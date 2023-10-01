@@ -6,10 +6,10 @@ public class TaskReport : Auditable
 {
     [Key]
     public int TaskReportId { get; set; }
-    public string Content { get; set; } = "No Content";
+    public string ReportContent { get; set; } = "No Content";
+    public int? TaskActivityId { get; set; }
 
-    public TaskActivity? TaskACtivity { get; set; }
-    public int? TaskACtivityId { get; set; }
+    public TaskActivity? TaskActivity { get; set; }
 
     public IEnumerable<Evidence>? Evidences { get; set; }
 }

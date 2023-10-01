@@ -9,11 +9,11 @@ public class Subject : Auditable
     public int SubjectId { get; set; }
     public string SubjectName { get; set; } = "Undefined";
     [Required]
-    public string? Code { get; set; }
+    public string? SubjectCode { get; set; }
     public bool Status { get; set; }
+    public int DepartmentId { get; set; }
 
     public Department? Department { get; set; }
-    public int DepartmentId { get; set; }
 
     public IEnumerable<Lecturer>? Lecturers { get; set; }
 

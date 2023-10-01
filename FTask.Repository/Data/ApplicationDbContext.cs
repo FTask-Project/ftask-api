@@ -63,8 +63,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid>, IApplic
                         j.HasKey("SubjectId", "LecturerId");
                     });
 
-            entity.HasOne(u => u.ManagedDepartment).WithOne(d => d.Manager)
-                .HasForeignKey<Department>(d => d.ManagerId);
+            entity.HasOne(u => u.DepartmentHead).WithOne(d => d.DepartmentHead)
+                .HasForeignKey<Department>(d => d.DepartmentHeadId);
         });
 
         builder.Entity<User>(entity =>
@@ -77,21 +77,21 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid>, IApplic
         {
             entity.ToTable("Department");
 
-            entity.HasIndex(d => d.Code).IsUnique();
+            entity.HasIndex(d => d.DepartmentCode).IsUnique();
         });
 
         builder.Entity<Semester>(entity =>
         {
             entity.ToTable("Semester");
 
-            entity.HasIndex(s => s.Code).IsUnique();
+            entity.HasIndex(s => s.SemesterCode).IsUnique();
         });
 
         builder.Entity<Subject>(entity =>
         {
             entity.ToTable("Subject");
 
-            entity.HasIndex(s => s.Code).IsUnique();
+            entity.HasIndex(s => s.SubjectCode).IsUnique();
 
             entity.HasMany(s => s.Tasks).WithOne(t => t.Subject).HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.NoAction);
         });
@@ -100,7 +100,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid>, IApplic
         {
             entity.ToTable("Task");
 
-            entity.HasMany(t => t.TaskUsers).WithOne(tu => tu.Task)
+            entity.HasMany(t => t.TaskLecturers).WithOne(tu => tu.Task)
                 .HasForeignKey(tu => tu.TaskId).OnDelete(DeleteBehavior.NoAction);
         });
 
@@ -113,8 +113,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid>, IApplic
         {
             entity.ToTable("TaskReport");
 
-            entity.HasOne(r => r.TaskACtivity).WithOne(a => a.TaskReport)
-                .HasForeignKey<TaskReport>(r => r.TaskACtivityId);
+            entity.HasOne(r => r.TaskActivity).WithOne(a => a.TaskReport)
+                .HasForeignKey<TaskReport>(r => r.TaskActivityId);
         });
 
         builder.Entity<TaskLecturer>(entity =>

@@ -9,10 +9,10 @@ public class Department : Auditable
     public int DepartmentId { get; set; }
     public string DepartmentName { get; set; } = "Undefined";
     [Required]
-    public string? Code { get; set; }
+    public string? DepartmentCode { get; set; }
+    public Guid DepartmentHeadId { get; set; }
 
-    public Lecturer? Manager { get; set; }
-    public Guid ManagerId { get; set; }
+    public Lecturer? DepartmentHead { get; set; }
 
     public IEnumerable<Subject>? Subjects { get; set; }
 

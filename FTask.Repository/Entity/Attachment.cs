@@ -12,8 +12,8 @@ namespace FTask.Repository.Entity
         [Key]
         public int AttachmentId { get; set; }
         public string Url { get; set; } = "Undefined";
+        public int TaskId { get; set; }
 
         public Task? Task { get; set; }
-        public int TaskId { get; set; }
     }
 }
