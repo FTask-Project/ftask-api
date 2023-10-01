@@ -8,7 +8,7 @@ namespace FTask.Repository.Identity
         public string CreatedBy { get; set; } = "Undefined";
         public DateTime CreatedAt { get; set; }
 
-        // Managed Department, this is for Manager
+        // Department this Lecturer is head of (if any)
         public Department? DepartmentHead { get; set; }
 
         // Belong to which department this is for lecturer
