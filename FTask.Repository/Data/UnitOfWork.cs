@@ -16,6 +16,8 @@ public interface IUnitOfWork
     ITaskLecturerRepository TaskLecturerRepository { get; }
     ITaskReportRepository TaskReportRepository { get; }
     ITaskRepository TaskRepository { get; }
+
+    Task<bool> SaveChangesAsync();
 }
 
 public class UnitOfWork : IUnitOfWork, IDisposable

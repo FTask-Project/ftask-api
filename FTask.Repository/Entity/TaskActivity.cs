@@ -9,9 +9,9 @@ public class TaskActivity : Auditable
     public string ActivityTitle { get; set; } = "No Title";
     public string ActivityDescription { get; set; } = "No description";
     public DateTime Deadline { get; set; }
-    public int TaskLecturerId { get; set; }
 
     public TaskLecturer? TaskLecturer { get; set; }
+    public int TaskLecturerId { get; set; }
 
     public TaskReport? TaskReport { get; set; }
 }

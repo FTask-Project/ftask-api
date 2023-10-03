@@ -11,11 +11,11 @@ public class Subject : Auditable
     [Required]
     public string? SubjectCode { get; set; }
     public bool Status { get; set; }
-    public int DepartmentId { get; set; }
 
     public Department? Department { get; set; }
+    public int DepartmentId { get; set; }
 
-    public IEnumerable<Lecturer>? Lecturers { get; set; }
+    public IEnumerable<Lecturer> Lecturers { get; set; } = Enumerable.Empty<Lecturer>(); 
 
-    public IEnumerable<Task>? Tasks { get; set; }
+    public IEnumerable<Task> Tasks { get; set; } = Enumerable.Empty<Task>();
 }

@@ -22,6 +22,8 @@ public interface IApplicationDbContext
     public DbSet<Department> Departments { get; set; }
     public DbSet<Evidence> Evidences { get; set; }
     public DbSet<Attachment> Attachments { get; set; }
+
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken());
 }
 
 public class ApplicationDbContext : IdentityDbContext<User, Role, Guid>, IApplicationDbContext
@@ -30,6 +32,12 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid>, IApplic
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, ICurrentUserService currentUserService) : base(options)
     {
         _currentUserService = currentUserService;
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+    {
+        var result = await base.SaveChangesAsync(cancellationToken);
+        return result;
     }
 
     public DbSet<Lecturer> Lecturers { get; set; } = null!;

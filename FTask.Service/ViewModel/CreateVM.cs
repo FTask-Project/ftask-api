@@ -15,3 +15,21 @@ public class LoginUserVM
 
     public bool IsMember { get; set; } = false;
 }
+
+public class DepartmentVM
+{
+    [Required]
+    public string? DepartmentName { get; set; }
+    [Required]
+    public string? DepartmentCode { get; set; }
+    public Guid? DepartmentHeadId { get; set; }
+    public IEnumerable<SubjectVM> Subjects { get; set; } = Enumerable.Empty<SubjectVM>();
+}
+
+public class SubjectVM
+{
+    public string SubjectName { get; set; } = "Undefined";
+    [Required]
+    public string? SubjectCode { get; set; }
+    public bool Status { get; set; }
+}

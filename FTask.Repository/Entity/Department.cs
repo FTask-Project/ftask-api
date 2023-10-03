@@ -1,5 +1,6 @@
 ﻿using FTask.Repository.Identity;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FTask.Repository.Entity;
 
@@ -7,16 +8,18 @@ public class Department : Auditable
 {
     [Key]
     public int DepartmentId { get; set; }
+    [Required]
     public string DepartmentName { get; set; } = "Undefined";
     [Required]
-    public string? DepartmentCode { get; set; }
-    public Guid DepartmentHeadId { get; set; }
-
+    public string DepartmentCode { get; set; } = "Undefined";
+    
     public Lecturer? DepartmentHead { get; set; }
+    [AllowNull]
+    public Guid? DepartmentHeadId { get; set; }
 
-    public IEnumerable<Subject>? Subjects { get; set; }
+    public IEnumerable<Subject> Subjects { get; set; } = Enumerable.Empty<Subject>();
 
-    public IEnumerable<Task>? Tasks { get; set; }
+    public IEnumerable<Task> Tasks { get; set; } = Enumerable.Empty<Task>();
 
-    public IEnumerable<Lecturer>? Lecturers { get; set; }
+    public IEnumerable<Lecturer> Lecturers { get; set; } = Enumerable.Empty<Lecturer>(); 
 }

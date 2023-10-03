@@ -15,8 +15,8 @@ namespace FTask.Repository.Identity
         public Department? Department { get; set; }
         public int? DepartmentId { get; set; }
 
-        public IEnumerable<TaskLecturer>? TaskLecturers { get; set; }
-        public IEnumerable<Subject>? Subjects { get; set; }
+        public IEnumerable<TaskLecturer> TaskLecturers { get; set; } = Enumerable.Empty<TaskLecturer>();
+        public IEnumerable<Subject> Subjects { get; set; } = Enumerable.Empty<Subject>();
     }
 
     public class LoginLecturerManagement

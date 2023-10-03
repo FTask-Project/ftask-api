@@ -12,17 +12,17 @@ public class Task : Auditable
     public DateTime EndDate { get; set; }
     public int TaskLevel { get; set; }
     public string? Location { get; set; }
-    public int SubjectId { get; set; }
-    public int SemesterId { get; set; }
-    public int DepartmentId { get; set; }
 
-    public IEnumerable<TaskLecturer>? TaskLecturers { get; set; }
+    public IEnumerable<TaskLecturer> TaskLecturers { get; set; } = Enumerable.Empty<TaskLecturer>();
 
-    public IEnumerable<Attachment>? Attachments { get; set; }
+    public IEnumerable<Attachment> Attachments { get; set; } = Enumerable.Empty<Attachment>();
 
     public Subject? Subject { get; set; }
+    public int SubjectId { get; set; }
 
     public Semester? Semester { get; set; }
+    public int SemesterId { get; set; }
 
     public Department? Department { get; set; }
+    public int DepartmentId { get; set; }
 }
