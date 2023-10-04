@@ -29,7 +29,7 @@ namespace FTask.Service.IService
             return await _unitOfWork.DepartmentRepository.FindAsync(id);
         }
 
-        public async Task<IEnumerable<Department>?> GetDepartments(int page, int quantity)
+        public async Task<IEnumerable<Department>> GetDepartments(int page, int quantity)
         {
             if(page == 0)
             {
