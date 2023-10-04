@@ -36,7 +36,7 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            return await _unitOfWork.DepartmentRepository.FindAll().Skip((page - 1) * quantity).Take(quantity).ToArrayAsync();
+            return await _unitOfWork.DepartmentRepository.FindAll().Skip((page - 1) * _checkQuantityTaken.PageQuantity).Take(quantity).ToArrayAsync();
         }
 
         public async Task<ServiceResponse> CreateNewDepartment(Department newEntity)
