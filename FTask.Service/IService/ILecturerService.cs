@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FTask.Repository.Identity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,5 +9,7 @@ namespace FTask.Service.IService
 {
     public interface ILecturerService
     {
+        Task<IEnumerable<Lecturer>> GetLecturers(int page, int quantity);
+        Task<Lecturer?> GetLectureById(Guid id);
     }
 }
