@@ -1,4 +1,5 @@
 ﻿using FTask.Repository.Data;
+using FTask.Repository.Entity;
 using FTask.Repository.Identity;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
@@ -43,7 +44,7 @@ namespace FTask.Service.IService
             return await _unitOfWork.LecturerRepository.FindAsync(id);
         }
 
-        /*public async Task<ServiceResponse> CreateNewLecturer(Lecturer newEntity, string password, IEnumerable<int> subjectIds)
+        public async Task<ServiceResponse> CreateNewLecturer(Lecturer newEntity, string password, IEnumerable<int> subjectIds)
         {
             var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => l.Email == newEntity.Email).FirstOrDefaultAsync();
             if (existedLecturer is not null)
@@ -81,11 +82,22 @@ namespace FTask.Service.IService
 
             if (subjectIds.Count() > 0)
             {
-                foreach(int id in subjectIds)
+                IEnumerable<Subject> subjects = new Enumerable.Empty<Subject>();
+                foreach (int id in subjectIds)
                 {
-                    var existedSubject = _unitOfWork.
+                    var existedSubject = await _unitOfWork.SubjectRepository.FindAsync(id);
+                    if(existedSubject is null)
+                    {
+                        return new ServiceResponse
+                        {
+                            IsSuccess = false,
+                            Message = "Created new lecturer sucessully, but can not assign subjects for the lecturer",
+                            Errors = new List<string>() { "Subject not found with the given id :" + id }
+                        };
+                    }
+
                 }
             }
-        }*/
+        }
     }
 }

@@ -34,7 +34,7 @@ namespace FTask.API.Controllers
             return Ok(_mapper.Map<UserInformationResponseVM>(result));
         }
         
-        [HttpGet]
+        [HttpGet("/hello/aaa")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserInformationResponseVM>))]
         public async Task<IActionResult> GetLecturers([FromQuery] int page, [FromQuery] int amount)
         {
