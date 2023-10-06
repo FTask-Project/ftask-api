@@ -52,12 +52,13 @@ namespace FTask.API.Controllers
                 var result = await _subjectService.CreateNewSubject(_mapper.Map<Subject>(subject));
                 if (result.IsSuccess)
                 {
-                    var existedSubject = await _subjectService.GetSubjectById(result.Id);
+                    var id = Int32.Parse(result.Id!);
+                    var existedSubject = await _subjectService.GetSubjectById(id);
                     if (existedSubject is not null)
                     {
                         return CreatedAtAction(
                             nameof(GetSubjectById),
-                            new { subjectId = result.Id }, 
+                            new { subjectId = id }, 
                             _mapper.Map<SubjectResponseVM>(existedSubject)
                         );
                     }

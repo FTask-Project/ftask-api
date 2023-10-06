@@ -16,7 +16,7 @@ namespace FTask.Service.IService
             _checkQuantityTaken = checkQuantityTaken;
         }
 
-        public async Task<Subject> GetSubjectById(int id)
+        public async Task<Subject?> GetSubjectById(int id)
         {
             return await _unitOfWork.SubjectRepository.FindAsync(id);
         }
@@ -81,7 +81,7 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = true,
                         Message = "Subject was created successfully",
-                        Id = subjectEntity.SubjectId
+                        Id = subjectEntity.SubjectId.ToString()
                     };
                 }
                 else
@@ -130,7 +130,7 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = true,
                         Message = "Subject was updated successfully",
-                        Id = subjectEntity.SubjectId
+                        Id = subjectEntity.SubjectId.ToString(),
                     };
                 }
                 else
