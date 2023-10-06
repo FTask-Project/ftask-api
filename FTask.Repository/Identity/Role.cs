@@ -6,5 +6,5 @@ public class Role : IdentityRole<Guid>
 {
     public string CreatedBy { get; set; } = "Undefined";
     public DateTime CreatedAt { get; set; }
-    public IEnumerable<User> Users { get; set; } = Enumerable.Empty<User>();
+    public IEnumerable<User> Users { get; set; } = new List<User>();
 }

@@ -12,6 +12,7 @@ public interface IUserService
 {
     Task<LoginUserManagement> LoginMember(LoginUserVM resource);
     Task<LoginLecturerManagement> LoginLecturer(LoginUserVM resource);
-
-    //Task Start();
+    Task<IEnumerable<User>> GetUsers(int page, int quantity);
+    Task<User?> GetUserById(Guid id);
+    Task<ServiceResponse> CreateNewUser(UserVM newEntity);
 }
