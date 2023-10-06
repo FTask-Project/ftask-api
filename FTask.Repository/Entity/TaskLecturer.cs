@@ -15,5 +15,5 @@ public class TaskLecturer : Auditable
     public Lecturer? Lecturer { get; set; }
     public Guid LecturerId { get; set; }
 
-    public IEnumerable<TaskActivity> TaskActivities { get; set; } = Enumerable.Empty<TaskActivity>();
+    public IEnumerable<TaskActivity> TaskActivities { get; set; } = new List<TaskActivity>();
 }

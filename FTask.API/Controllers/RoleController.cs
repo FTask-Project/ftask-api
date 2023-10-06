@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
-using FTask.Repository.Identity;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,51 +8,51 @@ namespace FTask.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LecturerController : ControllerBase
+    public class RoleController : ControllerBase
     {
-        private readonly ILecturerService _lecturerService;
+        private readonly IRoleService _roleService;
         private readonly IMapper _mapper;
 
-        public LecturerController(ILecturerService lecturerService, IMapper mapper)
+        public RoleController(IRoleService roleService, IMapper mapper)
         {
-            _lecturerService = lecturerService;
+            _roleService = roleService;
             _mapper = mapper;
         }
 
-        [HttpGet("{lecturerId}", Name = nameof(GetLecturerById))]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserInformationResponseVM))]
+        [HttpGet("{roleId}", Name = nameof(GetRoleById))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RoleResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public async Task<IActionResult> GetLecturerById(Guid lecturerId)
+        public async Task<IActionResult> GetRoleById(Guid roleId)
         {
             if (ModelState.IsValid)
             {
-                var result = await _lecturerService.GetLectureById(lecturerId);
-                if (result is null)
+                var result = await _roleService.GetRoleById(roleId);
+                if(result is null)
                 {
                     return NotFound("Not found");
                 }
-                return Ok(_mapper.Map<UserInformationResponseVM>(result));
+                return Ok(_mapper.Map<RoleResponseVM>(result));
             }
             else
             {
                 return BadRequest(new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Invalid input"
+                    Message = "Invalid input",
                 });
             }
         }
 
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserInformationResponseVM>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<RoleResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> GetLecturers([FromQuery] int page, [FromQuery] int quantity)
+        public async Task<IActionResult> GetRoles([FromQuery] int page, [FromQuery] int quantity)
         {
             if (ModelState.IsValid)
             {
-                var result = await _lecturerService.GetLecturers(page, quantity);
-                return Ok(_mapper.Map<IEnumerable<UserInformationResponseVM>>(result));
+                var result = await _roleService.GetRoles(page, quantity);
+                return Ok(_mapper.Map<IEnumerable<RoleResponseVM>>(result));
             }
             else
             {
@@ -67,23 +65,23 @@ namespace FTask.API.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(UserInformationResponseVM))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RoleResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> CreateNewLecturer([FromForm] LecturerVM resource)
+        public async Task<IActionResult> CreateRole([FromBody]RoleVM resource)
         {
             if (ModelState.IsValid)
             {
-                var result = await _lecturerService.CreateNewLecturer(resource);
+                var result = await _roleService.CreateNewRole(resource);
                 if (result.IsSuccess)
                 {
                     var id = Guid.Parse(result.Id!);
-                    var existedLecturer = await _lecturerService.GetLectureById(id);
-                    if(existedLecturer is not null)
+                    var role = await _roleService.GetRoleById(id);
+                    if(role is not null)
                     {
-                        return CreatedAtAction(nameof(GetLecturerById), new
+                        return CreatedAtAction(nameof(GetRoleById), new
                         {
-                            lecturerId = id
-                        }, _mapper.Map<UserInformationResponseVM>(existedLecturer));
+                            roleId = id,
+                        }, _mapper.Map<RoleResponseVM>(role));
                     }
                     else
                     {
@@ -91,7 +89,7 @@ namespace FTask.API.Controllers
                         {
                             IsSuccess = false,
                             Message = "Some error happened",
-                            Errors = new List<string> { "Error at create new lecturer action method", "Created lecturer not found" }
+                            Errors = new List<string> { "Error at create new role action method", "Created role not found" }
                         });
                     }
                 }

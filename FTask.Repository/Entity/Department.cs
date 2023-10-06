@@ -17,9 +17,9 @@ public class Department : Auditable
     [AllowNull]
     public Guid? DepartmentHeadId { get; set; }
 
-    public IEnumerable<Subject> Subjects { get; set; } = Enumerable.Empty<Subject>();
+    public IEnumerable<Subject> Subjects { get; set; } = new List<Subject>();
 
-    public IEnumerable<Task> Tasks { get; set; } = Enumerable.Empty<Task>();
+    public IEnumerable<Task> Tasks { get; set; } = new List<Task>();
 
-    public IEnumerable<Lecturer> Lecturers { get; set; } = Enumerable.Empty<Lecturer>(); 
+    public IEnumerable<Lecturer> Lecturers { get; set; } = new List<Lecturer>(); 
 }

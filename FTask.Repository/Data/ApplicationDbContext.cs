@@ -73,12 +73,20 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid>, IApplic
 
             entity.HasOne(u => u.DepartmentHead).WithOne(d => d.DepartmentHead)
                 .HasForeignKey<Department>(d => d.DepartmentHeadId);
+
+            entity.HasIndex(l => l.Email).IsUnique();
+
+            entity.HasIndex(l => l.PhoneNumber).IsUnique();
         });
 
         builder.Entity<User>(entity =>
         {
             entity.HasMany(u => u.Roles).WithMany(r => r.Users)
-                .UsingEntity<IdentityUserRole<Guid>>();    
+                .UsingEntity<IdentityUserRole<Guid>>();
+
+            entity.HasIndex(u => u.Email).IsUnique();
+
+            entity.HasIndex(u => u.PhoneNumber).IsUnique();
         });
 
         builder.Entity<Department>(entity =>

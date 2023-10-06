@@ -11,5 +11,5 @@ public class TaskReport : Auditable
     public TaskActivity? TaskActivity { get; set; }
     public int? TaskActivityId { get; set; }
 
-    public IEnumerable<Evidence> Evidences { get; set; } = Enumerable.Empty<Evidence>();
+    public IEnumerable<Evidence> Evidences { get; set; } = new List<Evidence>();
 }

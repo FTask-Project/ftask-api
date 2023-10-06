@@ -11,5 +11,5 @@ public class Semester : Auditable
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
 
-    public IEnumerable<Task>? Tasks { get; set; }
+    public IEnumerable<Task> Tasks { get; set; } = new List<Task>();
 }

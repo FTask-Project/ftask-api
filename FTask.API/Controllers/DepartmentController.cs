@@ -3,6 +3,7 @@ using FTask.Repository.Entity;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Utilities;
 
 namespace FTask.API.Controllers
 {
@@ -24,19 +25,30 @@ namespace FTask.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public async Task<IActionResult> GetDeaprtmentById(int departmentId)
         {
-            var result = await _departmentService.GetDepartmentById(departmentId);
-            if(result is null)
+            if (ModelState.IsValid)
             {
-                return NotFound("Not found");
+                var result = await _departmentService.GetDepartmentById(departmentId);
+                if (result is null)
+                {
+                    return NotFound("Not found");
+                }
+                return Ok(_mapper.Map<DepartmentResponseVM>(result));
             }
-            return Ok(_mapper.Map<DepartmentResponseVM>(result));
+            else
+            {
+                return BadRequest(new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<DepartmentResponseVM>))]
-        public async Task<IActionResult> GetDepartments([FromQuery]int page, [FromQuery]int amount)
+        public async Task<IActionResult> GetDepartments([FromQuery]int page, [FromQuery]int quantity)
         {
-            var result = await _departmentService.GetDepartments(page, amount);
+            var result = await _departmentService.GetDepartments(page, quantity);
             return Ok(_mapper.Map<IEnumerable<DepartmentResponseVM>>(result));
         }
 
@@ -50,13 +62,14 @@ namespace FTask.API.Controllers
                 var result = await _departmentService.CreateNewDepartment(_mapper.Map<Department>(resource));
                 if (result.IsSuccess)
                 {
-                    var existedDepartment = await _departmentService.GetDepartmentById(result.Id);
+                    int id = Int32.Parse(result.Id!);
+                    var existedDepartment = await _departmentService.GetDepartmentById(id);
                     if (existedDepartment is not null)
                     {
                         return CreatedAtAction(nameof(GetDeaprtmentById),
                         new
                         {
-                            departmentId = result.Id
+                            departmentId = id
                         }, _mapper.Map<DepartmentResponseVM>(existedDepartment));
                     }
                     else
@@ -64,7 +77,8 @@ namespace FTask.API.Controllers
                         return BadRequest(new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Some error happened"
+                            Message = "Some error happened",
+                            Errors = new List<string> { "Error at create new department action method", "Created department not found" }
                         });
                     }
                 }

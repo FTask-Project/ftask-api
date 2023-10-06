@@ -15,7 +15,7 @@ public class Subject : Auditable
     public Department? Department { get; set; }
     public int DepartmentId { get; set; }
 
-    public IEnumerable<Lecturer> Lecturers { get; set; } = Enumerable.Empty<Lecturer>(); 
+    public IEnumerable<Lecturer> Lecturers { get; set; } = new List<Lecturer>(); 
 
-    public IEnumerable<Task> Tasks { get; set; } = Enumerable.Empty<Task>();
+    public IEnumerable<Task> Tasks { get; set; } = new List<Task>();
 }
