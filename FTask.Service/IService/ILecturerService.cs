@@ -1,4 +1,5 @@
 ﻿using FTask.Repository.Identity;
+using FTask.Service.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,6 @@ namespace FTask.Service.IService
     {
         Task<IEnumerable<Lecturer>> GetLecturers(int page, int quantity);
         Task<Lecturer?> GetLectureById(Guid id);
+        Task<ServiceResponse> CreateNewLecturer(LecturerVM newEntity);
     }
 }

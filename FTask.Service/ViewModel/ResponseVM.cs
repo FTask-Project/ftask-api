@@ -1,12 +1,13 @@
 ﻿using FTask.Repository.Entity;
 using FTask.Repository.Identity;
+using System.ComponentModel.DataAnnotations;
 using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.Service.ViewModel;
 
 public class ServiceResponse
 {
-    public int Id { get; set; }
+    public string? Id { get; set; }
     public bool IsSuccess { get; set; }
     public string? Message { get; set; }
     public IEnumerable<string>? Errors { get; set; }
@@ -31,6 +32,7 @@ public class UserInformationResponseVM
     public bool TwoFactorEnabled { get; set; }
     public DateTimeOffset? LockoutEnd { get; set; }
     public bool LockoutEnabled { get; set; }
+    public string? FilePath { get; set; }
 }
 // =======================================================
 
@@ -72,4 +74,18 @@ public class LecturerResponseVM
     public Guid Id { get; set; }
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
+}
+
+public class RoleResponseVM
+{
+    public Guid Id { get; set; }
+    public string? Name { get; set; }
+}
+
+public class SemesterResponseVM
+{
+    public int SemesterId { get; set; }
+    public string? SemesterCode { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
 }

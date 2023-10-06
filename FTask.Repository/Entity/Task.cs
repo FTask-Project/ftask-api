@@ -13,9 +13,9 @@ public class Task : Auditable
     public int TaskLevel { get; set; }
     public string? Location { get; set; }
 
-    public IEnumerable<TaskLecturer> TaskLecturers { get; set; } = Enumerable.Empty<TaskLecturer>();
+    public IEnumerable<TaskLecturer> TaskLecturers { get; set; } = new List<TaskLecturer>();
 
-    public IEnumerable<Attachment> Attachments { get; set; } = Enumerable.Empty<Attachment>();
+    public IEnumerable<Attachment> Attachments { get; set; } = new List<Attachment>();
 
     public Subject? Subject { get; set; }
     public int SubjectId { get; set; }

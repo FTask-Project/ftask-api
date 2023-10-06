@@ -28,7 +28,8 @@ public static class DependencyInjection
         #endregion
 
         #region Validation
-        services.AddScoped<ICheckQuantityTaken, CheckQuantityTaken>();
+        services.AddSingleton<ICheckQuantityTaken, CheckQuantityTaken>();
+        services.AddSingleton<ICheckSemesterPeriod, CheckSemesterPeriod>();
         #endregion
 
         return services;

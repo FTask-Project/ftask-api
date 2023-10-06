@@ -85,7 +85,7 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = true,
                         Message = "Created new department",
-                        Id = newEntity.DepartmentId
+                        Id = newEntity.DepartmentId.ToString()
                     };
                 }
                 else
@@ -93,7 +93,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new department failed"
+                        Message = "Create new department failed",
+                        Errors = new List<string>() { "Error at create new department service", "Can not save changes" }
                     };
                 }
             }

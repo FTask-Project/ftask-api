@@ -8,7 +8,9 @@ public class User : IdentityUser<Guid>
     public string CreatedBy { get; set; } = "Undefined";
     public DateTime CreatedAt { get; set; }
 
-    public IEnumerable<Role> Roles { get; set; } = Enumerable.Empty<Role>();
+    public IEnumerable<Role> Roles { get; set; } = new List<Role>();
+
+    public string? FilePath { get; set; }
 }
 
 public class LoginUserManagement
