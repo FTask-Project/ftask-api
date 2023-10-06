@@ -32,6 +32,13 @@ public static class DependencyInjection
         services.AddSingleton<ICheckSemesterPeriod, CheckSemesterPeriod>();
         #endregion
 
+        #region Cache
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Redis");
+        });
+        #endregion
+
         return services;
     }
 }

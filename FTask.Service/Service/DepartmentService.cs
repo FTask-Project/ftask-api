@@ -1,10 +1,13 @@
 ﻿using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Repository.Identity;
+using FTask.Service.Utilize;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,15 +21,43 @@ namespace FTask.Service.IService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICheckQuantityTaken _checkQuantityTaken;
-        public DepartmentService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken)
+        private readonly IDistributedCache _distributedCache;
+        public DepartmentService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, IDistributedCache distributedCache)
         {
             _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
+            _distributedCache = distributedCache;
         }
 
         public async Task<Department?> GetDepartmentById(int id)
         {
-            return await _unitOfWork.DepartmentRepository.FindAsync(id);
+            string key = $"department-{id}";
+            string? cache = await _distributedCache.GetStringAsync(key);
+
+            Department? department;
+            if (string.IsNullOrEmpty(cache))
+            {
+                department = await _unitOfWork.DepartmentRepository.FindAsync(id);
+                if(department is null)
+                {
+                    return department;
+                }
+
+                await _distributedCache.SetStringAsync(
+                    key, 
+                    JsonConvert.SerializeObject(department));
+
+                return department;
+            }
+
+            department = JsonConvert.DeserializeObject<Department>(cache,
+                new JsonSerializerSettings
+                {
+                    ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+                    ContractResolver = new PrivateResolver()
+                });
+
+            return department;
         }
 
         public async Task<IEnumerable<Department>> GetDepartments(int page, int quantity)
