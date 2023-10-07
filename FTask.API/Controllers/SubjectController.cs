@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using FTask.Repository.Entity;
+using FTask.Service.Caching;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.API.Controllers
 {
@@ -10,13 +12,19 @@ namespace FTask.API.Controllers
     [ApiController]
     public class SubjectController : ControllerBase
     {
+        private readonly ICacheService<Subject> _cacheService;
         private readonly ISubjectService _subjectService;
         private readonly IMapper _mapper;
 
-        public SubjectController(ISubjectService subjectService, IMapper mapper)
+        public SubjectController(
+            ICacheService<Subject> cacheService,
+            ISubjectService subjectService,
+            IMapper mapper
+            )
         {
             _subjectService = subjectService;
             _mapper = mapper;
+            _cacheService = cacheService;
         }
 
         [HttpGet("{subjectId}", Name = nameof(GetSubjectById))]
@@ -24,23 +32,44 @@ namespace FTask.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public async Task<IActionResult> GetSubjectById(int subjectId)
         {
-            var subjectResult = await _subjectService.GetSubjectById(subjectId);
-            if (subjectResult is null)
+            string key = $"subject-{subjectId}";
+            var cachedData = await _cacheService.GetAsync(key);
+            if (cachedData is null)
             {
-                return NotFound("Not found");
+                var subjectResult = await _subjectService.GetSubjectById(subjectId);
+                if (subjectResult is null)
+                {
+                    return NotFound("Not found");
+                }
+
+                await _cacheService.SetAsync(key, subjectResult);
+
+                return Ok(_mapper.Map<SubjectResponseVM>(subjectResult));
             }
-            return Ok(_mapper.Map<SubjectResponseVM>(subjectResult));
+
+            return Ok(_mapper.Map<SubjectResponseVM>(cachedData));
+
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SubjectResponseVM>))]
         public async Task<IActionResult> GetSubjects([FromQuery] int page, [FromQuery] int amount)
         {
-            var subjectList = await _subjectService.GetSubjectAllSubject(page, amount);
-            return Ok(_mapper.Map<IEnumerable<SubjectResponseVM>>(subjectList));
+            string key = $"subject-{page}-{amount}";
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData is null)
+            {
+                var subjectList = await _subjectService.GetSubjectAllSubject(page, amount);
+                if (!subjectList.IsNullOrEmpty())
+                {
+                    await _cacheService.SetAsync(key, subjectList);
+                }
+                return Ok(_mapper.Map<IEnumerable<SubjectResponseVM>>(subjectList));
+            }
+
+            return Ok(_mapper.Map<IEnumerable<SubjectResponseVM>>(cachedData));
+
         }
-
-
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SubjectResponseVM))]
@@ -58,7 +87,7 @@ namespace FTask.API.Controllers
                     {
                         return CreatedAtAction(
                             nameof(GetSubjectById),
-                            new { subjectId = id }, 
+                            new { subjectId = id },
                             _mapper.Map<SubjectResponseVM>(existedSubject)
                         );
                     }

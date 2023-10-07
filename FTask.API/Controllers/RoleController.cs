@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Duende.IdentityServer.Extensions;
+using FTask.Repository.Identity;
+using FTask.Service.Caching;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
@@ -10,11 +12,17 @@ namespace FTask.API.Controllers
     [ApiController]
     public class RoleController : ControllerBase
     {
+        private readonly ICacheService<Role> _cacheService;
         private readonly IRoleService _roleService;
         private readonly IMapper _mapper;
 
-        public RoleController(IRoleService roleService, IMapper mapper)
+        public RoleController(
+            ICacheService<Role> cacheService,
+            IRoleService roleService,
+            IMapper mapper
+            )
         {
+            _cacheService = cacheService;
             _roleService = roleService;
             _mapper = mapper;
         }
@@ -27,12 +35,19 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _roleService.GetRoleById(roleId);
-                if(result is null)
+                string key = $"role-{roleId}";
+                var cacheData = await _cacheService.GetAsync(key);
+                if (cacheData is null)
                 {
-                    return NotFound("Not found");
+                    var roleResult = await _roleService.GetRoleById(roleId);
+                    if (roleResult is null)
+                    {
+                        return NotFound("Not Found");
+                    }
+                    await _cacheService.SetAsync(key, roleResult);
+                    return Ok(_mapper.Map<RoleResponseVM>(roleResult));
                 }
-                return Ok(_mapper.Map<RoleResponseVM>(result));
+                return Ok(_mapper.Map<RoleResponseVM>(cacheData));
             }
             else
             {
@@ -51,8 +66,19 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _roleService.GetRoles(page, quantity);
-                return Ok(_mapper.Map<IEnumerable<RoleResponseVM>>(result));
+                string key = $"role-{page}-{quantity}";
+                var cacheData = await _cacheService.GetAsyncArray(key);
+                if (cacheData is null)
+                {
+                    var roleList = await _roleService.GetRoles(page, quantity);
+                    if (!roleList.IsNullOrEmpty())
+                    {
+                        await _cacheService.SetAsync(key, roleList);
+                    }
+                    return Ok(_mapper.Map<IEnumerable<RoleResponseVM>>(roleList));
+                }
+
+                return Ok(_mapper.Map<IEnumerable<RoleResponseVM>>(cacheData));
             }
             else
             {
@@ -67,7 +93,7 @@ namespace FTask.API.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RoleResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> CreateRole([FromBody]RoleVM resource)
+        public async Task<IActionResult> CreateRole([FromBody] RoleVM resource)
         {
             if (ModelState.IsValid)
             {
@@ -76,7 +102,7 @@ namespace FTask.API.Controllers
                 {
                     var id = Guid.Parse(result.Id!);
                     var role = await _roleService.GetRoleById(id);
-                    if(role is not null)
+                    if (role is not null)
                     {
                         return CreatedAtAction(nameof(GetRoleById), new
                         {

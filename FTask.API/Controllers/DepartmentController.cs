@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
+using Duende.IdentityServer.Extensions;
 using FTask.Repository.Entity;
+using FTask.Service.Caching;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Utilities;
 
 namespace FTask.API.Controllers
 {
@@ -11,12 +12,18 @@ namespace FTask.API.Controllers
     [ApiController]
     public class DepartmentController : ControllerBase
     {
+        private readonly ICacheService<Department> _cacheService;
         private readonly IDepartmentService _departmentService;
         private readonly IMapper _mapper;
 
-        public DepartmentController(IDepartmentService departmentService, IMapper mapper)
+        public DepartmentController (
+            ICacheService<Department> cacheService,
+            IDepartmentService departmentService,
+            IMapper mapper
+            )
         {
             _departmentService = departmentService;
+            _cacheService = cacheService;
             _mapper = mapper;
         }
 
@@ -27,12 +34,20 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _departmentService.GetDepartmentById(departmentId);
-                if (result is null)
+                string key = $"department-{departmentId}";
+                var cachedData = await _cacheService.GetAsync(key);
+                if (cachedData is null)
                 {
-                    return NotFound("Not found");
+                    var departmentResult = await _departmentService.GetDepartmentById(departmentId);
+                    if (departmentResult is null)
+                    {
+                        return NotFound("Not found");
+                    }
+                    await _cacheService.SetAsync(key, departmentResult);
+                    return Ok(_mapper.Map<DepartmentResponseVM>(departmentResult));
                 }
-                return Ok(_mapper.Map<DepartmentResponseVM>(result));
+
+                return Ok(_mapper.Map<DepartmentResponseVM>(cachedData));
             }
             else
             {
@@ -48,8 +63,20 @@ namespace FTask.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<DepartmentResponseVM>))]
         public async Task<IActionResult> GetDepartments([FromQuery]int page, [FromQuery]int quantity)
         {
-            var result = await _departmentService.GetDepartments(page, quantity);
-            return Ok(_mapper.Map<IEnumerable<DepartmentResponseVM>>(result));
+            string key = $"department-{page}-{quantity}";
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData is null)
+            {
+                var departmentList = await _departmentService.GetDepartments(page, quantity);
+                if (!departmentList.IsNullOrEmpty())
+                {
+                    await _cacheService.SetAsync(key, departmentList);
+                }
+                return Ok(_mapper.Map<IEnumerable<DepartmentResponseVM>>(departmentList));
+            }
+
+            return Ok(_mapper.Map<IEnumerable<DepartmentResponseVM>>(cachedData));
+            
         }
 
         [HttpPost]
