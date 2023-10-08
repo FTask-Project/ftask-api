@@ -1,7 +1,4 @@
 ﻿using AutoMapper;
-using Duende.IdentityServer.Extensions;
-using FTask.Repository.Identity;
-using FTask.Service.Caching;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using Microsoft.AspNetCore.Mvc;
@@ -12,19 +9,16 @@ namespace FTask.API.Controllers
     [ApiController]
     public class LecturerController : ControllerBase
     {
-        private readonly ICacheService<Lecturer> _cacheService;
         private readonly ILecturerService _lecturerService;
         private readonly IMapper _mapper;
 
         public LecturerController(
-            ICacheService<Lecturer> cacheService,
             ILecturerService lecturerService,
             IMapper mapper
             )
         {
             _lecturerService = lecturerService;
             _mapper = mapper;
-            _cacheService = cacheService;
         }
 
         [HttpGet("{lecturerId}", Name = nameof(GetLecturerById))]
@@ -35,21 +29,12 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                string key = $"lecturer-{lecturerId}";
-                var cachedData = await _cacheService.GetAsync(key);
-                if (cachedData is null)
+                var lecturerResult = await _lecturerService.GetLectureById(lecturerId);
+                if (lecturerResult is null)
                 {
-                    var lecturerResult = await _lecturerService.GetLectureById(lecturerId);
-                    if (lecturerResult is null)
-                    {
-                        return NotFound("Not found");
-                    }
-                    await _cacheService.SetAsync(key, lecturerResult);
-                    return Ok(_mapper.Map<UserInformationResponseVM>(lecturerResult));
-
+                    return NotFound("Not found");
                 }
-
-                return Ok(_mapper.Map<UserInformationResponseVM>(cachedData));
+                return Ok(_mapper.Map<UserInformationResponseVM>(lecturerResult));
             }
             else
             {
@@ -68,19 +53,8 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                string key = $"lecturer-{page}-{quantity}";
-                var cachedData = await _cacheService.GetAsyncArray(key);
-                if (cachedData is null)
-                {
-                    var lecturerList = await _lecturerService.GetLecturers(page, quantity);
-                    if (!lecturerList.IsNullOrEmpty())
-                    {
-                        await _cacheService.SetAsync(key, lecturerList);
-                    }
-
-                    return Ok(_mapper.Map<IEnumerable<UserInformationResponseVM>>(lecturerList));
-                }
-                return Ok(_mapper.Map<IEnumerable<UserInformationResponseVM>>(cachedData));
+                var lecturerList = await _lecturerService.GetLecturers(page, quantity);
+                return Ok(_mapper.Map<IEnumerable<UserInformationResponseVM>>(lecturerList));
             }
             else
             {

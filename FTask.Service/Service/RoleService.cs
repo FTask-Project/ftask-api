@@ -1,28 +1,30 @@
 ﻿using FTask.Repository.Data;
 using FTask.Repository.Identity;
+using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
-using IdentityModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FTask.Service.IService
 {
     internal class RoleService : IRoleService
     {
+        private readonly ICheckQuantityTaken _checkQuantityTaken;
+        private readonly ICacheService<Role> _cacheService;
         private readonly RoleManager<Role> _roleManager;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICheckQuantityTaken _checkQuantityTaken;
-        public RoleService(IUnitOfWork unitOfWork, RoleManager<Role> roleManager, ICheckQuantityTaken checkQuantityTaken)
+        public RoleService(
+            ICheckQuantityTaken checkQuantityTaken,
+            ICacheService<Role> cacheService,
+            RoleManager<Role> roleManager,
+            IUnitOfWork unitOfWork
+            )
         {
-            _unitOfWork = unitOfWork;
-            _roleManager = roleManager;
             _checkQuantityTaken = checkQuantityTaken;
+            _cacheService = cacheService;
+            _roleManager = roleManager;
+            _unitOfWork = unitOfWork;
         }
         public async Task<IEnumerable<Role>> GetRolesByName(IEnumerable<string> roleNames)
         {
@@ -31,7 +33,20 @@ namespace FTask.Service.IService
 
         public async Task<Role?> GetRoleById(Guid id)
         {
-            return await _roleManager.FindByIdAsync(id.ToString());
+            string key = CacheKeyGenerator.GetKeyById(nameof(Role), id.ToString());
+            var cachedData = await _cacheService.GetAsync(key);
+
+            if (cachedData is null)
+            {
+                var role = await _roleManager.FindByIdAsync(id.ToString());
+                if (role is not null)
+                {
+                    await _cacheService.SetAsync(key, role);
+                }
+                return role;
+            }
+
+            return cachedData;
         }
 
         public async Task<IEnumerable<Role>> GetRoles(int page, int quantity)
@@ -41,10 +56,24 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            return await _roleManager.Roles
-                .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                .Take(quantity)
-                .ToArrayAsync();
+
+            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Role), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData is null)
+            {
+                var roleList = await _roleManager.Roles
+                    .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                    .Take(quantity)
+                    .ToArrayAsync();
+
+                if (roleList.Count() > 0)
+                {
+                    await _cacheService.SetAsync(key, roleList);
+                }
+                return roleList;
+            }
+
+            return cachedData;
         }
 
         public async Task<ServiceResponse> CreateNewRole(RoleVM newEntity)

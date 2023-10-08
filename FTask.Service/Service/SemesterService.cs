@@ -1,6 +1,7 @@
 ﻿using Duende.IdentityServer.Extensions;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
+using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
@@ -14,19 +15,39 @@ namespace FTask.Service.IService
 {
     internal class SemesterService : ISemesterService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly ICheckQuantityTaken _checkQuantityTaken;
         private readonly ICheckSemesterPeriod _checkSemesterPeriod;
-        public SemesterService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, ICheckSemesterPeriod checkSemesterPeriod)
+        private readonly ICheckQuantityTaken _checkQuantityTaken;
+        private readonly ICacheService<Semester> _cacheService;
+        private readonly IUnitOfWork _unitOfWork;
+        public SemesterService(
+            ICheckSemesterPeriod checkSemesterPeriod,
+            ICheckQuantityTaken checkQuantityTaken, 
+            ICacheService<Semester> cacheService,
+            IUnitOfWork unitOfWork
+            )
         {
-            _unitOfWork = unitOfWork;
-            _checkQuantityTaken = checkQuantityTaken;
             _checkSemesterPeriod = checkSemesterPeriod;
+            _checkQuantityTaken = checkQuantityTaken;
+            _cacheService = cacheService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Semester?> GetSemesterById(int id)
         {
-            return await _unitOfWork.SemesterRepository.FindAsync(id);
+            string key = CacheKeyGenerator.GetKeyById(nameof(Semester), id.ToString());
+            var cachedData = await _cacheService.GetAsync(key);
+
+            if (cachedData is null)
+            {
+                var semester = await _unitOfWork.SemesterRepository.FindAsync(id);
+                if (semester is not null)
+                {
+                    await _cacheService.SetAsync(key, semester);
+                }
+                return semester;
+            }
+
+            return cachedData;
         }
 
         public async Task<IEnumerable<Semester>> GetSemesters(int page, int quantity)
@@ -36,11 +57,25 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            return await _unitOfWork.SemesterRepository
-                .FindAll()
-                .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                .Take(quantity)
-                .ToArrayAsync();
+
+            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Semester), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData is null)
+            {
+                var semesterList = await _unitOfWork.SemesterRepository
+                    .FindAll()
+                    .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                    .Take(quantity)
+                    .ToArrayAsync();
+                
+                if (semesterList.Count() > 0)
+                {
+                    await _cacheService.SetAsync(key, semesterList);
+                }
+                return semesterList;
+            }
+
+            return cachedData;
         }
 
         public async Task<ServiceResponse> CreateNewSemester(SemesterVM newEntity)

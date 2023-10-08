@@ -1,7 +1,4 @@
 ﻿using AutoMapper;
-using Duende.IdentityServer.Extensions;
-using FTask.Repository.Entity;
-using FTask.Service.Caching;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using Microsoft.AspNetCore.Mvc;
@@ -12,19 +9,16 @@ namespace FTask.API.Controllers
     [ApiController]
     public class SemesterController : ControllerBase
     {
-        private readonly ICacheService<Semester> _cacheService;
         private readonly ISemesterService _semesterService;
         private readonly IMapper _mapper;
 
         public SemesterController(
-            ICacheService<Semester> cacheService,
             ISemesterService semesterService,
             IMapper mapper
             )
         {
             _mapper = mapper;
             _semesterService = semesterService;
-            _cacheService = cacheService;
         }
 
         [HttpGet("{semesterId}", Name = nameof(GetSemesterById))]
@@ -34,20 +28,12 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                string key = $"semester-{semesterId}";
-                var cachedData = await _cacheService.GetAsync(key);
-                if (cachedData is null)
+                var semesterResult = await _semesterService.GetSemesterById(semesterId);
+                if (semesterResult is null)
                 {
-                    var semesterResult = await _semesterService.GetSemesterById(semesterId);
-                    if (semesterResult is null)
-                    {
-                        return NotFound("Not found");
-                    }
-                    await _cacheService.SetAsync(key, semesterResult);
-                    return Ok(_mapper.Map<SemesterResponseVM>(semesterResult));
+                    return NotFound("Not found");
                 }
-
-                return Ok(_mapper.Map<SemesterResponseVM>(cachedData));
+                return Ok(_mapper.Map<SemesterResponseVM>(semesterResult));
             }
             else
             {
@@ -63,20 +49,19 @@ namespace FTask.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SemesterResponseVM>))]
         public async Task<IActionResult> GetSemester([FromQuery] int page, [FromQuery] int quantity)
         {
-            string key = $"semester-{page}-{quantity}";
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
+            if (ModelState.IsValid)
             {
                 var semesterList = await _semesterService.GetSemesters(page, quantity);
-                if (!semesterList.IsNullOrEmpty())
-                {
-                    await _cacheService.SetAsync(key, semesterList);
-                }
-
                 return Ok(_mapper.Map<IEnumerable<SemesterResponseVM>>(semesterList));
             }
-
-            return Ok(_mapper.Map<IEnumerable<SemesterResponseVM>>(cachedData));
+            else
+            {
+                return BadRequest(new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input",
+                });
+            }
         }
 
         [HttpPost]

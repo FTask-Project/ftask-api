@@ -1,48 +1,82 @@
-﻿using FTask.Repository.Data;
+﻿using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Repository.Identity;
+using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using EntityFramework.Exceptions.Common;
-using CloudinaryDotNet;
-using CloudinaryDotNet.Actions;
-using System.Collections;
 
 namespace FTask.Service.IService
 {
     internal class LecturerService : ILecturerService
     {
-        private readonly IUnitOfWork _unitOfWork;
         private readonly ICheckQuantityTaken _checkQuantityTaken;
+        private readonly ICacheService<Lecturer> _cacheService;
         private readonly UserManager<Lecturer> _userManager;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly Cloudinary _cloudinary;
 
-        public LecturerService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, UserManager<Lecturer> userManager, Cloudinary cloudinary)
+        public LecturerService(
+            ICheckQuantityTaken checkQuantityTaken,
+            ICacheService<Lecturer> cacheService,
+            UserManager<Lecturer> userManager,
+            IUnitOfWork unitOfWork,
+            Cloudinary cloudinary
+            )
         {
-            _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
+            _cacheService = cacheService;
             _userManager = userManager;
+            _unitOfWork = unitOfWork;
             _cloudinary = cloudinary;
         }
 
         public async Task<IEnumerable<Lecturer>> GetLecturers(int page, int quantity)
         {
-            if(page == 0)
+            if (page == 0)
             {
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            return await _unitOfWork.LecturerRepository
-                .FindAll()
-                .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                .Take(quantity).ToArrayAsync();
+
+            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Lecturer), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData is null)
+            {
+                var lecturerList = await _unitOfWork.LecturerRepository
+                    .FindAll()
+                    .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                    .Take(quantity)
+                    .ToArrayAsync();
+
+                if (lecturerList.Length > 0)
+                {
+                    await _cacheService.SetAsync(key, lecturerList);
+                }
+                return lecturerList;
+            }
+            return cachedData;
         }
 
         public async Task<Lecturer?> GetLectureById(Guid id)
         {
-            return await _unitOfWork.LecturerRepository.FindAsync(id);
+            string key = CacheKeyGenerator.GetKeyById(nameof(Lecturer), id.ToString());
+            var cachedData = await _cacheService.GetAsync(key);
+
+            if (cachedData is null)
+            {
+                var lecturer = await _unitOfWork.LecturerRepository.FindAsync(id);
+                if (lecturer is not null)
+                {
+                    await _cacheService.SetAsync(key, lecturer);
+                }
+                return lecturer;
+            }
+
+            return cachedData;
         }
 
         public async Task<ServiceResponse> CreateNewLecturer(LecturerVM newEntity)
@@ -72,7 +106,7 @@ namespace FTask.Service.IService
                     }
                 }
 
-                if(newEntity.PhoneNumber is not null)
+                if (newEntity.PhoneNumber is not null)
                 {
                     var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.PhoneNumber.Equals(l.PhoneNumber)).FirstOrDefaultAsync();
                     if (existedLecturer is not null)
@@ -139,7 +173,7 @@ namespace FTask.Service.IService
 
                 //Upload file
                 var file = newEntity.Avatar;
-                if(file is not null && file.Length > 0)
+                if (file is not null && file.Length > 0)
                 {
                     var uploadFile = new ImageUploadParams
                     {
@@ -147,13 +181,13 @@ namespace FTask.Service.IService
                     };
                     var uploadResult = await _cloudinary.UploadAsync(uploadFile);
 
-                    if(uploadResult.Error is not null)
+                    if (uploadResult.Error is not null)
                     {
                         return new ServiceResponse
                         {
                             IsSuccess = false,
                             Message = "Create new lecturer failed",
-                            Errors = new string[1] {"Error when upload image"}
+                            Errors = new string[1] { "Error when upload image" }
                         };
                     }
                     newLecturer.FilePath = uploadResult.SecureUrl.ToString();

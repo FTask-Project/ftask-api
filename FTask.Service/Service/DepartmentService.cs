@@ -1,73 +1,72 @@
 ﻿using FTask.Repository.Data;
 using FTask.Repository.Entity;
-using FTask.Repository.Identity;
-using FTask.Service.Utilize;
+using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.Caching.Distributed;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FTask.Service.IService
 {
     internal class DepartmentService : IDepartmentService
     {
-        private readonly IUnitOfWork _unitOfWork;
         private readonly ICheckQuantityTaken _checkQuantityTaken;
-        private readonly IDistributedCache _distributedCache;
-        public DepartmentService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, IDistributedCache distributedCache)
+        private readonly ICacheService<Department> _cacheService;
+        private readonly IUnitOfWork _unitOfWork;
+        public DepartmentService(
+            ICheckQuantityTaken checkQuantityTaken,
+            ICacheService<Department> cacheService,
+            IUnitOfWork unitOfWork
+            )
         {
-            _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
-            _distributedCache = distributedCache;
+            _cacheService = cacheService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Department?> GetDepartmentById(int id)
         {
-            string key = $"department-{id}";
-            string? cache = await _distributedCache.GetStringAsync(key);
+            string key = CacheKeyGenerator.GetKeyById(nameof(Department), id.ToString());
+            var cachedData = await _cacheService.GetAsync(key);
 
-            Department? department;
-            if (string.IsNullOrEmpty(cache))
+            if (cachedData is null)
             {
-                department = await _unitOfWork.DepartmentRepository.FindAsync(id);
-                if(department is null)
+                var department = await _unitOfWork.DepartmentRepository.FindAsync(id);
+                if (department is not null)
                 {
-                    return department;
+                    await _cacheService.SetAsync(key, department);
                 }
-
-                await _distributedCache.SetStringAsync(
-                    key, 
-                    JsonConvert.SerializeObject(department));
-
                 return department;
             }
 
-            department = JsonConvert.DeserializeObject<Department>(cache,
-                new JsonSerializerSettings
-                {
-                    ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
-                    ContractResolver = new PrivateResolver()
-                });
-
-            return department;
+            return cachedData;
         }
 
         public async Task<IEnumerable<Department>> GetDepartments(int page, int quantity)
         {
-            if(page == 0)
+            if (page == 0)
             {
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            return await _unitOfWork.DepartmentRepository.FindAll().Skip((page - 1) * _checkQuantityTaken.PageQuantity).Take(quantity).ToArrayAsync();
+
+            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Department), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData is null)
+            {
+                var departmentList = await _unitOfWork.DepartmentRepository
+                    .FindAll()
+                    .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                    .Take(quantity)
+                    .ToArrayAsync();
+
+                if (departmentList.Count() > 0)
+                {
+                    await _cacheService.SetAsync(key, departmentList);
+                }
+                return departmentList;
+            }
+
+            return cachedData;
         }
 
         public async Task<ServiceResponse> CreateNewDepartment(Department newEntity)

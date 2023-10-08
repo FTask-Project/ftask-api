@@ -6,33 +6,37 @@ using FTask.Service.Validation;
 using Microsoft.EntityFrameworkCore;
 using CloudinaryDotNet.Actions;
 using CloudinaryDotNet;
-using EntityFramework.Exceptions.Common;
 using Role = FTask.Repository.Identity.Role;
+using FTask.Service.Caching;
 
 namespace FTask.Service.IService;
 
 internal class UserService : IUserService
 {
-    private readonly UserManager<Lecturer> _lecturerManager;
     private readonly ICheckQuantityTaken _checkQuantityTaken;
+    private readonly UserManager<Lecturer> _lecturerManager;
+    private readonly ICacheService<User> _cacheService;
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<Role> _roleManager;
     private readonly IUnitOfWork _unitOfWork;
     private readonly Cloudinary _cloudinary;
 
     public UserService(
+        ICheckQuantityTaken checkQuantityTaken,
+        UserManager<Lecturer> lecturerManager, 
+        ICacheService<User> cacheService,
         UserManager<User> userManager, 
         RoleManager<Role> roleManager, 
-        UserManager<Lecturer> lecturerManager, 
         IUnitOfWork unitOfWork, 
-        ICheckQuantityTaken checkQuantityTaken,
-        Cloudinary cloudinary)
+        Cloudinary cloudinary
+        )
     {
+        _checkQuantityTaken = checkQuantityTaken;
         _lecturerManager = lecturerManager;
+        _cacheService = cacheService;
         _userManager = userManager;
         _roleManager = roleManager;
         _unitOfWork = unitOfWork;
-        _checkQuantityTaken = checkQuantityTaken;
         _cloudinary = cloudinary;
     }
 
@@ -127,16 +131,42 @@ internal class UserService : IUserService
             page = 1;
         }
         quantity = _checkQuantityTaken.check(quantity);
-        return await _unitOfWork.UserRepository
-            .FindAll()
-            .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-            .Take(quantity)
-            .ToArrayAsync();
+
+        string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(User), page, quantity);
+        var cacheData = await _cacheService.GetAsyncArray(key);
+        if (cacheData is null)
+        {
+            var userList = await _unitOfWork.UserRepository
+                .FindAll()
+                .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                .Take(quantity)
+                .ToArrayAsync();
+
+            if (userList.Count() > 0)
+            {
+                await _cacheService.SetAsync(key, userList);
+            }
+            return userList;
+        }
+
+        return cacheData;
     }
 
     public async Task<User?> GetUserById(Guid id)
     {
-        return await _unitOfWork.UserRepository.FindAsync(id);
+        string key = CacheKeyGenerator.GetKeyById(nameof(User), id.ToString());
+        var cacheData = await _cacheService.GetAsync(key);
+        if (cacheData is null)
+        {
+            var user = await _unitOfWork.UserRepository.FindAsync(id);
+            if (user is not null)
+            {
+                await _cacheService.SetAsync(key, user);
+            }
+            return user;
+        }
+
+        return cacheData;
     }
 
     public async Task<ServiceResponse> CreateNewUser(UserVM newEntity)

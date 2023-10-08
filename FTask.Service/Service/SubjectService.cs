@@ -1,5 +1,6 @@
 ﻿using FTask.Repository.Data;
 using FTask.Repository.Entity;
+using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
@@ -8,17 +9,36 @@ namespace FTask.Service.IService
 {
     internal class SubjectService : ISubjectService
     {
-        private readonly IUnitOfWork _unitOfWork;
         private readonly ICheckQuantityTaken _checkQuantityTaken;
-        public SubjectService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken)
+        private readonly ICacheService<Subject> _cacheService;
+        private readonly IUnitOfWork _unitOfWork;
+        public SubjectService(
+            ICheckQuantityTaken checkQuantityTaken,
+            ICacheService<Subject> cacheService,
+            IUnitOfWork unitOfWork
+            )
         {
-            _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
+            _cacheService = cacheService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Subject?> GetSubjectById(int id)
         {
-            return await _unitOfWork.SubjectRepository.FindAsync(id);
+            string key = CacheKeyGenerator.GetKeyById(nameof(Subject), id.ToString());
+            var cachedData = await _cacheService.GetAsync(key);
+
+            if (cachedData is null)
+            {
+                var subject = await _unitOfWork.SubjectRepository.FindAsync(id);
+                if (subject is not null)
+                {
+                    await _cacheService.SetAsync(key, subject);
+                }
+                return subject;
+            }
+
+            return cachedData;
         }
 
         public async Task<IEnumerable<Subject>> GetSubjectAllSubject(int page, int quantity)
@@ -28,31 +48,45 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            return await _unitOfWork.SubjectRepository
-                .FindAll().Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                .Take(quantity).ToArrayAsync();
+
+            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Subject), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData is null)
+            {
+                var subjectList = await _unitOfWork.SubjectRepository
+                    .FindAll()
+                    .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                    .Take(quantity)
+                    .ToArrayAsync();
+
+                if (subjectList.Count() > 0)
+                {
+                    await _cacheService.SetAsync(key, subjectList);
+                }
+                return subjectList;
+            }
+
+            return cachedData;
         }
 
         public async Task<IEnumerable<Subject>> GetSubjectFromDepartment(int departmentId)
         {
-            //var department = await _unitOfWork.SubjectRepository.FindAsync(departmentId);
+            string key = CacheKeyGenerator.GetKeyByOtherId(nameof(Subject), nameof(Department), departmentId.ToString());
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData is null)
+            {
+                  var subjectList = await _unitOfWork.SubjectRepository
+                    .Get(subject => subject.DepartmentId == departmentId)
+                    .ToArrayAsync();
 
-            //if (department is null)
-            //{
-            //    throw new Exception(
-            //        new ServiceResponse
-            //        {
-            //            IsSuccess = false,
-            //            Message = "Department not found"
-            //        }.ToString()
-            //    );
+                if (subjectList.Count() > 0)
+                {
+                    await _cacheService.SetAsync(key, subjectList);
+                }
+                return subjectList;
+            }
 
-
-            return await _unitOfWork.SubjectRepository
-                         .Get(subject => subject.DepartmentId == departmentId)
-                         .ToArrayAsync();
-                //.Where(subject => subject.DepartmentId == departmentId)
-                //.ToArrayAsync();
+            return cachedData;
         }
 
         public async Task<ServiceResponse> CreateNewSubject(Subject subjectEntity)
