@@ -4,6 +4,7 @@ using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService
 {
@@ -51,7 +52,7 @@ namespace FTask.Service.IService
 
             string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Department), page, quantity);
             var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
+            if (cachedData.IsNullOrEmpty())
             {
                 var departmentList = await _unitOfWork.DepartmentRepository
                     .FindAll()
@@ -61,7 +62,7 @@ namespace FTask.Service.IService
 
                 if (departmentList.Count() > 0)
                 {
-                    await _cacheService.SetAsync(key, departmentList);
+                    await _cacheService.SetAsyncArray(key, departmentList);
                 }
                 return departmentList;
             }

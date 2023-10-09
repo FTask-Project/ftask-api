@@ -8,6 +8,7 @@ using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService
 {
@@ -44,7 +45,7 @@ namespace FTask.Service.IService
 
             string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Lecturer), page, quantity);
             var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
+            if (cachedData.IsNullOrEmpty())
             {
                 var lecturerList = await _unitOfWork.LecturerRepository
                     .FindAll()
@@ -52,9 +53,9 @@ namespace FTask.Service.IService
                     .Take(quantity)
                     .ToArrayAsync();
 
-                if (lecturerList.Length > 0)
+                if (lecturerList.Count() > 0)
                 {
-                    await _cacheService.SetAsync(key, lecturerList);
+                    await _cacheService.SetAsyncArray(key, lecturerList);
                 }
                 return lecturerList;
             }

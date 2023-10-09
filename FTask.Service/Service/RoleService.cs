@@ -5,6 +5,7 @@ using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService
 {
@@ -59,7 +60,7 @@ namespace FTask.Service.IService
 
             string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Role), page, quantity);
             var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
+            if (cachedData.IsNullOrEmpty())
             {
                 var roleList = await _roleManager.Roles
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
@@ -68,7 +69,7 @@ namespace FTask.Service.IService
 
                 if (roleList.Count() > 0)
                 {
-                    await _cacheService.SetAsync(key, roleList);
+                    await _cacheService.SetAsyncArray(key, roleList);
                 }
                 return roleList;
             }
