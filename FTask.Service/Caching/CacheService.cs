@@ -14,7 +14,7 @@ namespace FTask.Service.Caching
 
         public async Task<T?> GetAsync(string key)
         {
-            string cacheData = await _distributedCache.GetStringAsync(key.ToString());
+            string? cacheData = await _distributedCache.GetStringAsync(key.ToString());
 
             if (cacheData is null)
             {
@@ -25,29 +25,44 @@ namespace FTask.Service.Caching
             return deserializedData;
         }
 
-        public async Task<T[]> GetAsyncArray(string key)
+        public async Task<T[]?> GetAsyncArray(string key)
         {
-            string cacheData = await _distributedCache.GetStringAsync(key.ToString());
+            string? cacheData = await _distributedCache.GetStringAsync(key.ToString());
 
             if (cacheData is null)
             {
-                return null;
+                return new T[0];
             }
 
-            T[] deserializedData = JsonConvert.DeserializeObject<T[]>(cacheData);
+            T[]? deserializedData = JsonConvert.DeserializeObject<T[]>(cacheData);
             return deserializedData;
+        }
+
+        public async Task SetAsync(string key, T entity)
+        {
+            string cacheData = JsonConvert.SerializeObject(entity);
+
+            await _distributedCache.SetStringAsync(key.ToString(), cacheData);
+        }
+
+        public async Task SetAsyncArray(string key, T[] entity)
+        {
+            await SetAsyncArray(key, entity, 5);
+        }
+
+        public async Task SetAsyncArray(string key, T[] entity, double expiredMinute)
+        {
+            var timeToLive = new DistributedCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(expiredMinute));
+
+            string cacheData = JsonConvert.SerializeObject(entity);
+
+            await _distributedCache.SetStringAsync(key.ToString(), cacheData, timeToLive);
         }
 
         public async Task RemoveAsync(string key)
         {
             await _distributedCache.RemoveAsync(key.ToString());
-        }
-
-        public async Task SetAsync<T>(string key, T entity)
-        {
-            string cacheData = JsonConvert.SerializeObject(entity);
-
-            await _distributedCache.SetStringAsync(key.ToString(), cacheData);
         }
     }
 }
