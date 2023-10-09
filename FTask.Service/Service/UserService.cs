@@ -8,6 +8,7 @@ using CloudinaryDotNet.Actions;
 using CloudinaryDotNet;
 using Role = FTask.Repository.Identity.Role;
 using FTask.Service.Caching;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService;
 
@@ -134,7 +135,7 @@ internal class UserService : IUserService
 
         string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(User), page, quantity);
         var cacheData = await _cacheService.GetAsyncArray(key);
-        if (cacheData is null)
+        if (cacheData.IsNullOrEmpty())
         {
             var userList = await _unitOfWork.UserRepository
                 .FindAll()
@@ -144,7 +145,7 @@ internal class UserService : IUserService
 
             if (userList.Count() > 0)
             {
-                await _cacheService.SetAsync(key, userList);
+                await _cacheService.SetAsyncArray(key, userList);
             }
             return userList;
         }

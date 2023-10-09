@@ -5,11 +5,6 @@ using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FTask.Service.IService
 {
@@ -21,7 +16,7 @@ namespace FTask.Service.IService
         private readonly IUnitOfWork _unitOfWork;
         public SemesterService(
             ICheckSemesterPeriod checkSemesterPeriod,
-            ICheckQuantityTaken checkQuantityTaken, 
+            ICheckQuantityTaken checkQuantityTaken,
             ICacheService<Semester> cacheService,
             IUnitOfWork unitOfWork
             )
@@ -60,17 +55,17 @@ namespace FTask.Service.IService
 
             string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Semester), page, quantity);
             var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
+            if (cachedData.IsNullOrEmpty())
             {
                 var semesterList = await _unitOfWork.SemesterRepository
                     .FindAll()
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-                
+
                 if (semesterList.Count() > 0)
                 {
-                    await _cacheService.SetAsync(key, semesterList);
+                    await _cacheService.SetAsyncArray(key, semesterList);
                 }
                 return semesterList;
             }
