@@ -4,6 +4,7 @@ using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM.CreateSemester;
 using Microsoft.EntityFrameworkCore;
 
 namespace FTask.Service.IService
@@ -111,6 +112,15 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = false,
                         Message = $"The duration of semester must be greater than {_checkSemesterPeriod.MinimumDuration} days and less than {_checkSemesterPeriod.MaximumDuration} days"
+                    };
+                }
+
+                if(!(await _checkSemesterPeriod.IsValidStartDate(newEntity.StartDate, _unitOfWork)))
+                {
+                    return new ServiceResponse
+                    {
+                        IsSuccess = false,
+                        Message = "The new semester must start after the latest semester"
                     };
                 }
 

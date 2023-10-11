@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM.CreateRole;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
@@ -90,7 +91,7 @@ namespace FTask.API.Controllers
                         return BadRequest(new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Some error happened",
+                            Message = "Create new role failed",
                             Errors = new List<string> { "Error at create new role action method", "Created role not found" }
                         });
                     }

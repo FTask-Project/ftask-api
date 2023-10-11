@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddSingleton<ICacheService<Semester>, CacheService<Semester>>();
         services.AddSingleton<ICacheService<User>, CacheService<User>>();
         services.AddSingleton<ICacheService<Role>, CacheService<Role>>();
+        services.AddSingleton<ICacheService<Task>, CacheService<Task>>();
         //services.AddSingleton<ICacheService<Task, int>, CacheService<Task, int>>();
         //services.AddSingleton<ICacheService<TaskActivity, int>, CacheService<TaskActivity, int>>();
         //services.AddSingleton<ICacheService<TaskLecturer, int>, CacheService<TaskLecturer, int>>();

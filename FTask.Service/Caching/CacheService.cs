@@ -34,7 +34,7 @@ namespace FTask.Service.Caching
                 return new T[0];
             }
 
-            T[]? deserializedData = JsonConvert.DeserializeObject<T[]>(cacheData);
+            T[] deserializedData = JsonConvert.DeserializeObject<T[]>(cacheData) ?? new T[0];
             return deserializedData;
         }
 

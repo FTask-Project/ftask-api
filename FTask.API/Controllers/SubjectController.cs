@@ -2,6 +2,7 @@
 using FTask.Repository.Entity;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM.CreateSubject;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
@@ -68,7 +69,7 @@ namespace FTask.API.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SubjectResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> CreateSubject([FromBody] SubjectVM subject)
+        public async Task<IActionResult> CreateSubject([FromBody] CreateSubjectVM subject)
         {
             if (ModelState.IsValid)
             {
@@ -90,7 +91,7 @@ namespace FTask.API.Controllers
                         return BadRequest(new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Error occur"
+                            Message = "Create new subject failed"
                         });
                     }
                 }

@@ -107,6 +107,16 @@ namespace FTask.Service.IService
                     };
                 }
 
+                var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(subjectEntity.DepartmentId);
+                if(existedDepartment is null)
+                {
+                    return new ServiceResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Department not found"
+                    };
+                }
+
                 await _unitOfWork.SubjectRepository.AddAsync(subjectEntity);
                 var result = await _unitOfWork.SaveChangesAsync();
 

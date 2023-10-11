@@ -2,6 +2,7 @@
 using FTask.Repository.Entity;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM.CreateDepartment;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
@@ -24,6 +25,7 @@ namespace FTask.API.Controllers
 
         [HttpGet("{departmentId}", Name = nameof(GetDeaprtmentById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DepartmentResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public async Task<IActionResult> GetDeaprtmentById(int departmentId)
         {
@@ -48,6 +50,7 @@ namespace FTask.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<DepartmentResponseVM>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
         public async Task<IActionResult> GetDepartments([FromQuery] int page, [FromQuery] int quantity)
         {
             if (ModelState.IsValid)
@@ -90,7 +93,7 @@ namespace FTask.API.Controllers
                         return BadRequest(new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Some error happened",
+                            Message = "Create department failed",
                             Errors = new List<string> { "Error at create new department action method", "Created department not found" }
                         });
                     }

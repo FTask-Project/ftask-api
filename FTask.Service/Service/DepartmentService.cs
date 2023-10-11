@@ -49,7 +49,7 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-
+            
             string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Department), page, quantity);
             var cachedData = await _cacheService.GetAsyncArray(key);
             if (cachedData.IsNullOrEmpty())
@@ -59,7 +59,6 @@ namespace FTask.Service.IService
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-
                 if (departmentList.Count() > 0)
                 {
                     await _cacheService.SetAsyncArray(key, departmentList);
@@ -134,7 +133,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Some error happend",
+                    Message = "Create new department failed",
                     Errors = new List<string>() { ex.Message }
                 };
             }

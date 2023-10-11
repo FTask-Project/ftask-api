@@ -8,6 +8,8 @@ using CloudinaryDotNet.Actions;
 using CloudinaryDotNet;
 using Role = FTask.Repository.Identity.Role;
 using FTask.Service.Caching;
+using FTask.Service.ViewModel.RequestVM.CreateUser;
+using FTask.Service.ViewModel.RequestVM;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService;
@@ -80,47 +82,6 @@ internal class UserService : IUserService
                 IsSuccess = true,
                 LoginUser = existedUser,
                 RoleNames = roles
-            };
-        }
-    }
-
-    public async Task<LoginLecturerManagement> LoginLecturer(LoginUserVM resource)
-    {
-        var existedUser = await _lecturerManager.FindByNameAsync(resource.UserName);
-        if (existedUser == null)
-        {
-            return new LoginLecturerManagement
-            {
-                Message = "Invalid Username or password",
-                IsSuccess = false,
-            };
-        }
-
-        var checkPassword = await _lecturerManager.CheckPasswordAsync(existedUser, resource.Password);
-        if (!checkPassword)
-        {
-            return new LoginLecturerManagement
-            {
-                Message = "Invalid Username or password",
-                IsSuccess = false,
-            };
-        }
-
-        if (existedUser.LockoutEnabled)
-        {
-            return new LoginLecturerManagement
-            {
-                Message = "Account is locked",
-                IsSuccess = false,
-            };
-        }
-        else
-        {
-            return new LoginLecturerManagement
-            {
-                Message = "Login Successfully",
-                IsSuccess = true,
-                LoginUser = existedUser
             };
         }
     }

@@ -10,7 +10,7 @@ public class Task : Auditable
     public string? TaskContent { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    public int TaskLevel { get; set; }
+    public int TaskLevel { get; set; } = 1;
     public string? Location { get; set; }
 
     public IEnumerable<TaskLecturer> TaskLecturers { get; set; } = new List<TaskLecturer>();
@@ -18,11 +18,11 @@ public class Task : Auditable
     public IEnumerable<Attachment> Attachments { get; set; } = new List<Attachment>();
 
     public Subject? Subject { get; set; }
-    public int SubjectId { get; set; }
+    public int? SubjectId { get; set; }
 
     public Semester? Semester { get; set; }
     public int SemesterId { get; set; }
 
     public Department? Department { get; set; }
-    public int DepartmentId { get; set; }
+    public int? DepartmentId { get; set; }
 }
