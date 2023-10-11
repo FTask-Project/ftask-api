@@ -4,6 +4,7 @@ using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService
 {
@@ -48,12 +49,25 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            var subjectList = await _unitOfWork.SubjectRepository
+
+            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Subject), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData.IsNullOrEmpty())
+            {
+                var subjectList = await _unitOfWork.SubjectRepository
                     .FindAll()
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-            return subjectList;
+
+                if (subjectList.Count() > 0)
+                {
+                    await _cacheService.SetAsyncArray(key, subjectList);
+                }
+                return subjectList;
+            }
+
+            return cachedData;
         }
 
         public async Task<IEnumerable<Subject>> GetSubjectFromDepartment(int departmentId)
@@ -68,7 +82,7 @@ namespace FTask.Service.IService
 
                 if (subjectList.Count() > 0)
                 {
-                    await _cacheService.SetAsync(key, subjectList);
+                    await _cacheService.SetAsyncArray(key, subjectList);
                 }
                 return subjectList;
             }

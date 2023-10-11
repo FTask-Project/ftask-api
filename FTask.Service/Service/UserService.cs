@@ -10,6 +10,7 @@ using Role = FTask.Repository.Identity.Role;
 using FTask.Service.Caching;
 using FTask.Service.ViewModel.RequestVM.CreateUser;
 using FTask.Service.ViewModel.RequestVM;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService;
 
@@ -92,12 +93,25 @@ internal class UserService : IUserService
             page = 1;
         }
         quantity = _checkQuantityTaken.check(quantity);
-        var userList = await _unitOfWork.UserRepository
+
+        string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(User), page, quantity);
+        var cacheData = await _cacheService.GetAsyncArray(key);
+        if (cacheData.IsNullOrEmpty())
+        {
+            var userList = await _unitOfWork.UserRepository
                 .FindAll()
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                 .Take(quantity)
                 .ToArrayAsync();
-        return userList;
+
+            if (userList.Count() > 0)
+            {
+                await _cacheService.SetAsyncArray(key, userList);
+            }
+            return userList;
+        }
+
+        return cacheData;
     }
 
     public async Task<User?> GetUserById(Guid id)

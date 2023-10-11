@@ -10,6 +10,7 @@ using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.RequestVM.CreateLecturer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService
 {
@@ -84,12 +85,22 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            var lecturerList = await _unitOfWork.LecturerRepository
+            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Lecturer), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData.IsNullOrEmpty())
+            {
+                var lecturerList = await _unitOfWork.LecturerRepository
                     .FindAll()
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-            return lecturerList;
+                if (lecturerList.Count() > 0)
+                {
+                    await _cacheService.SetAsyncArray(key, lecturerList);
+                }
+                return lecturerList;
+            }
+            return cachedData;
         }
 
         public async Task<Lecturer?> GetLectureById(Guid id)
