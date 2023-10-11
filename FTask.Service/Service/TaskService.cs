@@ -1,13 +1,12 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Duende.IdentityServer.Models;
+using Duende.IdentityServer.Extensions;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
-using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.RequestVM.CreateTask;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
@@ -24,9 +23,9 @@ namespace FTask.Service.IService
         private readonly Cloudinary _cloudinary;
 
         public TaskService(
-            IUnitOfWork unitOfWork, 
-            ICheckQuantityTaken checkQuantityTaken, 
-            ICacheService<Task> cacheService, 
+            IUnitOfWork unitOfWork,
+            ICheckQuantityTaken checkQuantityTaken,
+            ICacheService<Task> cacheService,
             IMapper mapper,
             Cloudinary cloudinary)
         {
@@ -42,10 +41,10 @@ namespace FTask.Service.IService
             string key = CacheKeyGenerator.GetKeyById(nameof(Task), id.ToString());
             var cachedData = await _cacheService.GetAsync(key);
 
-            if(cachedData is null)
+            if (cachedData is null)
             {
                 var task = await _unitOfWork.TaskRepository.FindAsync(id);
-                if(task is not null)
+                if (task is not null)
                 {
                     await _cacheService.SetAsync(key, task);
                 }
@@ -62,12 +61,26 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            var taskList = await _unitOfWork.TaskRepository
-                .FindAll()
-                .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                .Take(quantity)
-                .ToArrayAsync();
-            return taskList;
+
+            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Task), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData.IsNullOrEmpty())
+            {
+                var taskList = await _unitOfWork.TaskRepository
+                    .FindAll()
+                    .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                    .Take(quantity)
+                    .ToArrayAsync();
+
+                if (taskList.Count() > 0)
+                {
+                    await _cacheService.SetAsyncArray(key, taskList);
+                }
+
+                return taskList;
+            }
+            return cachedData;
+
         }
 
         public async Task<ServiceResponse> CreateNewTask(TaskVM newEntity)
@@ -112,12 +125,12 @@ namespace FTask.Service.IService
                 }
             }
 
-            if(newEntity.TaskLecturers.Count() > 0)
+            if (newEntity.TaskLecturers.Count() > 0)
             {
-                foreach(var assignedlecturer in newEntity.TaskLecturers)
+                foreach (var assignedlecturer in newEntity.TaskLecturers)
                 {
                     var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync(assignedlecturer.LecturerId);
-                    if(existedLecturer is null)
+                    if (existedLecturer is null)
                     {
                         return new ServiceResponse
                         {
@@ -131,7 +144,7 @@ namespace FTask.Service.IService
 
             var currentDateTime = DateTime.Now;
             var currentSemester = await _unitOfWork.SemesterRepository.Get(s => currentDateTime >= s.StartDate && currentDateTime <= s.EndDate).FirstOrDefaultAsync();
-            if(currentSemester is null)
+            if (currentSemester is null)
             {
                 return new ServiceResponse
                 {
@@ -172,7 +185,7 @@ namespace FTask.Service.IService
 
                 var urls = await System.Threading.Tasks.Task.WhenAll(uploadTasks);
 
-                if(errors.Count() > 0)
+                if (errors.Count() > 0)
                 {
                     return new ServiceResponse
                     {
@@ -181,10 +194,10 @@ namespace FTask.Service.IService
                         Errors = errors
                     };
                 }
-                if(urls.Count() > 0)
+                if (urls.Count() > 0)
                 {
                     var attachments = new List<Attachment>();
-                    foreach(var url in urls)
+                    foreach (var url in urls)
                     {
                         Attachment attachment = new Attachment
                         {
