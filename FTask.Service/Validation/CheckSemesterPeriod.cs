@@ -1,4 +1,7 @@
-﻿using System;
+﻿using FTask.Repository.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +14,7 @@ namespace FTask.Service.Validation
         public int MinimumDuration { get; }
         public int MaximumDuration { get; }
         bool CheckValidDuration(DateTime from, DateTime to);
+        Task<bool> IsValidStartDate(DateTime startDate, IUnitOfWork unitOfWork);
     }
 
     internal class CheckSemesterPeriod : ICheckSemesterPeriod
@@ -22,6 +26,16 @@ namespace FTask.Service.Validation
         {
             var duration = (to - from).TotalDays;
             if(duration >= MINIMUM_DURATION.Days && duration <= MAXIMUM_DURATION.Days)
+            {
+                return true;
+            }
+            return false;
+        }
+        
+        public async Task<bool> IsValidStartDate(DateTime startDate, IUnitOfWork unitOfWork)
+        {
+            var checkSemester = await unitOfWork.SemesterRepository.Get(s => s.EndDate > startDate).FirstOrDefaultAsync();
+            if(checkSemester is null)
             {
                 return true;
             }

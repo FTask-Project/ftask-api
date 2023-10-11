@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM.CreateSemester;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
@@ -88,7 +89,7 @@ namespace FTask.API.Controllers
                         return BadRequest(new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Some error happened",
+                            Message = "Create new semester failed",
                             Errors = new List<string> { "Error at create new semester action method", "Created semester not found" }
                         });
                     }

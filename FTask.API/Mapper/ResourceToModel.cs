@@ -1,6 +1,11 @@
 ﻿using AutoMapper;
 using FTask.Repository.Entity;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM;
+using FTask.Service.ViewModel.RequestVM.CreateTask;
+using Task = FTask.Repository.Entity.Task;
+using FTask.Service.ViewModel.RequestVM.CreateDepartment;
+using FTask.Service.ViewModel.RequestVM.CreateSubject;
 
 namespace FTask.API.Mapper
 {
@@ -8,10 +13,19 @@ namespace FTask.API.Mapper
     {
         public ResourceToModel()
         {
-            CreateMap<SubjectVM, Subject>();
+            CreateMap<CreateSubjectVM, Subject>();
 
             CreateMap<DepartmentVM, Department>()
                 .ForMember(dest => dest.Subjects, opt => opt.MapFrom(src => src.Subjects));
+
+            CreateMap<TaskVM, Task>()
+                .ForMember(dest => dest.TaskLecturers, opt => opt.MapFrom(src => src.TaskLecturers))
+                .ForMember(dest => dest.Attachments, opt => opt.Ignore());
+
+            CreateMap<TaskLecturerVM, TaskLecturer>()
+                .ForMember(dest => dest.TaskActivities, opt => opt.MapFrom(src => src.TaskActivities));
+
+            CreateMap<TaskActivityVM, TaskActivity>();
         }
     }
 }

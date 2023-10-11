@@ -8,6 +8,8 @@ using CloudinaryDotNet.Actions;
 using CloudinaryDotNet;
 using Role = FTask.Repository.Identity.Role;
 using FTask.Service.Caching;
+using FTask.Service.ViewModel.RequestVM.CreateUser;
+using FTask.Service.ViewModel.RequestVM;
 
 namespace FTask.Service.IService;
 
@@ -83,47 +85,6 @@ internal class UserService : IUserService
         }
     }
 
-    public async Task<LoginLecturerManagement> LoginLecturer(LoginUserVM resource)
-    {
-        var existedUser = await _lecturerManager.FindByNameAsync(resource.UserName);
-        if (existedUser == null)
-        {
-            return new LoginLecturerManagement
-            {
-                Message = "Invalid Username or password",
-                IsSuccess = false,
-            };
-        }
-
-        var checkPassword = await _lecturerManager.CheckPasswordAsync(existedUser, resource.Password);
-        if (!checkPassword)
-        {
-            return new LoginLecturerManagement
-            {
-                Message = "Invalid Username or password",
-                IsSuccess = false,
-            };
-        }
-
-        if (existedUser.LockoutEnabled)
-        {
-            return new LoginLecturerManagement
-            {
-                Message = "Account is locked",
-                IsSuccess = false,
-            };
-        }
-        else
-        {
-            return new LoginLecturerManagement
-            {
-                Message = "Login Successfully",
-                IsSuccess = true,
-                LoginUser = existedUser
-            };
-        }
-    }
-
     public async Task<IEnumerable<User>> GetUsers(int page, int quantity)
     {
         if (page == 0)
@@ -131,25 +92,12 @@ internal class UserService : IUserService
             page = 1;
         }
         quantity = _checkQuantityTaken.check(quantity);
-
-        string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(User), page, quantity);
-        var cacheData = await _cacheService.GetAsyncArray(key);
-        if (cacheData is null)
-        {
-            var userList = await _unitOfWork.UserRepository
+        var userList = await _unitOfWork.UserRepository
                 .FindAll()
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                 .Take(quantity)
                 .ToArrayAsync();
-
-            if (userList.Count() > 0)
-            {
-                await _cacheService.SetAsync(key, userList);
-            }
-            return userList;
-        }
-
-        return cacheData;
+        return userList;
     }
 
     public async Task<User?> GetUserById(Guid id)

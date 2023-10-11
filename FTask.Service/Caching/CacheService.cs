@@ -14,7 +14,7 @@ namespace FTask.Service.Caching
 
         public async Task<T?> GetAsync(string key)
         {
-            string cacheData = await _distributedCache.GetStringAsync(key.ToString());
+            string? cacheData = await _distributedCache.GetStringAsync(key.ToString());
 
             if (cacheData is null)
             {
@@ -27,14 +27,14 @@ namespace FTask.Service.Caching
 
         public async Task<T[]> GetAsyncArray(string key)
         {
-            string cacheData = await _distributedCache.GetStringAsync(key.ToString());
+            string? cacheData = await _distributedCache.GetStringAsync(key.ToString());
 
             if (cacheData is null)
             {
-                return null;
+                return new T[0];
             }
 
-            T[] deserializedData = JsonConvert.DeserializeObject<T[]>(cacheData);
+            T[] deserializedData = JsonConvert.DeserializeObject<T[]>(cacheData) ?? new T[0];
             return deserializedData;
         }
 
@@ -43,9 +43,13 @@ namespace FTask.Service.Caching
             await _distributedCache.RemoveAsync(key.ToString());
         }
 
-        public async Task SetAsync<T>(string key, T entity)
+        public async Task SetAsync<Y>(string key, Y entity)
         {
-            string cacheData = JsonConvert.SerializeObject(entity);
+            string cacheData = JsonConvert.SerializeObject(entity, new JsonSerializerSettings()
+            {
+                //NullValueHandling = NullValueHandling.Ignore,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            });
 
             await _distributedCache.SetStringAsync(key.ToString(), cacheData);
         }

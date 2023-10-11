@@ -3,6 +3,7 @@ using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM.CreateRole;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -56,24 +57,11 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Role), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
-            {
-                var roleList = await _roleManager.Roles
+            var roleList = await _roleManager.Roles
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-
-                if (roleList.Count() > 0)
-                {
-                    await _cacheService.SetAsync(key, roleList);
-                }
-                return roleList;
-            }
-
-            return cachedData;
+            return roleList;
         }
 
         public async Task<ServiceResponse> CreateNewRole(RoleVM newEntity)

@@ -48,25 +48,12 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Subject), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
-            {
-                var subjectList = await _unitOfWork.SubjectRepository
+            var subjectList = await _unitOfWork.SubjectRepository
                     .FindAll()
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-
-                if (subjectList.Count() > 0)
-                {
-                    await _cacheService.SetAsync(key, subjectList);
-                }
-                return subjectList;
-            }
-
-            return cachedData;
+            return subjectList;
         }
 
         public async Task<IEnumerable<Subject>> GetSubjectFromDepartment(int departmentId)
@@ -103,6 +90,16 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = false,
                         Message = "Subject code or subject name already exist"
+                    };
+                }
+
+                var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(subjectEntity.DepartmentId);
+                if(existedDepartment is null)
+                {
+                    return new ServiceResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Department not found"
                     };
                 }
 

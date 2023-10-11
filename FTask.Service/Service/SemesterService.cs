@@ -4,6 +4,7 @@ using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM.CreateSemester;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -57,25 +58,12 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Semester), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
-            {
-                var semesterList = await _unitOfWork.SemesterRepository
+            var semesterList = await _unitOfWork.SemesterRepository
                     .FindAll()
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-                
-                if (semesterList.Count() > 0)
-                {
-                    await _cacheService.SetAsync(key, semesterList);
-                }
-                return semesterList;
-            }
-
-            return cachedData;
+            return semesterList;
         }
 
         public async Task<ServiceResponse> CreateNewSemester(SemesterVM newEntity)
@@ -116,6 +104,15 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = false,
                         Message = $"The duration of semester must be greater than {_checkSemesterPeriod.MinimumDuration} days and less than {_checkSemesterPeriod.MaximumDuration} days"
+                    };
+                }
+
+                if(!(await _checkSemesterPeriod.IsValidStartDate(newEntity.StartDate, _unitOfWork)))
+                {
+                    return new ServiceResponse
+                    {
+                        IsSuccess = false,
+                        Message = "The new semester must start after the latest semester"
                     };
                 }
 

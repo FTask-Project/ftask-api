@@ -6,7 +6,7 @@ namespace FTask.Service.Caching
     {
         Task<T?> GetAsync(string key);
         Task<T[]> GetAsyncArray(string key);
-        Task SetAsync<T>(string key, T entity);
+        Task SetAsync<Y>(string key, Y entity);
         Task RemoveAsync(string key);
     }
 }

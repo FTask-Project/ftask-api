@@ -48,25 +48,12 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Department), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
-            {
-                var departmentList = await _unitOfWork.DepartmentRepository
+            var departmentList = await _unitOfWork.DepartmentRepository
                     .FindAll()
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-
-                if (departmentList.Count() > 0)
-                {
-                    await _cacheService.SetAsync(key, departmentList);
-                }
-                return departmentList;
-            }
-
-            return cachedData;
+            return departmentList;
         }
 
         public async Task<ServiceResponse> CreateNewDepartment(Department newEntity)
@@ -133,7 +120,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Some error happend",
+                    Message = "Create new department failed",
                     Errors = new List<string>() { ex.Message }
                 };
             }

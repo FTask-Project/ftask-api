@@ -6,6 +6,8 @@ using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.RequestVM;
+using FTask.Service.ViewModel.RequestVM.CreateLecturer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +36,47 @@ namespace FTask.Service.IService
             _cloudinary = cloudinary;
         }
 
+        public async Task<LoginLecturerManagement> LoginLecturer(LoginUserVM resource)
+        {
+            var existedUser = await _userManager.FindByNameAsync(resource.UserName);
+            if (existedUser == null)
+            {
+                return new LoginLecturerManagement
+                {
+                    Message = "Invalid Username or password",
+                    IsSuccess = false,
+                };
+            }
+
+            var checkPassword = await _userManager.CheckPasswordAsync(existedUser, resource.Password);
+            if (!checkPassword)
+            {
+                return new LoginLecturerManagement
+                {
+                    Message = "Invalid Username or password",
+                    IsSuccess = false,
+                };
+            }
+
+            if (existedUser.LockoutEnabled)
+            {
+                return new LoginLecturerManagement
+                {
+                    Message = "Account is locked",
+                    IsSuccess = false,
+                };
+            }
+            else
+            {
+                return new LoginLecturerManagement
+                {
+                    Message = "Login Successfully",
+                    IsSuccess = true,
+                    LoginUser = existedUser
+                };
+            }
+        }
+
         public async Task<IEnumerable<Lecturer>> GetLecturers(int page, int quantity)
         {
             if (page == 0)
@@ -41,24 +84,12 @@ namespace FTask.Service.IService
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Lecturer), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
-            {
-                var lecturerList = await _unitOfWork.LecturerRepository
+            var lecturerList = await _unitOfWork.LecturerRepository
                     .FindAll()
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
-
-                if (lecturerList.Length > 0)
-                {
-                    await _cacheService.SetAsync(key, lecturerList);
-                }
-                return lecturerList;
-            }
-            return cachedData;
+            return lecturerList;
         }
 
         public async Task<Lecturer?> GetLectureById(Guid id)
