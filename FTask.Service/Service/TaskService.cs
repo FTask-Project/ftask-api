@@ -54,7 +54,7 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<IEnumerable<Task>> GetTasks(int page, int quantity)
+        public async Task<IEnumerable<Task>> GetTasks(int page, int quantity, string filter, int? semsesterId, int? departmentId, int? subjectId, int? status)
         {
             if (page == 0)
             {
@@ -62,25 +62,32 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Task), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData.IsNullOrEmpty())
-            {
-                var taskList = await _unitOfWork.TaskRepository
-                    .FindAll()
+            var taskList = _unitOfWork.TaskRepository
+                    .Get(t => t.TaskTitle.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                    .Take(quantity)
-                    .ToArrayAsync();
+                    .Take(quantity);
 
-                if (taskList.Count() > 0)
-                {
-                    await _cacheService.SetAsyncArray(key, taskList);
-                }
-
-                return taskList;
+            if(semsesterId is not null)
+            {
+                taskList = taskList.Where(t => t.SemesterId == semsesterId);
             }
-            return cachedData;
 
+            if(departmentId is not null)
+            {
+                taskList = taskList.Where(t => t.DepartmentId == departmentId);
+            }
+
+            if (subjectId is not null)
+            {
+                taskList = taskList.Where(t => t.SubjectId == subjectId);
+            }
+
+            if(status is not null)
+            {
+                taskList = taskList.Where(t => t.TaskStatus == status);
+            }
+
+            return await taskList.ToArrayAsync();
         }
 
         public async Task<ServiceResponse> CreateNewTask(TaskVM newEntity)

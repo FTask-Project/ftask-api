@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/lecturers")]
     [ApiController]
     public class LecturerController : ControllerBase
     {
@@ -22,15 +22,15 @@ namespace FTask.API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("{lecturerId}", Name = nameof(GetLecturerById))]
+        [HttpGet("{id}", Name = nameof(GetLecturerById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserInformationResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public async Task<IActionResult> GetLecturerById(Guid lecturerId)
+        public async Task<IActionResult> GetLecturerById(Guid id)
         {
             if (ModelState.IsValid)
             {
-                var lecturerResult = await _lecturerService.GetLectureById(lecturerId);
+                var lecturerResult = await _lecturerService.GetLectureById(id);
                 if (lecturerResult is null)
                 {
                     return NotFound("Not found");
@@ -50,11 +50,11 @@ namespace FTask.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserInformationResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> GetLecturers([FromQuery] int page, [FromQuery] int quantity)
+        public async Task<IActionResult> GetLecturers([FromQuery] int page, [FromQuery] int quantity, [FromQuery] string? filter, [FromQuery] int? departmentId, [FromQuery] int? subjectId)
         {
             if (ModelState.IsValid)
             {
-                var lecturerList = await _lecturerService.GetLecturers(page, quantity);
+                var lecturerList = await _lecturerService.GetLecturers(page, quantity, filter ?? "", departmentId, subjectId);
                 return Ok(_mapper.Map<IEnumerable<UserInformationResponseVM>>(lecturerList));
             }
             else
@@ -83,7 +83,7 @@ namespace FTask.API.Controllers
                     {
                         return CreatedAtAction(nameof(GetLecturerById), new
                         {
-                            lecturerId = id
+                            id = id
                         }, _mapper.Map<UserInformationResponseVM>(existedLecturer));
                     }
                     else

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/departments")]
     [ApiController]
     public class DepartmentController : ControllerBase
     {
@@ -23,15 +23,15 @@ namespace FTask.API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("{departmentId}", Name = nameof(GetDeaprtmentById))]
+        [HttpGet("{id}", Name = nameof(GetDeaprtmentById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DepartmentResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public async Task<IActionResult> GetDeaprtmentById(int departmentId)
+        public async Task<IActionResult> GetDeaprtmentById(int id)
         {
             if (ModelState.IsValid)
             {
-                var departmentResult = await _departmentService.GetDepartmentById(departmentId);
+                var departmentResult = await _departmentService.GetDepartmentById(id);
                 if (departmentResult is null)
                 {
                     return NotFound("Not found");
@@ -51,11 +51,11 @@ namespace FTask.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<DepartmentResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> GetDepartments([FromQuery] int page, [FromQuery] int quantity)
+        public async Task<IActionResult> GetDepartments([FromQuery] int page, [FromQuery] int quantity, [FromQuery] string? filter, [FromQuery] Guid? headerId)
         {
             if (ModelState.IsValid)
             {
-                var departmentList = await _departmentService.GetDepartments(page, quantity);
+                var departmentList = await _departmentService.GetDepartments(page, quantity, filter ?? "", headerId);
                 return Ok(_mapper.Map<IEnumerable<DepartmentResponseVM>>(departmentList));
             }
             else
@@ -85,7 +85,7 @@ namespace FTask.API.Controllers
                         return CreatedAtAction(nameof(GetDeaprtmentById),
                         new
                         {
-                            departmentId = id
+                            id = id
                         }, _mapper.Map<DepartmentResponseVM>(existedDepartment));
                     }
                     else

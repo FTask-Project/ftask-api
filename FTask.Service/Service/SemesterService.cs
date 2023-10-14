@@ -46,7 +46,7 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<IEnumerable<Semester>> GetSemesters(int page, int quantity)
+        public async Task<IEnumerable<Semester>> GetSemesters(int page, int quantity, string filter)
         {
             if (page == 0)
             {
@@ -54,24 +54,11 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Semester), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData.IsNullOrEmpty())
-            {
-                var semesterList = await _unitOfWork.SemesterRepository
-                    .FindAll()
+            var semesterList = _unitOfWork.SemesterRepository
+                    .Get(s => s.SemesterCode.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                    .Take(quantity)
-                    .ToArrayAsync();
-
-                if (semesterList.Count() > 0)
-                {
-                    await _cacheService.SetAsyncArray(key, semesterList);
-                }
-                return semesterList;
-            }
-
-            return cachedData;
+                    .Take(quantity);
+            return await semesterList.ToArrayAsync();
         }
 
         public async Task<ServiceResponse> CreateNewSemester(SemesterVM newEntity)

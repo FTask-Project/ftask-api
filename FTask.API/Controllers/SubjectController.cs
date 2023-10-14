@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/subjects")]
     [ApiController]
     public class SubjectController : ControllerBase
     {
@@ -23,14 +23,14 @@ namespace FTask.API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("{subjectId}", Name = nameof(GetSubjectById))]
+        [HttpGet("{id}", Name = nameof(GetSubjectById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SubjectResponseVM))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public async Task<IActionResult> GetSubjectById(int subjectId)
+        public async Task<IActionResult> GetSubjectById(int id)
         {
             if (ModelState.IsValid)
             {
-                var subjectResult = await _subjectService.GetSubjectById(subjectId);
+                var subjectResult = await _subjectService.GetSubjectById(id);
                 if (subjectResult is null)
                 {
                     return NotFound("Not found");
@@ -49,11 +49,11 @@ namespace FTask.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SubjectResponseVM>))]
-        public async Task<IActionResult> GetSubjects([FromQuery] int page, [FromQuery] int amount)
+        public async Task<IActionResult> GetSubjects([FromQuery] int page, [FromQuery] int amount, [FromQuery] string? filter, [FromQuery] int? departmentId)
         {
             if (ModelState.IsValid)
             {
-                var subjectList = await _subjectService.GetSubjectAllSubject(page, amount);
+                var subjectList = await _subjectService.GetSubjectAllSubject(page, amount, filter ?? "" , departmentId);
                 return Ok(_mapper.Map<IEnumerable<SubjectResponseVM>>(subjectList));
             }
             else
@@ -82,7 +82,7 @@ namespace FTask.API.Controllers
                     {
                         return CreatedAtAction(
                             nameof(GetSubjectById),
-                            new { subjectId = id },
+                            new { id = id },
                             _mapper.Map<SubjectResponseVM>(existedSubject)
                         );
                     }

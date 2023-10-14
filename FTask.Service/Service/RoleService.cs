@@ -51,7 +51,7 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<IEnumerable<Role>> GetRoles(int page, int quantity)
+        public async Task<IEnumerable<Role>> GetRoles(int page, int quantity, string filter)
         {
             if (page == 0)
             {
@@ -59,23 +59,11 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Role), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData.IsNullOrEmpty())
-            {
-                var roleList = await _roleManager.Roles
+            var roleList = _roleManager.Roles
+                    .Where(r => r.Name.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                    .Take(quantity)
-                    .ToArrayAsync();
-
-                if (roleList.Count() > 0)
-                {
-                    await _cacheService.SetAsyncArray(key, roleList);
-                }
-                return roleList;
-            }
-
-            return cachedData;
+                    .Take(quantity);
+            return await roleList.ToArrayAsync();
         }
 
         public async Task<ServiceResponse> CreateNewRole(RoleVM newEntity)

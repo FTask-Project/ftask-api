@@ -5,6 +5,7 @@ namespace FTask.Repository.Identity;
 
 public class User : IdentityUser<Guid>
 {
+    public string? DisplayName { get; set; } = "Undefined";
     public string CreatedBy { get; set; } = "Undefined";
     public DateTime CreatedAt { get; set; }
 

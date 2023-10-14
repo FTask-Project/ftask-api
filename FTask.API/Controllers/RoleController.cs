@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/roles")]
     [ApiController]
     public class RoleController : ControllerBase
     {
@@ -22,15 +22,15 @@ namespace FTask.API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("{roleId}", Name = nameof(GetRoleById))]
+        [HttpGet("{id}", Name = nameof(GetRoleById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RoleResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public async Task<IActionResult> GetRoleById(Guid roleId)
+        public async Task<IActionResult> GetRoleById(Guid id)
         {
             if (ModelState.IsValid)
             {
-                var roleResult = await _roleService.GetRoleById(roleId);
+                var roleResult = await _roleService.GetRoleById(id);
                 if (roleResult is null)
                 {
                     return NotFound("Not Found");
@@ -50,11 +50,11 @@ namespace FTask.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<RoleResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> GetRoles([FromQuery] int page, [FromQuery] int quantity)
+        public async Task<IActionResult> GetRoles([FromQuery] int page, [FromQuery] int quantity, [FromQuery] string? filter)
         {
             if (ModelState.IsValid)
             {
-                var roleList = await _roleService.GetRoles(page, quantity);
+                var roleList = await _roleService.GetRoles(page, quantity, filter ?? "");
                 return Ok(_mapper.Map<IEnumerable<RoleResponseVM>>(roleList));
             }
             else
@@ -83,7 +83,7 @@ namespace FTask.API.Controllers
                     {
                         return CreatedAtAction(nameof(GetRoleById), new
                         {
-                            roleId = id,
+                            id = id,
                         }, _mapper.Map<RoleResponseVM>(role));
                     }
                     else

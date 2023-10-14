@@ -42,7 +42,7 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<IEnumerable<Subject>> GetSubjectAllSubject(int page, int quantity)
+        public async Task<IEnumerable<Subject>> GetSubjectAllSubject(int page, int quantity, string filter, int? departmentId)
         {
             if (page == 0)
             {
@@ -50,24 +50,33 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Subject), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData.IsNullOrEmpty())
-            {
-                var subjectList = await _unitOfWork.SubjectRepository
-                    .FindAll()
+            var subjectList = await _unitOfWork.SubjectRepository
+                    .Get(s => s.SubjectName.Contains(filter) || s.SubjectCode.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
+
+            if(departmentId is not null)
+            {
+                subjectList = subjectList.Where(s => s.DepartmentId == departmentId).ToArray();
+            }
+
+            return subjectList;
+
+            /*string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Subject), page, quantity);
+            var cachedData = await _cacheService.GetAsyncArray(key);
+            if (cachedData.IsNullOrEmpty())
+            {
+                
 
                 if (subjectList.Count() > 0)
                 {
                     await _cacheService.SetAsyncArray(key, subjectList);
                 }
-                return subjectList;
+                
             }
 
-            return cachedData;
+            return cachedData;*/
         }
 
         public async Task<IEnumerable<Subject>> GetSubjectFromDepartment(int departmentId)

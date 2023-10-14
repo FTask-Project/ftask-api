@@ -8,6 +8,8 @@ namespace FTask.Repository.Identity
         public string CreatedBy { get; set; } = "Undefined";
         public DateTime CreatedAt { get; set; }
 
+        public string? DisplayName { get; set; } = "Undefined";
+
         // Department this Lecturer is head of (if any)
         public Department? DepartmentHead { get; set; }
 

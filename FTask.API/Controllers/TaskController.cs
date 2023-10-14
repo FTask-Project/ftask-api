@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace FTask.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/tasks")]
     [ApiController]
     public class TaskController : ControllerBase
     {
@@ -23,14 +23,14 @@ namespace FTask.API.Controllers
             _taskService = taskService;
         }
 
-        [HttpGet("{taskId}", Name = nameof(GetTaskById))]
+        [HttpGet("{id}", Name = nameof(GetTaskById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TaskResponseVM))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public async Task<IActionResult> GetTaskById(int taskId)
+        public async Task<IActionResult> GetTaskById(int id)
         {
             if (ModelState.IsValid)
             {
-                var result = await _taskService.GetTaskById(taskId);
+                var result = await _taskService.GetTaskById(id);
                 if(result is null)
                 {
                     return NotFound("Not found");
@@ -50,11 +50,17 @@ namespace FTask.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> GetTasks([FromQuery] int page, [FromQuery] int quantity)
+        public async Task<IActionResult> GetTasks([FromQuery] int page, 
+            [FromQuery] int quantity, 
+            [FromQuery] string? filter, 
+            [FromQuery] int? semsesterId, 
+            [FromQuery] int? departmentId, 
+            [FromQuery] int? subjectId,
+            [FromQuery] int? status)
         {
             if (ModelState.IsValid)
             {
-                var result = await _taskService.GetTasks(page, quantity);
+                var result = await _taskService.GetTasks(page, quantity, filter ?? "", semsesterId, departmentId, subjectId, status);
                 return Ok(_mapper.Map<IEnumerable<TaskResponseVM>>(result));
             }
             else
@@ -89,7 +95,7 @@ namespace FTask.API.Controllers
                     {
                         return CreatedAtAction(nameof(GetTaskById), new
                         {
-                            taskId = id,
+                            id = id,
                         }, 
                         _mapper.Map<TaskResponseVM>(existedTask));
                     }

@@ -5,6 +5,7 @@ using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq.Expressions;
 
 namespace FTask.Service.IService
 {
@@ -42,31 +43,39 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<IEnumerable<Department>> GetDepartments(int page, int quantity)
+        public async Task<IEnumerable<Department>> GetDepartments(int page, int quantity, string filter, Guid? headerId)
         {
             if (page == 0)
             {
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Department), page, quantity);
+
+            var departmentList = _unitOfWork.DepartmentRepository
+                    .Get(d => d.DepartmentName.Contains(filter) || d.DepartmentCode.Contains(filter))
+                    .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                    .Take(quantity);
+
+            if(headerId is not null)
+            {
+                departmentList = departmentList.Where(d => d.DepartmentHeadId == headerId);
+            }
+
+            return await departmentList.ToArrayAsync();
+
+            /*string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Department), page, quantity);
             var cachedData = await _cacheService.GetAsyncArray(key);
             if (cachedData.IsNullOrEmpty())
             {
-                var departmentList = await _unitOfWork.DepartmentRepository
-                    .FindAll()
-                    .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                    .Take(quantity)
-                    .ToArrayAsync();
+                
                 if (departmentList.Count() > 0)
                 {
                     await _cacheService.SetAsyncArray(key, departmentList);
                 }
-                return departmentList;
+                
             }
 
-            return cachedData;
+            return cachedData;*/
         }
 
         public async Task<ServiceResponse> CreateNewDepartment(Department newEntity)

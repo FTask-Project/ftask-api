@@ -78,29 +78,34 @@ namespace FTask.Service.IService
             }
         }
 
-        public async Task<IEnumerable<Lecturer>> GetLecturers(int page, int quantity)
+        public async Task<IEnumerable<Lecturer>> GetLecturers(int page, int quantity, string filter, int? departmentId, int? subjectId)
         {
             if (page == 0)
             {
                 page = 1;
             }
             quantity = _checkQuantityTaken.check(quantity);
-            string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Lecturer), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData.IsNullOrEmpty())
-            {
-                var lecturerList = await _unitOfWork.LecturerRepository
-                    .FindAll()
+
+            var lecturerList = _unitOfWork.LecturerRepository
+                    .Get(l => l.Email.Contains(filter) || l.PhoneNumber.Contains(filter) || CheckDisplayName(l.DisplayName, filter),
+                        new System.Linq.Expressions.Expression<Func<Lecturer, object>>[1]
+                        {
+                            l => l.Subjects
+                        })
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                    .Take(quantity)
-                    .ToArrayAsync();
-                if (lecturerList.Count() > 0)
-                {
-                    await _cacheService.SetAsyncArray(key, lecturerList);
-                }
-                return lecturerList;
+                    .Take(quantity);
+
+            if(departmentId is not null)
+            {
+                lecturerList = lecturerList.Where(l => l.DepartmentId == departmentId);
             }
-            return cachedData;
+
+            if (subjectId is not null)
+            {
+                lecturerList = lecturerList.Where(l => l.Subjects.Any(s => s.SubjectId == subjectId));
+            }
+
+            return await lecturerList.ToArrayAsync();
         }
 
         public async Task<Lecturer?> GetLectureById(Guid id)
@@ -283,6 +288,15 @@ namespace FTask.Service.IService
                     Errors = new List<string>() { ex.Message }
                 };
             }
+        }
+
+        private bool CheckDisplayName(string? name, string filter)
+        {
+            if(name is null)
+            {
+                return false;
+            }
+            return name.Contains(filter);
         }
     }
 }

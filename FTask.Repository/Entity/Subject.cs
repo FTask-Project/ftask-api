@@ -9,7 +9,7 @@ public class Subject : Auditable
     public int SubjectId { get; set; }
     public string SubjectName { get; set; } = "Undefined";
     [Required]
-    public string? SubjectCode { get; set; }
+    public string SubjectCode { get; set; } = null!;
     public bool Status { get; set; }
 
     public Department? Department { get; set; }

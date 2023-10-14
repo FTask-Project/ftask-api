@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/users")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -22,15 +22,15 @@ namespace FTask.API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("{userId}", Name = nameof(GetUserById))]
+        [HttpGet("{id}", Name = nameof(GetUserById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserInformationResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public async Task<IActionResult> GetUserById(Guid userId)
+        public async Task<IActionResult> GetUserById(Guid id)
         {
             if (ModelState.IsValid)
             {
-                var userResult = await _userService.GetUserById(userId);
+                var userResult = await _userService.GetUserById(id);
                 if (userResult is null)
                 {
                     return NotFound("Not Found");
@@ -50,11 +50,11 @@ namespace FTask.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserInformationResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> GetUsers([FromQuery] int page, [FromQuery] int quantity)
+        public async Task<IActionResult> GetUsers([FromQuery] int page, [FromQuery] int quantity, [FromQuery] string? filter)
         {
             if (ModelState.IsValid)
             {
-                var userList = await _userService.GetUsers(page, quantity);
+                var userList = await _userService.GetUsers(page, quantity, filter ?? "");
                 return Ok(_mapper.Map<IEnumerable<UserInformationResponseVM>>(userList));
             }
             else
@@ -83,7 +83,7 @@ namespace FTask.API.Controllers
                     {
                         return CreatedAtAction(nameof(GetUserById), new
                         {
-                            userId = id
+                            id = id
                         }, _mapper.Map<UserInformationResponseVM>(existedUser));
                     }
                     else

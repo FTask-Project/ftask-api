@@ -86,7 +86,7 @@ internal class UserService : IUserService
         }
     }
 
-    public async Task<IEnumerable<User>> GetUsers(int page, int quantity)
+    public async Task<IEnumerable<User>> GetUsers(int page, int quantity, string filter)
     {
         if (page == 0)
         {
@@ -94,24 +94,11 @@ internal class UserService : IUserService
         }
         quantity = _checkQuantityTaken.check(quantity);
 
-        string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(User), page, quantity);
-        var cacheData = await _cacheService.GetAsyncArray(key);
-        if (cacheData.IsNullOrEmpty())
-        {
-            var userList = await _unitOfWork.UserRepository
-                .FindAll()
+        var userList = _unitOfWork.UserRepository
+                .Get(u => u.Email.Contains(filter) || u.PhoneNumber.Contains(filter) || CheckDisplayName(u.DisplayName, filter))
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                .Take(quantity)
-                .ToArrayAsync();
-
-            if (userList.Count() > 0)
-            {
-                await _cacheService.SetAsyncArray(key, userList);
-            }
-            return userList;
-        }
-
-        return cacheData;
+                .Take(quantity);
+        return await userList.ToArrayAsync();
     }
 
     public async Task<User?> GetUserById(Guid id)
@@ -260,5 +247,14 @@ internal class UserService : IUserService
                 Errors = new List<string>() { ex.Message }
             };
         }
+    }
+
+    private bool CheckDisplayName(string? name, string filter)
+    {
+        if(name is null)
+        {
+            return false;
+        }
+        return name.Contains(filter);
     }
 }

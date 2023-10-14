@@ -25,7 +25,7 @@ namespace FTask.Service.Caching
             return deserializedData;
         }
 
-        public async Task<T[]?> GetAsyncArray(string key)
+        public async Task<T[]> GetAsyncArray(string key)
         {
             string? cacheData = await _distributedCache.GetStringAsync(key.ToString());
 

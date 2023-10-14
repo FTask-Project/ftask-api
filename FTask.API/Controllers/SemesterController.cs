@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/semesters")]
     [ApiController]
     public class SemesterController : ControllerBase
     {
@@ -22,14 +22,14 @@ namespace FTask.API.Controllers
             _semesterService = semesterService;
         }
 
-        [HttpGet("{semesterId}", Name = nameof(GetSemesterById))]
+        [HttpGet("{id}", Name = nameof(GetSemesterById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SemesterResponseVM))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public async Task<IActionResult> GetSemesterById(int semesterId)
+        public async Task<IActionResult> GetSemesterById(int id)
         {
             if (ModelState.IsValid)
             {
-                var semesterResult = await _semesterService.GetSemesterById(semesterId);
+                var semesterResult = await _semesterService.GetSemesterById(id);
                 if (semesterResult is null)
                 {
                     return NotFound("Not found");
@@ -48,11 +48,11 @@ namespace FTask.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SemesterResponseVM>))]
-        public async Task<IActionResult> GetSemester([FromQuery] int page, [FromQuery] int quantity)
+        public async Task<IActionResult> GetSemester([FromQuery] int page, [FromQuery] int quantity, [FromQuery] string? filter)
         {
             if (ModelState.IsValid)
             {
-                var semesterList = await _semesterService.GetSemesters(page, quantity);
+                var semesterList = await _semesterService.GetSemesters(page, quantity, filter ?? "");
                 return Ok(_mapper.Map<IEnumerable<SemesterResponseVM>>(semesterList));
             }
             else
@@ -81,7 +81,7 @@ namespace FTask.API.Controllers
                     {
                         return CreatedAtAction(nameof(GetSemesterById), new
                         {
-                            semesterId = id
+                            id = id
                         }, _mapper.Map<SemesterResponseVM>(existedSemester));
                     }
                     else

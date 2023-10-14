@@ -7,7 +7,7 @@ public class Semester : Auditable
     [Key]
     public int SemesterId { get; set; }
     [Required]
-    public string? SemesterCode { get; set; }
+    public string SemesterCode { get; set; } = null!;
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
 
