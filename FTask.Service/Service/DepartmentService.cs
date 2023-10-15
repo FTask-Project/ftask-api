@@ -54,7 +54,8 @@ namespace FTask.Service.IService
             var departmentList = _unitOfWork.DepartmentRepository
                     .Get(d => d.DepartmentName.Contains(filter) || d.DepartmentCode.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                    .Take(quantity);
+                    .Take(quantity)
+                    .AsNoTracking();
 
             if(headerId is not null)
             {
@@ -62,20 +63,6 @@ namespace FTask.Service.IService
             }
 
             return await departmentList.ToArrayAsync();
-
-            /*string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Department), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData.IsNullOrEmpty())
-            {
-                
-                if (departmentList.Count() > 0)
-                {
-                    await _cacheService.SetAsyncArray(key, departmentList);
-                }
-                
-            }
-
-            return cachedData;*/
         }
 
         public async Task<ServiceResponse> CreateNewDepartment(Department newEntity)
