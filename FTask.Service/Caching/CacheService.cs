@@ -40,7 +40,10 @@ namespace FTask.Service.Caching
 
         public async Task SetAsync(string key, T entity)
         {
-            string cacheData = JsonConvert.SerializeObject(entity);
+            string cacheData = JsonConvert.SerializeObject(entity, new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            });
 
             await _distributedCache.SetStringAsync(key.ToString(), cacheData);
         }
