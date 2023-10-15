@@ -3,8 +3,8 @@ using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 
 namespace FTask.Service.IService
@@ -76,7 +76,8 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Can not find task"
+                    Message = "Failed to assign task",
+                    Errors = new string[1] {"Can not find task"}
                 };
             }
 
@@ -86,7 +87,8 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Can not find lecturer"
+                    Message = "Failed to assign task",
+                    Errors = new string[1] {"Can not find lecturer"}
                 };
             }
 
@@ -121,7 +123,7 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Assign task failed",
+                        Message = "Failed to assign task",
                         Errors = new string[1] { "Can not save changes" }
                     };
                 }
@@ -131,7 +133,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Create new task failed",
+                    Message = "Failed to assign task",
                     Errors = new List<string>() { ex.Message }
                 };
             }

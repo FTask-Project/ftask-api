@@ -1,5 +1,5 @@
-﻿using FTask.Service.ViewModel;
-using FTask.Service.ViewModel.RequestVM.CreateTask;
+﻿using FTask.Service.ViewModel.RequestVM.CreateTask;
+using FTask.Service.ViewModel.ResposneVM;
 using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.Service.IService

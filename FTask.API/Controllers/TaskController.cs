@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using Duende.IdentityServer.Extensions;
 using FTask.Service.IService;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTask;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -24,6 +24,7 @@ namespace FTask.API.Controllers
         [HttpGet("{id}", Name = nameof(GetTaskById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TaskResponseVM))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> GetTaskById(int id)
         {
             if (ModelState.IsValid)
@@ -37,7 +38,7 @@ namespace FTask.API.Controllers
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input"
@@ -47,7 +48,7 @@ namespace FTask.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskResponseVM>))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> GetTasks([FromQuery] int page,
             [FromQuery] int quantity,
             [FromQuery] string? filter,
@@ -63,7 +64,7 @@ namespace FTask.API.Controllers
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input"
@@ -73,7 +74,7 @@ namespace FTask.API.Controllers
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TaskResponseVM))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> CreateTask([FromForm] TaskVM resource)
         {
             if (ModelState.IsValid)
@@ -99,22 +100,22 @@ namespace FTask.API.Controllers
                     }
                     else
                     {
-                        return BadRequest(new ServiceResponse
+                        return BadRequest(new ServiceResponseVM
                         {
                             IsSuccess = false,
-                            Message = "Create task failed",
-                            Errors = new List<string> { "Error at create new task action method", "Created task not found" }
+                            Message = "Failed to create new task",
+                            Errors = new List<string> { "Created task not found" }
                         });
                     }
                 }
                 else
                 {
-                    return BadRequest(result);
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
                 }
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input"

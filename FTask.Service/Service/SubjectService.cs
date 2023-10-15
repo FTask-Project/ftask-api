@@ -2,7 +2,7 @@
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 
 namespace FTask.Service.IService
@@ -111,7 +111,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Subject code or subject name already exist"
+                        Message = "Failed to create new subject",
+                        Errors = new string[1] { "Subject code or name already exist" }
                     };
                 }
 
@@ -121,7 +122,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Department not found"
+                        Message = "Failed to create new subject",
+                        Errors = new string[1] {"Department not found"}
                     };
                 }
 
@@ -133,7 +135,7 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = true,
-                        Message = "Subject was created successfully",
+                        Message = "Create new subject successfully",
                         Id = subjectEntity.SubjectId.ToString()
                     };
                 }
@@ -142,7 +144,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new subject failed"
+                        Message = "Failed to create new subject",
+                        Errors = new string[1] {"Can not save changes"}
                     };
                 }
             }
@@ -151,7 +154,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Some error happend",
+                    Message = "Failed to create new subject",
                     Errors = new List<string>() { ex.Message }
                 };
             }

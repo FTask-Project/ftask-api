@@ -122,7 +122,7 @@ namespace FTask.API
 
             services.AddRepository(Configuration);
             services.AddService(Configuration);
-            services.AddAutoMapper(typeof(ModelToResource), typeof(ResourceToModel));
+            services.AddAutoMapper(typeof(ModelToResponse), typeof(RequestToModel));
             services.AddScoped<IBackgroundTaskService, BackgroundTaskService>();
             services.AddScoped<IJWTTokenService<IdentityUser<Guid>>, JWTTokenService<IdentityUser<Guid>>>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

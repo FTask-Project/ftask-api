@@ -1,15 +1,17 @@
 ﻿using AutoMapper;
 using FTask.Repository.Entity;
 using FTask.Repository.Identity;
-using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.ResposneVM;
 using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.API.Mapper;
 
-public class ModelToResource : Profile
+public class ModelToResponse : Profile
 {
-    public ModelToResource()
+    public ModelToResponse()
     {
+        CreateMap<ServiceResponse, ServiceResponseVM>();
+
         CreateMap<User, UserInformationResponseVM>();
 
         CreateMap<Role, RoleResponseVM>();

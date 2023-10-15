@@ -2,8 +2,8 @@
 using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateRole;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -75,7 +75,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = $"Role name {newEntity.RoleName} is already taken"
+                        Message = "Failed to create new role",
+                        Errors = new string[1] { $"Role name {newEntity.RoleName} is already taken" }
                     };
                 }
                 Role newRole = new Role
@@ -100,7 +101,7 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new roles failed",
+                        Message = "Failed to create new role",
                         Errors = errors
                     };
                 }
@@ -110,7 +111,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Some error happened",
+                    Message = "Failed to create new role",
                     Errors = new List<string>() { ex.Message }
                 };
             }

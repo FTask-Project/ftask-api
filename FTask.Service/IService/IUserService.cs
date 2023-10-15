@@ -1,7 +1,7 @@
 ﻿using FTask.Repository.Identity;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.RequestVM.CreateUser;
+using FTask.Service.ViewModel.ResposneVM;
 
 namespace FTask.Service.IService;
 

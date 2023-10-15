@@ -2,7 +2,7 @@
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 
 namespace FTask.Service.IService
@@ -91,7 +91,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Department code or name already exist"
+                        Message = "Failed to create new department",
+                        Errors = new string[1] { "Department code or name already exist" }
                     };
                 }
 
@@ -108,7 +109,7 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = true,
-                        Message = "Created new department",
+                        Message = "Created new department successfully",
                         Id = newEntity.DepartmentId.ToString()
                     };
                 }
@@ -117,8 +118,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new department failed",
-                        Errors = new List<string>() { "Error at create new department service", "Can not save changes" }
+                        Message = "Failed to create new department",
+                        Errors = new List<string>() { "Can not save changes" }
                     };
                 }
             }
@@ -127,7 +128,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Create new department failed",
+                    Message = "Failed to create new department",
                     Errors = new List<string>() { ex.Message }
                 };
             }

@@ -5,9 +5,9 @@ using FTask.Repository.Entity;
 using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.RequestVM.CreateLecturer;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -135,7 +135,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Username is already taken"
+                        Message = "Failed to create new lecturer",
+                        Errors = new string[1] { "Username is already taken" }
                     };
                 }
 
@@ -147,7 +148,8 @@ namespace FTask.Service.IService
                         return new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Email is already exist"
+                            Message = "Failed to create new lecturer",
+                            Errors = new string[1] {"Email is already exist"}
                         };
                     }
                 }
@@ -160,7 +162,8 @@ namespace FTask.Service.IService
                         return new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Phone is already taken"
+                            Message = "Failed to create new lecturer",
+                            Errors = new string[1] {"Phone is already taken"}
                         };
                     }
                 }
@@ -173,7 +176,8 @@ namespace FTask.Service.IService
                         return new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Department not found"
+                            Message = "Failed to create new lecturer",
+                            Errors = new string[1] {"Department not found"}
                         };
                     }
                 }
@@ -202,8 +206,8 @@ namespace FTask.Service.IService
                             return new ServiceResponse
                             {
                                 IsSuccess = false,
-                                Message = "Create new lecturer failed",
-                                Errors = new List<string>() { "Subject not found with the given id :" + id }
+                                Message = "Failed to create new lecturer",
+                                Errors = new string[1] { "Subject not found with the given id :" + id }
                             };
                         }
                         else
@@ -232,8 +236,8 @@ namespace FTask.Service.IService
                         return new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Create new lecturer failed",
-                            Errors = new string[1] { "Error when upload image" }
+                            Message = "Failed to create new lecturer",
+                            Errors = new string[1] { "Failed to upload image" }
                         };
                     }
                     newLecturer.FilePath = uploadResult.SecureUrl.ToString();
@@ -245,7 +249,7 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new lecturer failed",
+                        Message = "Failed to create new lecturer",
                         Errors = identityResult.Errors.Select(e => e.Description)
                     };
                 }
@@ -259,25 +263,6 @@ namespace FTask.Service.IService
                     };
                 }
             }
-            /*catch (UniqueConstraintException ex)
-            {
-                string message = "Created new lecturer failed";
-                if (ex.InnerException!.Message.Contains("IX_Lecturer_Email"))
-                {
-                    message = "Email is already taken";
-                }
-                if (ex.InnerException!.Message.Contains("IX_Lecturer_PhoneNumber"))
-                {
-                    message = "Phonenumber is already taken";
-                }
-
-                return new ServiceResponse
-                {
-                    IsSuccess = false,
-                    Message = message,
-                    Errors = new List<string>() { ex.Message }
-                };
-            }*/
             catch (DbUpdateException ex)
             {
                 return new ServiceResponse

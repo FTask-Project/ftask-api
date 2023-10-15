@@ -12,4 +12,6 @@ public class Semester : Auditable
     public DateTime EndDate { get; set; }
 
     public IEnumerable<Task> Tasks { get; set; } = new List<Task>();
+
+    public bool Deleted { get; set; } = false;
 }

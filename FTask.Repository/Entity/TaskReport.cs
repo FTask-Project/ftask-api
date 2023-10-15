@@ -12,4 +12,6 @@ public class TaskReport : Auditable
     public int TaskActivityId { get; set; }
 
     public IEnumerable<Evidence> Evidences { get; set; } = new List<Evidence>();
+
+    public bool Deleted { get; set; } = false;
 }

@@ -10,9 +10,9 @@ using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.API.Mapper
 {
-    public class ResourceToModel : Profile
+    public class RequestToModel : Profile
     {
-        public ResourceToModel()
+        public RequestToModel()
         {
             CreateMap<CreateSubjectVM, Subject>();
 

@@ -1,6 +1,6 @@
 ﻿using FTask.Repository.Identity;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateRole;
+using FTask.Service.ViewModel.ResposneVM;
 
 namespace FTask.Service.IService
 {

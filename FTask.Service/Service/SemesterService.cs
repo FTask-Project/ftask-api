@@ -3,8 +3,8 @@ using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateSemester;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 
 namespace FTask.Service.IService
@@ -70,7 +70,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Invalid semester code"
+                        Message = "Failed to create new semester",
+                        Errors = new string[1] { "Invalid semester code" }
                     };
                 }
 
@@ -80,7 +81,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Semester code is already taken"
+                        Message = "Failed to create new semester",
+                        Errors = new string[1] {"Semester code is already taken"}
                     };
                 }
 
@@ -89,7 +91,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "End date must be greater than start date"
+                        Message = "Failed to create new semester",
+                        Errors = new string[1] {"End date must be greater than start date"}
                     };
                 }
 
@@ -98,7 +101,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = $"The duration of semester must be greater than {_checkSemesterPeriod.MinimumDuration} days and less than {_checkSemesterPeriod.MaximumDuration} days"
+                        Message = "Failed to create new semester",
+                        Errors = new string[1] { $"The duration of semester must be greater than {_checkSemesterPeriod.MinimumDuration} days and less than {_checkSemesterPeriod.MaximumDuration} days" }
                     };
                 }
 
@@ -107,7 +111,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "The new semester must start after the latest semester"
+                        Message = "Failed to create new semester",
+                        Errors = new string[1] { "The new semester must start after the latest semester" }
                     };
                 }
 
@@ -134,7 +139,7 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new semester failed",
+                        Message = "Failed to create new semester",
                         Errors = new List<string>() { "Error at create new semester service", "Can not save changes" }
                     };
                 }
@@ -144,7 +149,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Some error happened",
+                    Message = "Failed to create new semester",
                     Errors = new List<string>() { ex.Message }
                 };
             }

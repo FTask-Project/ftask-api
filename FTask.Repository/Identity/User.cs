@@ -11,6 +11,8 @@ public class User : IdentityUser<Guid>
     public IEnumerable<Role> Roles { get; set; } = new List<Role>();
 
     public string? FilePath { get; set; }
+
+    public bool Deleted { get; set; } = false;
 }
 
 public class LoginUserManagement

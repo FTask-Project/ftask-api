@@ -14,4 +14,6 @@ public class TaskActivity : Auditable
     public int TaskLecturerId { get; set; }
 
     public TaskReport? TaskReport { get; set; }
+
+    public bool Deleted { get; set; } = false;
 }

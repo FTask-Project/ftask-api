@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using FTask.Repository.Entity;
 using FTask.Service.IService;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateSubject;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
@@ -26,6 +26,7 @@ namespace FTask.API.Controllers
         [HttpGet("{id}", Name = nameof(GetSubjectById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SubjectResponseVM))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> GetSubjectById(int id)
         {
             if (ModelState.IsValid)
@@ -39,7 +40,7 @@ namespace FTask.API.Controllers
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input",
@@ -49,6 +50,7 @@ namespace FTask.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SubjectResponseVM>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> GetSubjects([FromQuery] int page, [FromQuery] int amount, [FromQuery] string? filter, [FromQuery] int? departmentId)
         {
             if (ModelState.IsValid)
@@ -58,7 +60,7 @@ namespace FTask.API.Controllers
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input",
@@ -68,7 +70,7 @@ namespace FTask.API.Controllers
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SubjectResponseVM))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> CreateSubject([FromBody] CreateSubjectVM subject)
         {
             if (ModelState.IsValid)
@@ -88,25 +90,22 @@ namespace FTask.API.Controllers
                     }
                     else
                     {
-                        return BadRequest(new ServiceResponse
+                        return BadRequest(new ServiceResponseVM
                         {
                             IsSuccess = false,
-                            Message = "Create new subject failed"
+                            Message = "Failed to create new subject",
+                            Errors = new string[1] {"Created subject not found"}
                         });
                     }
                 }
                 else
                 {
-                    return BadRequest(new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Create new subject fail"
-                    });
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
                 }
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input"

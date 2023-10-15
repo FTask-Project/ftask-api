@@ -18,4 +18,6 @@ public class Subject : Auditable
     public IEnumerable<Lecturer> Lecturers { get; set; } = new List<Lecturer>();
 
     public IEnumerable<Task> Tasks { get; set; } = new List<Task>();
+
+    public bool Deleted { get; set; } = false; 
 }

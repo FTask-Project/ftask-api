@@ -16,4 +16,6 @@ public class TaskLecturer : Auditable
     public Guid LecturerId { get; set; }
 
     public IEnumerable<TaskActivity> TaskActivities { get; set; } = new List<TaskActivity>();
+
+    public bool Deleted { get; set; } = false;
 }

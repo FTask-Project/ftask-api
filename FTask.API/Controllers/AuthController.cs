@@ -3,8 +3,8 @@ using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using FTask.API.Service;
 using FTask.Service.IService;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM;
+using FTask.Service.ViewModel.ResposneVM;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -30,9 +30,9 @@ namespace FTask.API.Controllers
 
         [HttpPost("login/user")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthenticateResponseVM))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponse))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ServiceResponse))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> LoginUser([FromBody] LoginUserVM resource)
         {
             if (ModelState.IsValid)
@@ -51,36 +51,36 @@ namespace FTask.API.Controllers
                     }
                     else
                     {
-                        return StatusCode(500, new ServiceResponse
+                        return StatusCode(500, new ServiceResponseVM
                         {
                             IsSuccess = false,
-                            Message = "Some errors happened",
+                            Message = "Login failed",
                             Errors = new List<string>() { "Can not create token" }
                         });
                     }
                 }
                 else
                 {
-                    return Unauthorized(new ServiceResponse
+                    return Unauthorized(new ServiceResponseVM
                     {
                         IsSuccess = false,
                         Message = result.Message
                     });
                 }
             }
-            return BadRequest(new ServiceResponse
+            return BadRequest(new ServiceResponseVM
             {
                 IsSuccess = false,
-                Message = "Invalid Input",
+                Message = "Login failed",
                 Errors = new List<string>() { "Invalid input" }
             });
         }
 
         [HttpPost("login/lecturer")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthenticateResponseVM))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponse))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ServiceResponse))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> LoginLecturer([FromBody] LoginUserVM resource)
         {
             if (ModelState.IsValid)
@@ -99,27 +99,27 @@ namespace FTask.API.Controllers
                     }
                     else
                     {
-                        return StatusCode(500, new ServiceResponse
+                        return StatusCode(500, new ServiceResponseVM
                         {
                             IsSuccess = false,
-                            Message = "Some errors happened",
+                            Message = "Login failed",
                             Errors = new List<string>() { "Can not create token" }
                         });
                     }
                 }
                 else
                 {
-                    return Unauthorized(new ServiceResponse
+                    return Unauthorized(new ServiceResponseVM
                     {
                         IsSuccess = false,
                         Message = result.Message
                     });
                 }
             }
-            return BadRequest(new ServiceResponse
+            return BadRequest(new ServiceResponseVM
             {
                 IsSuccess = false,
-                Message = "Invalid Input",
+                Message = "Login failed",
                 Errors = new List<string>() { "Invalid input" }
             });
 

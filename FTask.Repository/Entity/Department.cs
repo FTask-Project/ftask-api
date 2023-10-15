@@ -22,4 +22,6 @@ public class Department : Auditable
     public IEnumerable<Task> Tasks { get; set; } = new List<Task>();
 
     public IEnumerable<Lecturer> Lecturers { get; set; } = new List<Lecturer>();
+
+    public bool Deleted { get; set; } = false;
 }

@@ -5,8 +5,8 @@ using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTask;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using Task = FTask.Repository.Entity.Task;
@@ -99,7 +99,8 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "End date must be greater than start date"
+                    Message = "Failed to create new task",
+                    Errors = new string[1] { "End date must be greater than start date" }
                 };
             }
 
@@ -111,8 +112,8 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Department not found",
-                        Errors = new string[1] { "Department not found with the given id: " + newEntity.DepartmentId }
+                        Message = "Failed to create new task",
+                        Errors = new string[1] { "Department not found "}
                     };
                 }
                 level = 2;
@@ -124,8 +125,8 @@ namespace FTask.Service.IService
                         return new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Create new task failed",
-                            Errors = new string[1] { "Subject not found with the given id: " + newEntity.SubjectId }
+                            Message = "Failed to create new task",
+                            Errors = new string[1] { "Subject not found"}
                         };
                     }
                     level = 3;
@@ -142,8 +143,8 @@ namespace FTask.Service.IService
                         return new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Create new task failed",
-                            Errors = new string[1] { "Lecturer not found wit the given id: " + assignedlecturer.LecturerId }
+                            Message = "Failed to create new task",
+                            Errors = new string[1] { "Lecturer not found" }
                         };
                     }
                 }
@@ -156,7 +157,8 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "New semester has not been started"
+                    Message = "Failed to create new task",
+                    Errors = new string[1] { "Can not find semester" }
                 };
             }
 
@@ -197,7 +199,7 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new task failed",
+                        Message = "Failed to create new task",
                         Errors = errors
                     };
                 }
@@ -248,7 +250,7 @@ namespace FTask.Service.IService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new task failed",
+                        Message = "Failed to create new task",
                         Errors = new string[1] { "Can not save changes" }
                     };
                 }
@@ -258,7 +260,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Create new task failed",
+                    Message = "Failed to create new task",
                     Errors = new List<string>() { ex.Message }
                 };
             }

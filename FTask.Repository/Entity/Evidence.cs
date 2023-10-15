@@ -10,5 +10,7 @@ namespace FTask.Repository.Entity
 
         public TaskReport? TaskReport { get; set; }
         public int TaskReportId { get; set; }
+
+        public bool Deleted { get; set; } = false;
     }
 }

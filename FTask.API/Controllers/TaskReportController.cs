@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTaskReport;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
@@ -21,6 +21,7 @@ namespace FTask.API.Controllers
 
         [HttpGet("{id}", Name = nameof(GetTaskReportById))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TaskReportResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public async Task<IActionResult> GetTaskReportById(int id)
         {
@@ -35,7 +36,7 @@ namespace FTask.API.Controllers
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input"
@@ -46,7 +47,7 @@ namespace FTask.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskReportResponseVM>))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> GetTaskReports([FromQuery] int page,
             [FromQuery] int quantity,
             [FromQuery] int? taskActivityId)
@@ -58,7 +59,7 @@ namespace FTask.API.Controllers
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input"
@@ -69,7 +70,7 @@ namespace FTask.API.Controllers
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TaskReportResponseVM))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> CreateTaskLecturer([FromForm] TaskReportVM resource)
         {
             if (ModelState.IsValid)
@@ -89,7 +90,7 @@ namespace FTask.API.Controllers
                     }
                     else
                     {
-                        return BadRequest(new ServiceResponse
+                        return BadRequest(new ServiceResponseVM
                         {
                             IsSuccess = false,
                             Message = "Failed to create new task report",
@@ -99,12 +100,12 @@ namespace FTask.API.Controllers
                 }
                 else
                 {
-                    return BadRequest(result);
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
                 }
             }
             else
             {
-                return BadRequest(new ServiceResponse
+                return BadRequest(new ServiceResponseVM
                 {
                     IsSuccess = false,
                     Message = "Invalid input"

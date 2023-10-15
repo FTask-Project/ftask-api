@@ -4,9 +4,9 @@ using FTask.Repository.Data;
 using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.RequestVM.CreateUser;
+using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Role = FTask.Repository.Identity.Role;
@@ -127,7 +127,8 @@ internal class UserService : IUserService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = $"Username is already taken"
+                    Message = $"Failed to create new user",
+                    Errors = new string[1] { "Username is already taken" }
                 };
             }
 
@@ -139,7 +140,8 @@ internal class UserService : IUserService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Email is already taken"
+                        Message = "Failed to create new user",
+                        Errors = new string[1] { "Email is already taken" }
                     };
                 }
             }
@@ -152,7 +154,8 @@ internal class UserService : IUserService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Phone is already taken"
+                        Message = "Failed to create new user",
+                        Errors = new string[1] { "Phone is already taken" }
                     };
                 }
             }
@@ -180,8 +183,8 @@ internal class UserService : IUserService
                         return new ServiceResponse
                         {
                             IsSuccess = false,
-                            Message = "Create new user failed",
-                            Errors = new List<string>() { "Role not found with the given id :" + id }
+                            Message = "Failed to create new user",
+                            Errors = new List<string>() { "Role not found"}
                         };
                     }
                     else
@@ -210,7 +213,7 @@ internal class UserService : IUserService
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Create new lecturer failed",
+                        Message = "Failed to create new user",
                         Errors = new string[1] { "Error when upload image" }
                     };
                 }
@@ -223,7 +226,7 @@ internal class UserService : IUserService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Create new lecturer failed",
+                    Message = "Failed to create new user",
                     Errors = identityResult.Errors.Select(e => e.Description)
                 };
             }
@@ -242,7 +245,7 @@ internal class UserService : IUserService
             return new ServiceResponse
             {
                 IsSuccess = false,
-                Message = "Some error happened",
+                Message = "Failed to create new user",
                 Errors = new List<string>() { ex.Message }
             };
         }

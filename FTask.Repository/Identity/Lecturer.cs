@@ -1,5 +1,6 @@
 ﻿using FTask.Repository.Entity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace FTask.Repository.Identity
 {
@@ -21,6 +22,8 @@ namespace FTask.Repository.Identity
         public IEnumerable<Subject> Subjects { get; set; } = new List<Subject>();
 
         public string? FilePath { get; set; }
+
+        public bool Deleted { get; set; } = false;
     }
 
     public class LoginLecturerManagement
