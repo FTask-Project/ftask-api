@@ -20,7 +20,8 @@ public class ModelToResource : Profile
 
         CreateMap<Subject, SubjectResponseVM>();
 
-        CreateMap<Task, TaskResponseVM>();
+        CreateMap<Task, TaskResponseVM>()
+            .ForMember(dest => dest.TaskLecturers, opt => opt.MapFrom(src => src.TaskLecturers));
 
         CreateMap<Department, DepartmentResponseVM>()
             .ForMember(dest => dest.DepartmentHead, opt => opt.MapFrom(src => src.DepartmentHead))
@@ -29,5 +30,12 @@ public class ModelToResource : Profile
             .ForMember(dest => dest.Lecturers, opt => opt.MapFrom(src => src.Lecturers));
 
         CreateMap<Semester, SemesterResponseVM>();
+
+        CreateMap<TaskLecturer, TaskLecturerResponseVM>();
+
+        CreateMap<TaskActivity, TaskActivityResponseVM>();
+
+        CreateMap<TaskReport, TaskReportResponseVM>()
+            .ForMember(dest => dest.Evidences, opt => opt.MapFrom(src => src.Evidences.Select(e => e.Url)));
     }
 }
