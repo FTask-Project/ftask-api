@@ -4,7 +4,6 @@ using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService
 {
@@ -56,7 +55,7 @@ namespace FTask.Service.IService
                     .Take(quantity)
                     .ToArrayAsync();
 
-            if(departmentId is not null)
+            if (departmentId is not null)
             {
                 subjectList = subjectList.Where(s => s.DepartmentId == departmentId).ToArray();
             }
@@ -85,9 +84,9 @@ namespace FTask.Service.IService
             var cachedData = await _cacheService.GetAsyncArray(key);
             if (cachedData is null)
             {
-                  var subjectList = await _unitOfWork.SubjectRepository
-                    .Get(subject => subject.DepartmentId == departmentId)
-                    .ToArrayAsync();
+                var subjectList = await _unitOfWork.SubjectRepository
+                  .Get(subject => subject.DepartmentId == departmentId)
+                  .ToArrayAsync();
 
                 if (subjectList.Count() > 0)
                 {
@@ -104,7 +103,7 @@ namespace FTask.Service.IService
             try
             {
                 var isExist = await _unitOfWork.SubjectRepository
-                    .Get(subject => subject.SubjectCode == subjectEntity.SubjectCode 
+                    .Get(subject => subject.SubjectCode == subjectEntity.SubjectCode
                     || subject.SubjectName == subject.SubjectName)
                     .FirstOrDefaultAsync();
                 if (isExist is not null)
@@ -117,7 +116,7 @@ namespace FTask.Service.IService
                 }
 
                 var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(subjectEntity.DepartmentId);
-                if(existedDepartment is null)
+                if (existedDepartment is null)
                 {
                     return new ServiceResponse
                     {

@@ -37,8 +37,8 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     public ITaskReportRepository TaskReportRepository { get; private set; }
     public ITaskRepository TaskRepository { get; private set; }
 
-    public UnitOfWork(ApplicationDbContext applicationDbContext, 
-        IUserRepository userRepository, 
+    public UnitOfWork(ApplicationDbContext applicationDbContext,
+        IUserRepository userRepository,
         IRoleRepository roleRepository,
         ILecturerRepository lecturerRepository,
         IAttachmentRepository attachmentRepository,

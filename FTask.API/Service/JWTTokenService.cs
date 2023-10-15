@@ -1,5 +1,4 @@
-﻿using FTask.Repository.Identity;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -14,7 +13,7 @@ public interface IJWTTokenService<T> where T : IdentityUser<Guid>
 public class JWTTokenService<T> : IJWTTokenService<T> where T : IdentityUser<Guid>
 {
     private readonly IConfiguration _configuration;
-    private readonly IKeyManager  _keyManager;
+    private readonly IKeyManager _keyManager;
 
     public JWTTokenService(IConfiguration configuration, IKeyManager keyManager)
     {
@@ -32,7 +31,7 @@ public class JWTTokenService<T> : IJWTTokenService<T> where T : IdentityUser<Gui
 
         if (roleNames!.Count() > 0)
         {
-            foreach(var item in roleNames!)
+            foreach (var item in roleNames!)
             {
                 claims.Add(new Claim("scope", item));
             }
@@ -46,7 +45,7 @@ public class JWTTokenService<T> : IJWTTokenService<T> where T : IdentityUser<Gui
             audience: _configuration["Jwt:Issuer"],
             claims: claims,
             expires: DateTime.UtcNow.AddHours(2),
-            signingCredentials: creds); 
+            signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(jwtToken);
     }

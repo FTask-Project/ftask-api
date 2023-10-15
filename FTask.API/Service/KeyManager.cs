@@ -22,5 +22,5 @@ public class KeyManager : IKeyManager
             var privateKey = RsaKey.ExportRSAPrivateKey();
             File.WriteAllBytes("key", privateKey);
         }
-    } 
+    }
 }

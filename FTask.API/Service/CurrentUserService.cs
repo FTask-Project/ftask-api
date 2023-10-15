@@ -12,11 +12,11 @@ public class CurrentUserService : ICurrentUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public Guid UserId => 
-        Guid.Parse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
+    public Guid UserId =>
+        Guid.Parse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ??
             throw new InvalidOperationException("Unauthenticated User"));
 
-    public string UserName => 
+    public string UserName =>
         _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name) ??
             throw new InvalidOperationException("Unauthenticated User");
 }

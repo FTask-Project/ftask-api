@@ -1,17 +1,21 @@
 ﻿using CloudinaryDotNet;
+using FTask.API.Common;
+using FTask.API.Mapper;
 using FTask.API.Middleware;
 using FTask.API.Permission;
 using FTask.API.Service;
+using FTask.Repository;
 using FTask.Repository.application;
-using FTask.API.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Identity;
+using FTask.Service;
 using Hangfire;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Net.Http.Headers;
@@ -19,11 +23,6 @@ using System.Security.Claims;
 using System.Text.Json;
 using static FTask.API.Middleware.GlobalExceptionMiddleware;
 using HttpMethod = System.Net.Http.HttpMethod;
-using FTask.Repository;
-using FTask.Service;
-using Microsoft.AspNetCore.Identity;
-using FTask.API.Mapper;
-using System.Runtime;
 
 namespace FTask.API
 {
@@ -111,7 +110,7 @@ namespace FTask.API
             #region Email
             var emailConfig = Configuration.GetSection("EmailConfig").Get<EmailConfig>();
             services.AddSingleton(emailConfig);
-            services.AddTransient<IMailService,MailService>();
+            services.AddTransient<IMailService, MailService>();
             #endregion
 
             services.Configure<FormOptions>(o =>
@@ -127,7 +126,7 @@ namespace FTask.API
             services.AddScoped<IBackgroundTaskService, BackgroundTaskService>();
             services.AddScoped<IJWTTokenService<IdentityUser<Guid>>, JWTTokenService<IdentityUser<Guid>>>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddSingleton<ICurrentUserService,CurrentUserService>();
+            services.AddSingleton<ICurrentUserService, CurrentUserService>();
             services.AddSingleton<IAuthorizationPolicyProvider, AuthorizationPolicyProvider>();
             services.AddScoped<IAuthorizationHandler, HasScopeHandler>();
 
@@ -301,7 +300,7 @@ namespace FTask.API
 
             app.UseStatusCodePages(async context =>
             {
-                if(context.HttpContext.Response.StatusCode == 401)
+                if (context.HttpContext.Response.StatusCode == 401)
                 {
                     // Customize the response for 401 Unauthorized status code
                     context.HttpContext.Response.ContentType = "application/json";
@@ -313,7 +312,7 @@ namespace FTask.API
                     await context.HttpContext.Response.WriteAsync(error.ToString());
                 }
 
-                if(context.HttpContext.Response.StatusCode == 403)
+                if (context.HttpContext.Response.StatusCode == 403)
                 {
                     // Customize the response for 403 Forbidden status code
                     context.HttpContext.Response.ContentType = "application/json";

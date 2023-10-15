@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
-using Microsoft.AspNetCore.Mvc;
 using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
 {
@@ -80,12 +80,12 @@ namespace FTask.API.Controllers
                 {
                     int id = Int32.Parse(result.Id!);
                     var existedTaskLecturer = await _taskLecturerService.GetTaskLecturerById(id);
-                    if(existedTaskLecturer is not null)
+                    if (existedTaskLecturer is not null)
                     {
                         return CreatedAtAction(nameof(GetTaskLecturerById), new
                         {
                             id = id,
-                        }, 
+                        },
                         _mapper.Map<TaskLecturerResponseVM>(existedTaskLecturer));
                     }
                     else

@@ -102,7 +102,7 @@ namespace FTask.Service.IService
                     };
                 }
 
-                if(!(await _checkSemesterPeriod.IsValidStartDate(newEntity.StartDate, _unitOfWork)))
+                if (!(await _checkSemesterPeriod.IsValidStartDate(newEntity.StartDate, _unitOfWork)))
                 {
                     return new ServiceResponse
                     {

@@ -2,7 +2,6 @@
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTaskReport;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTask.API.Controllers
@@ -94,7 +93,7 @@ namespace FTask.API.Controllers
                         {
                             IsSuccess = false,
                             Message = "Failed to create new task report",
-                            Errors = new string[1] {"Created report not found"}
+                            Errors = new string[1] { "Created report not found" }
                         });
                     }
                 }

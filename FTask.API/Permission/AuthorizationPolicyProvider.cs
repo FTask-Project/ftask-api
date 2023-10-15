@@ -16,7 +16,7 @@ public class AuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
     {
         var policy = await base.GetPolicyAsync(policyName);
 
-        if(policy == null)
+        if (policy == null)
         {
             policy = new AuthorizationPolicyBuilder()
                 .AddRequirements(new HasScopeRequirement(policyName, _configuration["Jwt:Issuer"]!))
@@ -24,7 +24,7 @@ public class AuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
 
             _options.AddPolicy(policyName, policy);
         }
-        
+
         return policy;
     }
 }

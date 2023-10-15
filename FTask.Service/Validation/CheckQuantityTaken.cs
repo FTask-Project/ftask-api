@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FTask.Service.Validation;
+﻿namespace FTask.Service.Validation;
 
 public interface ICheckQuantityTaken
 {
@@ -18,11 +12,11 @@ internal class CheckQuantityTaken : ICheckQuantityTaken
     private static readonly int PAGE_QUANTITY = 10;
     public int check(int quantity)
     {
-        if(quantity > MAX_QUANTITY)
+        if (quantity > MAX_QUANTITY)
         {
             return MAX_QUANTITY;
         }
-        else if(quantity == 0)
+        else if (quantity == 0)
         {
             return 10;
         }
@@ -32,7 +26,7 @@ internal class CheckQuantityTaken : ICheckQuantityTaken
         }
     }
 
-    public int PageQuantity 
+    public int PageQuantity
     {
         get => PAGE_QUANTITY;
     }

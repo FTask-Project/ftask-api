@@ -41,7 +41,7 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, Guid>, IApplic
     }
 
     public DbSet<Lecturer> Lecturers { get; set; } = null!;
-    public DbSet<Task> Tasks { get; set; } = null!; 
+    public DbSet<Task> Tasks { get; set; } = null!;
     public DbSet<TaskLecturer> TaskLecturers { get; set; } = null!;
     public DbSet<TaskReport> TaskReports { get; set; } = null!;
     public DbSet<TaskActivity> TaskActivities { get; set; } = null!;

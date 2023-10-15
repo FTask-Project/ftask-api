@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using Duende.IdentityServer.Extensions;
-using FTask.Repository.Entity;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
-using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.RequestVM.CreateTask;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -31,7 +29,7 @@ namespace FTask.API.Controllers
             if (ModelState.IsValid)
             {
                 var result = await _taskService.GetTaskById(id);
-                if(result is null)
+                if (result is null)
                 {
                     return NotFound("Not found");
                 }
@@ -50,11 +48,11 @@ namespace FTask.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponse))]
-        public async Task<IActionResult> GetTasks([FromQuery] int page, 
-            [FromQuery] int quantity, 
-            [FromQuery] string? filter, 
-            [FromQuery] int? semsesterId, 
-            [FromQuery] int? departmentId, 
+        public async Task<IActionResult> GetTasks([FromQuery] int page,
+            [FromQuery] int quantity,
+            [FromQuery] string? filter,
+            [FromQuery] int? semsesterId,
+            [FromQuery] int? departmentId,
             [FromQuery] int? subjectId,
             [FromQuery] int? status)
         {
@@ -85,18 +83,18 @@ namespace FTask.API.Controllers
                 {
                     resource.TaskLecturers = JsonConvert.DeserializeObject<IEnumerable<TaskLecturerVM>>(data!) ?? new List<TaskLecturerVM>();
                 }
-                
+
                 var result = await _taskService.CreateNewTask(resource);
                 if (result.IsSuccess)
                 {
                     int id = Int32.Parse(result.Id!);
                     var existedTask = await _taskService.GetTaskById(id);
-                    if(existedTask is not null)
+                    if (existedTask is not null)
                     {
                         return CreatedAtAction(nameof(GetTaskById), new
                         {
                             id = id,
-                        }, 
+                        },
                         _mapper.Map<TaskResponseVM>(existedTask));
                     }
                     else
