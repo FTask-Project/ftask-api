@@ -65,7 +65,8 @@ namespace FTask.Service.IService
             var taskList = _unitOfWork.TaskRepository
                     .Get(t => t.TaskTitle.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                    .Take(quantity);
+                    .Take(quantity)
+                    .AsNoTracking();
 
             if(semsesterId is not null)
             {
@@ -249,7 +250,7 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = false,
                         Message = "Create new task failed",
-                        Errors = new string[2] { "Error at create new task service", "Can not save changes" }
+                        Errors = new string[1] { "Can not save changes" }
                     };
                 }
             }

@@ -95,7 +95,7 @@ internal class UserService : IUserService
         quantity = _checkQuantityTaken.check(quantity);
 
         var userList = _unitOfWork.UserRepository
-                .Get(u => u.Email.Contains(filter) || u.PhoneNumber.Contains(filter) || CheckDisplayName(u.DisplayName, filter))
+                .Get(u => u.Email.Contains(filter) || u.PhoneNumber.Contains(filter) || u.DisplayName!.Contains(filter))
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                 .Take(quantity);
         return await userList.ToArrayAsync();
@@ -247,14 +247,5 @@ internal class UserService : IUserService
                 Errors = new List<string>() { ex.Message }
             };
         }
-    }
-
-    private bool CheckDisplayName(string? name, string filter)
-    {
-        if(name is null)
-        {
-            return false;
-        }
-        return name.Contains(filter);
     }
 }
