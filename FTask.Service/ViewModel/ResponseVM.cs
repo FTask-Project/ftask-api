@@ -33,6 +33,7 @@ public class UserInformationResponseVM
     public DateTimeOffset? LockoutEnd { get; set; }
     public bool LockoutEnabled { get; set; }
     public string? FilePath { get; set; }
+    public string? DisplayName { get; set; }
 }
 // =======================================================
 
@@ -67,6 +68,32 @@ public class TaskResponseVM
     public DateTime EndDate { get; set; }
     public int TaskLevel { get; set; }
     public string? Location { get; set; }
+    public IEnumerable<TaskLecturerResponseVM> TaskLecturers { get; set; } = new List<TaskLecturerResponseVM>();
+}
+
+public class TaskLecturerResponseVM
+{
+    public int TaskLecturerId { get; set; }
+    public string? Note { get; set; }
+    public TaskResponseVM? Task { get; set; }
+    public LecturerResponseVM? Lecturer { get; set; }
+}
+
+public class TaskActivityResponseVM
+{
+    public int TaskActivityId { get; set; }
+    public string? ActivityTitle { get; set; }
+    public string? ActivityDescription { get; set; }
+    public DateTime Deadline { get; set; }
+    public TaskLecturerResponseVM? TaskLecturer { get; set; }
+}
+
+public class TaskReportResponseVM
+{
+    public int TaskReportId { get; set; }
+    public string? ReportContent { get; set; }
+    public TaskActivityResponseVM? TaskActivity { get; set; }
+    public IEnumerable<string> Evidences { get; set; } = new List<string>();
 }
 
 public class LecturerResponseVM

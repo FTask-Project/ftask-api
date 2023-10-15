@@ -10,11 +10,11 @@ namespace FTask.Service.ViewModel.RequestVM.CreateDepartment;
 public class DepartmentVM
 {
     [Required]
-    public string? DepartmentName { get; set; }
+    public string DepartmentName { get; set; } = null!;
     [Required]
-    public string? DepartmentCode { get; set; }
+    public string DepartmentCode { get; set; } = null!;
     public Guid? DepartmentHeadId { get; set; }
-    public IEnumerable<SubjectVM> Subjects { get; set; } = Enumerable.Empty<SubjectVM>();
+    public IEnumerable<SubjectVM> Subjects { get; set; } = new List<SubjectVM>();
 }
 
 public class SubjectVM
