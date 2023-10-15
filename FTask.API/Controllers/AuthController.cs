@@ -1,13 +1,14 @@
 ﻿using AutoMapper;
-using FTask.API.Common;
 using FTask.API.Service;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections;
+using Google.Apis.Auth;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
+using Google.Apis.Auth.OAuth2;
 
 namespace FTask.API.Controllers
 {
@@ -123,6 +124,31 @@ namespace FTask.API.Controllers
                 Errors = new List<string>() { "Invalid input" }
             });
 
+        }
+
+        [HttpPost("login/google/lecturer")]
+        public async Task<IActionResult> LoginGoogleLecturer([FromQuery] string idToken)
+        {
+            // Initialize the Firebase app
+            if(FirebaseApp.DefaultInstance is null)
+            {
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("serviceAccountKey.json"),
+                });
+            }
+
+            // Verify the ID token
+            var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(idToken);
+
+            // Get user data
+            var uid = decodedToken.Uid;
+            var name = decodedToken.Claims["name"].ToString();
+            var email = decodedToken.Claims["email"].ToString();
+            var pictureUrl = decodedToken.Claims["picture"].ToString();
+
+            // Use the user data
+            return Ok(decodedToken.ToString());
         }
     }
 }
