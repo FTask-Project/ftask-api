@@ -87,7 +87,7 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var lecturerList = _unitOfWork.LecturerRepository
-                    .Get(l => l.Email.Contains(filter) || l.PhoneNumber.Contains(filter) || CheckDisplayName(l.DisplayName, filter),
+                    .Get(l => l.Email.Contains(filter) || l.PhoneNumber.Contains(filter) || l.DisplayName!.Contains(filter),
                         new System.Linq.Expressions.Expression<Func<Lecturer, object>>[1]
                         {
                             l => l.Subjects
@@ -288,15 +288,6 @@ namespace FTask.Service.IService
                     Errors = new List<string>() { ex.Message }
                 };
             }
-        }
-
-        private bool CheckDisplayName(string? name, string filter)
-        {
-            if(name is null)
-            {
-                return false;
-            }
-            return name.Contains(filter);
         }
     }
 }
