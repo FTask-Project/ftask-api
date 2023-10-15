@@ -1,9 +1,4 @@
-﻿using FTask.Repository.Entity;
-using FTask.Repository.Identity;
-using System.ComponentModel.DataAnnotations;
-using Task = FTask.Repository.Entity.Task;
-
-namespace FTask.Service.ViewModel;
+﻿namespace FTask.Service.ViewModel;
 
 public class ServiceResponse
 {

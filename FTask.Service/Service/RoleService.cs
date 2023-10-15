@@ -6,7 +6,6 @@ using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateRole;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService
 {

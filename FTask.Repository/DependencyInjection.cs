@@ -28,15 +28,15 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<ILecturerRepository, LecturerRepository>();
-        services.AddScoped<IAttachmentRepository,AttachmentRepository>();
-        services.AddScoped<IDepartmentRepository,DepartmentRepository>();
-        services.AddScoped<IEvidenceRepository,EvidenceRepository>();
-        services.AddScoped<ISemesterRepository,SemesterRepository>();
-        services.AddScoped<ISubjectRepository,SubjectRepository>();
-        services.AddScoped<ITaskReportRepository,TaskReportRepository>();
-        services.AddScoped<ITaskActivityRepository,TaskActivityRepository>();
-        services.AddScoped<ITaskLecturerRepository,TaskLecturerRepository>();
-        services.AddScoped<ITaskRepository,TaskRepository>();
+        services.AddScoped<IAttachmentRepository, AttachmentRepository>();
+        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+        services.AddScoped<IEvidenceRepository, EvidenceRepository>();
+        services.AddScoped<ISemesterRepository, SemesterRepository>();
+        services.AddScoped<ISubjectRepository, SubjectRepository>();
+        services.AddScoped<ITaskReportRepository, TaskReportRepository>();
+        services.AddScoped<ITaskActivityRepository, TaskActivityRepository>();
+        services.AddScoped<ITaskLecturerRepository, TaskLecturerRepository>();
+        services.AddScoped<ITaskRepository, TaskRepository>();
         #endregion
 
         return services;

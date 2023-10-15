@@ -56,7 +56,7 @@ namespace FTask.Service.IService
                 .Take(quantity)
                 .AsNoTracking();
 
-            if(taskLecturerId is not null)
+            if (taskLecturerId is not null)
             {
                 taskActivityList = taskActivityList.Where(a => a.TaskLecturerId == taskLecturerId);
             }
@@ -67,7 +67,7 @@ namespace FTask.Service.IService
         public async Task<ServiceResponse> CreateNewActivity(CreateTaskActivityVM newEntity)
         {
             var existedTaskLecturer = await _unitOfWork.TaskLecturerRepository.FindAsync(newEntity.TaskLecturerId);
-            if(existedTaskLecturer is null)
+            if (existedTaskLecturer is null)
             {
                 return new ServiceResponse
                 {

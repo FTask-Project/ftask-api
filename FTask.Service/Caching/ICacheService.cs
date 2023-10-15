@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using System.Linq.Expressions;
-
-namespace FTask.Service.Caching
+﻿namespace FTask.Service.Caching
 {
     public interface ICacheService<T> where T : class
     {

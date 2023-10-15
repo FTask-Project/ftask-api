@@ -12,7 +12,7 @@ public class Department : Auditable
     public string DepartmentName { get; set; } = "Undefined";
     [Required]
     public string DepartmentCode { get; set; } = "Undefined";
-    
+
     public Lecturer? DepartmentHead { get; set; }
     [AllowNull]
     public Guid? DepartmentHeadId { get; set; }
@@ -21,5 +21,5 @@ public class Department : Auditable
 
     public IEnumerable<Task> Tasks { get; set; } = new List<Task>();
 
-    public IEnumerable<Lecturer> Lecturers { get; set; } = new List<Lecturer>(); 
+    public IEnumerable<Lecturer> Lecturers { get; set; } = new List<Lecturer>();
 }

@@ -12,7 +12,7 @@ public abstract class AuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? TableName { get; set; }
     public string? PrimaryKey { get; set; }
-    public Dictionary<string,object>?  Changes { get; set; }
+    public Dictionary<string, object>? Changes { get; set; }
     public bool? IsRestored { get; set; }
 
     [NotMapped]

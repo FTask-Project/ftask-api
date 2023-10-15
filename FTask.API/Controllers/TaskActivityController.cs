@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using FTask.Repository.Entity;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTaskActivity;

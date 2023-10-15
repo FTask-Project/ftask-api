@@ -1,12 +1,12 @@
 ﻿using AutoMapper;
 using FTask.Repository.Entity;
-using FTask.Service.ViewModel.RequestVM.CreateTask;
-using Task = FTask.Repository.Entity.Task;
 using FTask.Service.ViewModel.RequestVM.CreateDepartment;
 using FTask.Service.ViewModel.RequestVM.CreateSubject;
-using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
+using FTask.Service.ViewModel.RequestVM.CreateTask;
 using FTask.Service.ViewModel.RequestVM.CreateTaskActivity;
+using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
 using FTask.Service.ViewModel.RequestVM.CreateTaskReport;
+using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.API.Mapper
 {

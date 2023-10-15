@@ -1,14 +1,13 @@
 ﻿using AutoMapper;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
 using FTask.API.Service;
 using FTask.Service.IService;
 using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Google.Apis.Auth;
-using FirebaseAdmin;
-using FirebaseAdmin.Auth;
-using Google.Apis.Auth.OAuth2;
 
 namespace FTask.API.Controllers
 {
@@ -130,7 +129,7 @@ namespace FTask.API.Controllers
         public async Task<IActionResult> LoginGoogleLecturer([FromQuery] string idToken)
         {
             // Initialize the Firebase app
-            if(FirebaseApp.DefaultInstance is null)
+            if (FirebaseApp.DefaultInstance is null)
             {
                 FirebaseApp.Create(new AppOptions()
                 {

@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using CloudinaryDotNet.Actions;
 using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
@@ -8,12 +8,7 @@ using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTaskReport;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FTask.Service.IService
 {
@@ -65,7 +60,7 @@ namespace FTask.Service.IService
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                 .Take(quantity);
 
-            if(taskActivityId is not null)
+            if (taskActivityId is not null)
             {
                 taskReportList = taskReportList.Where(r => r.TaskActivityId == taskActivityId);
             }
@@ -76,19 +71,19 @@ namespace FTask.Service.IService
         public async Task<ServiceResponse> CreateNewTaskReport(TaskReportVM newEntity)
         {
             var existedTaskActivity = await _unitOfWork.TaskActivityRepository.FindAsync(newEntity.TaskActivityId);
-            if(existedTaskActivity is null)
+            if (existedTaskActivity is null)
             {
                 return new ServiceResponse
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task report",
-                    Errors = new string[1]{ "Can not find provided task activity" }
+                    Errors = new string[1] { "Can not find provided task activity" }
                 };
             }
 
             var newTaskReport = _mapper.Map<TaskReport>(newEntity);
 
-            if(newEntity.Evidences.Count() > 0)
+            if (newEntity.Evidences.Count() > 0)
             {
                 var errors = new ConcurrentQueue<string>();
 
