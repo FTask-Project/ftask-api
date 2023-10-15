@@ -6,7 +6,7 @@ namespace FTask.Repository.Repository;
 
 internal class RoleRepository : BaseRepository<Role, Guid>, IRoleRepository
 {
-	public RoleRepository(ApplicationDbContext dbContext) : base(dbContext)
-	{
-	}
+    public RoleRepository(ApplicationDbContext dbContext) : base(dbContext)
+    {
+    }
 }

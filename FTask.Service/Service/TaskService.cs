@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Duende.IdentityServer.Extensions;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
@@ -68,12 +67,12 @@ namespace FTask.Service.IService
                     .Take(quantity)
                     .AsNoTracking();
 
-            if(semsesterId is not null)
+            if (semsesterId is not null)
             {
                 taskList = taskList.Where(t => t.SemesterId == semsesterId);
             }
 
-            if(departmentId is not null)
+            if (departmentId is not null)
             {
                 taskList = taskList.Where(t => t.DepartmentId == departmentId);
             }
@@ -83,7 +82,7 @@ namespace FTask.Service.IService
                 taskList = taskList.Where(t => t.SubjectId == subjectId);
             }
 
-            if(status is not null)
+            if (status is not null)
             {
                 taskList = taskList.Where(t => t.TaskStatus == status);
             }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 
 namespace FTask.API.Permission;
 
@@ -14,7 +13,7 @@ public class HasScopeHandler : AuthorizationHandler<HasScopeRequirement>
 
         var requiredScope = requirement.Scope;
 
-        if(_scope != null)
+        if (_scope != null)
         {
             if (_scope.Contains(requiredScope))
             {
@@ -29,7 +28,7 @@ public class HasScopeHandler : AuthorizationHandler<HasScopeRequirement>
 
         var scopes = context.User.Claims.Where(claim => claim.Type == "scope" && claim.Issuer == requirement.Issuer);
 
-        if(scopes == null)
+        if (scopes == null)
             return Task.CompletedTask;
 
         foreach (var scope in scopes)

@@ -1,6 +1,5 @@
 ﻿using FTask.Repository.Entity;
 using FTask.Repository.Identity;
-using FTask.Repository.IRepository;
 using FTask.Service.Caching;
 using FTask.Service.IService;
 using FTask.Service.Validation;
@@ -17,18 +16,18 @@ public static class DependencyInjection
 
         #region Services
         // Register services
-        services.AddScoped<IAttachmentService,AttachmentService>();
-        services.AddScoped<IDepartmentService,DepartmentService>();
-        services.AddScoped<IEvidenceService,EvidenceService>();
-        services.AddScoped<ILecturerService,LecturerService>();
-        services.AddScoped<IRoleService,RoleService>();
-        services.AddScoped<ISemesterService,SemesterService>();
-        services.AddScoped<IUserService,UserService>();
-        services.AddScoped<ISubjectService,SubjectService>();
-        services.AddScoped<ITaskActivityService,TaskActivityService>();
-        services.AddScoped<ITaskLecturerService,TaskLecturerService>();
-        services.AddScoped<ITaskReportService,TaskReportService>();
-        services.AddScoped<ITaskService,TaskService>();
+        services.AddScoped<IAttachmentService, AttachmentService>();
+        services.AddScoped<IDepartmentService, DepartmentService>();
+        services.AddScoped<IEvidenceService, EvidenceService>();
+        services.AddScoped<ILecturerService, LecturerService>();
+        services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<ISemesterService, SemesterService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ISubjectService, SubjectService>();
+        services.AddScoped<ITaskActivityService, TaskActivityService>();
+        services.AddScoped<ITaskLecturerService, TaskLecturerService>();
+        services.AddScoped<ITaskReportService, TaskReportService>();
+        services.AddScoped<ITaskService, TaskService>();
         #endregion
 
         #region Validation

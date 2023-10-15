@@ -1,6 +1,6 @@
-﻿using MimeKit;
+﻿using Duende.IdentityServer.Extensions;
 using MailKit.Net.Smtp;
-using Duende.IdentityServer.Extensions;
+using MimeKit;
 
 namespace FTask.API.Service;
 
@@ -45,10 +45,10 @@ internal class MailService : IMailService
     private MimeMessage CreateEmailMessage(Message message)
     {
         var emailMessage = new MimeMessage();
-        emailMessage.From.Add(new MailboxAddress("email",_emailConfig.From));
-        emailMessage.To.Add(new MailboxAddress("email",message.To));
-        IEnumerable<MailboxAddress>? CC = message.CC?.Select(e => new MailboxAddress("email",e));
-        if(!CC.IsNullOrEmpty())
+        emailMessage.From.Add(new MailboxAddress("email", _emailConfig.From));
+        emailMessage.To.Add(new MailboxAddress("email", message.To));
+        IEnumerable<MailboxAddress>? CC = message.CC?.Select(e => new MailboxAddress("email", e));
+        if (!CC.IsNullOrEmpty())
         {
             emailMessage.Cc.AddRange(CC);
         }
@@ -59,10 +59,10 @@ internal class MailService : IMailService
         {
             HtmlBody = message.Content
         };
-        if(message.Attachments != null && message.Attachments.Any())
+        if (message.Attachments != null && message.Attachments.Any())
         {
             byte[] fileBytes;
-            foreach(var attachment in message.Attachments)
+            foreach (var attachment in message.Attachments)
             {
                 using (var ms = new MemoryStream())
                 {

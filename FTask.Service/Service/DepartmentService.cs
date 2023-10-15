@@ -4,8 +4,6 @@ using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Linq.Expressions;
 
 namespace FTask.Service.IService
 {
@@ -57,7 +55,7 @@ namespace FTask.Service.IService
                     .Take(quantity)
                     .AsNoTracking();
 
-            if(headerId is not null)
+            if (headerId is not null)
             {
                 departmentList = departmentList.Where(d => d.DepartmentHeadId == headerId);
             }

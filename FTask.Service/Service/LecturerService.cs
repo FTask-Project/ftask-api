@@ -10,7 +10,6 @@ using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.RequestVM.CreateLecturer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace FTask.Service.IService
 {
@@ -95,7 +94,7 @@ namespace FTask.Service.IService
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity);
 
-            if(departmentId is not null)
+            if (departmentId is not null)
             {
                 lecturerList = lecturerList.Where(l => l.DepartmentId == departmentId);
             }

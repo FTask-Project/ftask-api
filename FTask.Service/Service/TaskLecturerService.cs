@@ -6,11 +6,6 @@ using FTask.Service.Validation;
 using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FTask.Service.IService
 {
@@ -60,12 +55,12 @@ namespace FTask.Service.IService
                 .Take(quantity)
                 .AsNoTracking();
 
-            if(taskId is not null)
+            if (taskId is not null)
             {
                 taskLecturerList = taskLecturerList.Where(tl => tl.TaskId == taskId);
             }
 
-            if(lecturerId is not null)
+            if (lecturerId is not null)
             {
                 taskLecturerList = taskLecturerList.Where(tl => tl.LecturerId == lecturerId);
             }
@@ -76,7 +71,7 @@ namespace FTask.Service.IService
         public async Task<ServiceResponse> CreateNewTaskLecturer(CreateTaskLecturerVM newEntity)
         {
             var exsitedTask = await _unitOfWork.TaskRepository.FindAsync(newEntity.TaskId);
-            if(exsitedTask is null)
+            if (exsitedTask is null)
             {
                 return new ServiceResponse
                 {
@@ -86,7 +81,7 @@ namespace FTask.Service.IService
             }
 
             var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync(newEntity.LecturerId);
-            if(existedLecturer is null)
+            if (existedLecturer is null)
             {
                 return new ServiceResponse
                 {
@@ -98,9 +93,9 @@ namespace FTask.Service.IService
             var newTaskLecturer = _mapper.Map<TaskLecturer>(newEntity);
 
             var taskActivities = new List<TaskActivity>();
-            if(newTaskLecturer.TaskActivities.Count() > 0)
+            if (newTaskLecturer.TaskActivities.Count() > 0)
             {
-                foreach(var activity in newTaskLecturer.TaskActivities)
+                foreach (var activity in newTaskLecturer.TaskActivities)
                 {
                     taskActivities.Add(activity);
                 }

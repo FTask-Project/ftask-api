@@ -1,12 +1,6 @@
-﻿using FTask.Service.ViewModel.RequestVM;
-using FTask.Service.ViewModel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Task = FTask.Repository.Entity.Task;
+﻿using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM.CreateTask;
+using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.Service.IService
 {

@@ -53,7 +53,7 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                var subjectList = await _subjectService.GetSubjectAllSubject(page, amount, filter ?? "" , departmentId);
+                var subjectList = await _subjectService.GetSubjectAllSubject(page, amount, filter ?? "", departmentId);
                 return Ok(_mapper.Map<IEnumerable<SubjectResponseVM>>(subjectList));
             }
             else

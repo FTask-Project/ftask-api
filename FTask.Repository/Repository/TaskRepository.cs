@@ -4,7 +4,7 @@ using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.Repository.Repository
 {
-    internal class TaskRepository : BaseRepository<Task,int>, ITaskRepository
+    internal class TaskRepository : BaseRepository<Task, int>, ITaskRepository
     {
         public TaskRepository(ApplicationDbContext dbContext) : base(dbContext)
         {

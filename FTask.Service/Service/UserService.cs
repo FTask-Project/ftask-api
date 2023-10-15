@@ -1,16 +1,15 @@
-﻿using FTask.Service.ViewModel;
+﻿using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using FTask.Repository.Data;
 using FTask.Repository.Identity;
-using Microsoft.AspNetCore.Identity;
-using FTask.Service.Validation;
-using Microsoft.EntityFrameworkCore;
-using CloudinaryDotNet.Actions;
-using CloudinaryDotNet;
-using Role = FTask.Repository.Identity.Role;
 using FTask.Service.Caching;
-using FTask.Service.ViewModel.RequestVM.CreateUser;
+using FTask.Service.Validation;
+using FTask.Service.ViewModel;
 using FTask.Service.ViewModel.RequestVM;
-using Microsoft.IdentityModel.Tokens;
+using FTask.Service.ViewModel.RequestVM.CreateUser;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Role = FTask.Repository.Identity.Role;
 
 namespace FTask.Service.IService;
 
@@ -26,11 +25,11 @@ internal class UserService : IUserService
 
     public UserService(
         ICheckQuantityTaken checkQuantityTaken,
-        UserManager<Lecturer> lecturerManager, 
+        UserManager<Lecturer> lecturerManager,
         ICacheService<User> cacheService,
-        UserManager<User> userManager, 
-        RoleManager<Role> roleManager, 
-        IUnitOfWork unitOfWork, 
+        UserManager<User> userManager,
+        RoleManager<Role> roleManager,
+        IUnitOfWork unitOfWork,
         Cloudinary cloudinary
         )
     {
