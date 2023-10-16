@@ -7,9 +7,7 @@ namespace FTask.Service.IService
     {
         Task<Subject?> GetSubjectById(int id);
         Task<IEnumerable<Subject>> GetSubjectAllSubject(int page, int quantity, string filter, int? departmentId);
-        Task<IEnumerable<Subject>> GetSubjectFromDepartment(int departmentId);
         Task<ServiceResponse> CreateNewSubject(Subject subjectEntity);
-        Task<ServiceResponse> UpdateSubject(Subject subjectEntity);
-        Task<ServiceResponse> DeleteSubject(Subject subjectEntity);
+        Task<bool> DeleteSubject(int id);
     }
 }

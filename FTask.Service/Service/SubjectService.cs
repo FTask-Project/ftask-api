@@ -1,4 +1,5 @@
-﻿using FTask.Repository.Data;
+﻿using FTask.Repository.Common;
+using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
@@ -12,15 +13,18 @@ namespace FTask.Service.IService
         private readonly ICheckQuantityTaken _checkQuantityTaken;
         private readonly ICacheService<Subject> _cacheService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUserService _currentUserService;
         public SubjectService(
             ICheckQuantityTaken checkQuantityTaken,
             ICacheService<Subject> cacheService,
-            IUnitOfWork unitOfWork
+            IUnitOfWork unitOfWork,
+            ICurrentUserService currentUserService
             )
         {
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _unitOfWork = unitOfWork;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Subject?> GetSubjectById(int id)
@@ -30,7 +34,7 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var subject = await _unitOfWork.SubjectRepository.FindAsync(id);
+                var subject = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && s.SubjectId == id).FirstOrDefaultAsync();
                 if (subject is not null)
                 {
                     await _cacheService.SetAsync(key, subject);
@@ -50,7 +54,7 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var subjectList = await _unitOfWork.SubjectRepository
-                    .Get(s => s.SubjectName.Contains(filter) || s.SubjectCode.Contains(filter))
+                    .Get(s => !s.Deleted && (s.SubjectName.Contains(filter) || s.SubjectCode.Contains(filter)))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .ToArrayAsync();
@@ -61,75 +65,43 @@ namespace FTask.Service.IService
             }
 
             return subjectList;
-
-            /*string key = CacheKeyGenerator.GetKeyByPageAndQuantity(nameof(Subject), page, quantity);
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData.IsNullOrEmpty())
-            {
-                
-
-                if (subjectList.Count() > 0)
-                {
-                    await _cacheService.SetAsyncArray(key, subjectList);
-                }
-                
-            }
-
-            return cachedData;*/
-        }
-
-        public async Task<IEnumerable<Subject>> GetSubjectFromDepartment(int departmentId)
-        {
-            string key = CacheKeyGenerator.GetKeyByOtherId(nameof(Subject), nameof(Department), departmentId.ToString());
-            var cachedData = await _cacheService.GetAsyncArray(key);
-            if (cachedData is null)
-            {
-                var subjectList = await _unitOfWork.SubjectRepository
-                  .Get(subject => subject.DepartmentId == departmentId)
-                  .ToArrayAsync();
-
-                if (subjectList.Count() > 0)
-                {
-                    await _cacheService.SetAsyncArray(key, subjectList);
-                }
-                return subjectList;
-            }
-
-            return cachedData;
         }
 
         public async Task<ServiceResponse> CreateNewSubject(Subject subjectEntity)
         {
-            try
-            {
-                var isExist = await _unitOfWork.SubjectRepository
+            var isExist = await _unitOfWork.SubjectRepository
                     .Get(subject => subject.SubjectCode == subjectEntity.SubjectCode
                     || subject.SubjectName == subject.SubjectName)
                     .FirstOrDefaultAsync();
-                if (isExist is not null)
+            if (isExist is not null)
+            {
+                return new ServiceResponse
                 {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new subject",
-                        Errors = new string[1] { "Subject code or name already exist" }
-                    };
-                }
+                    IsSuccess = false,
+                    Message = "Failed to create new subject",
+                    Errors = new string[1] { "Subject code or name already exist" }
+                };
+            }
 
-                var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(subjectEntity.DepartmentId);
-                if (existedDepartment is null)
+            var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(subjectEntity.DepartmentId);
+            if (existedDepartment is null)
+            {
+                return new ServiceResponse
                 {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new subject",
-                        Errors = new string[1] {"Department not found"}
-                    };
-                }
+                    IsSuccess = false,
+                    Message = "Failed to create new subject",
+                    Errors = new string[1] { "Department not found" }
+                };
+            }
 
-                await _unitOfWork.SubjectRepository.AddAsync(subjectEntity);
+            subjectEntity.CreatedBy = _currentUserService.UserId;
+            subjectEntity.CreatedAt = DateTime.Now;
+
+            await _unitOfWork.SubjectRepository.AddAsync(subjectEntity);
+
+            try
+            {
                 var result = await _unitOfWork.SaveChangesAsync();
-
                 if (result)
                 {
                     return new ServiceResponse
@@ -149,7 +121,7 @@ namespace FTask.Service.IService
                     };
                 }
             }
-            catch (Exception ex)
+            catch (DbUpdateException ex)
             {
                 return new ServiceResponse
                 {
@@ -160,101 +132,23 @@ namespace FTask.Service.IService
             }
         }
 
-        public async Task<ServiceResponse> UpdateSubject(Subject subjectEntity)
+        public async Task<bool> DeleteSubject(int id)
         {
-            try
+            var existedSubject = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && s.SubjectId == id).FirstOrDefaultAsync();
+            if(existedSubject is null)
             {
-                var isExist = await _unitOfWork.SubjectRepository
-                    .Get(subject => subject.SubjectCode == subjectEntity.SubjectCode
-                    || subject.SubjectName == subject.SubjectName)
-                    .FirstOrDefaultAsync();
-                if (isExist is null)
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Subject code or subject name not exist"
-                    };
-                }
-
-                _unitOfWork.SubjectRepository.Update(subjectEntity);
-                var result = await _unitOfWork.SaveChangesAsync();
-
-                if (result)
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = true,
-                        Message = "Subject was updated successfully",
-                        Id = subjectEntity.SubjectId.ToString(),
-                    };
-                }
-                else
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Update subject failed"
-                    };
-                }
+                return false;
             }
-            catch (Exception ex)
+            _unitOfWork.SubjectRepository.Remove(existedSubject);
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result)
             {
-                return new ServiceResponse
-                {
-                    IsSuccess = false,
-                    Message = "Some error happend",
-                    Errors = new List<string>() { ex.Message }
-                };
+                string key = CacheKeyGenerator.GetKeyById(nameof(Subject), id.ToString());
+                await _cacheService.RemoveAsync(key);
             }
-        }
 
-        public async Task<ServiceResponse> DeleteSubject(Subject subjectEntity)
-        {
-            try
-            {
-                var isExist = await _unitOfWork.SubjectRepository
-                    .Get(subject => subject.SubjectCode == subjectEntity.SubjectCode
-                    || subject.SubjectName == subject.SubjectName)
-                    .FirstOrDefaultAsync();
-                if (isExist is null)
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Subject code or subject name not exist"
-                    };
-                }
-
-                _unitOfWork.SubjectRepository.Remove(subjectEntity);
-                var result = await _unitOfWork.SaveChangesAsync();
-
-                if (result)
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = true,
-                        Message = "Subject was deleted successfully"
-                    };
-                }
-                else
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Delete subject failed"
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new ServiceResponse
-                {
-                    IsSuccess = false,
-                    Message = "Some error happend",
-                    Errors = new List<string>() { ex.Message }
-                };
-            }
+            return result;
         }
     }
 }

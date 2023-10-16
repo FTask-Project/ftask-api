@@ -1,8 +1,8 @@
-﻿namespace FTask.Repository.application;
+﻿namespace FTask.Repository.Common;
 
 public interface ICurrentUserService
 {
-    public Guid UserId { get; }
+    public string UserId { get; }
 
     public string UserName { get; }
 }

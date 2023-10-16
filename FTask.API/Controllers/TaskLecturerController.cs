@@ -3,6 +3,7 @@ using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FTask.API.Controllers
 {
@@ -102,6 +103,53 @@ namespace FTask.API.Controllers
                 else
                 {
                     return BadRequest(_mapper.Map<ServiceResponseVM>(result));
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> DeleteTaskLecturer([FromQuery] int id)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var result = await _taskLecturerService.DeleteTaskLecturer(id);
+                    if (result)
+                    {
+                        return Ok(new ServiceResponseVM
+                        {
+                            IsSuccess = true,
+                            Message = "Unassign task successfully"
+                        });
+                    }
+                    else
+                    {
+                        return BadRequest(new ServiceResponseVM
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to unassign task"
+                        });
+                    }
+                }
+                catch (DbUpdateException ex)
+                {
+                    return BadRequest(new ServiceResponseVM
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to unassign task",
+                        Errors = new string[1] { ex.Message }
+                    });
                 }
             }
             else

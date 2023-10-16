@@ -1,5 +1,6 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Identity;
 using FTask.Service.Caching;
@@ -22,6 +23,7 @@ internal class UserService : IUserService
     private readonly RoleManager<Role> _roleManager;
     private readonly IUnitOfWork _unitOfWork;
     private readonly Cloudinary _cloudinary;
+    private readonly ICurrentUserService _currentUserService;
 
     public UserService(
         ICheckQuantityTaken checkQuantityTaken,
@@ -30,7 +32,8 @@ internal class UserService : IUserService
         UserManager<User> userManager,
         RoleManager<Role> roleManager,
         IUnitOfWork unitOfWork,
-        Cloudinary cloudinary
+        Cloudinary cloudinary,
+        ICurrentUserService currentUserService
         )
     {
         _checkQuantityTaken = checkQuantityTaken;
@@ -40,12 +43,13 @@ internal class UserService : IUserService
         _roleManager = roleManager;
         _unitOfWork = unitOfWork;
         _cloudinary = cloudinary;
+        _currentUserService = currentUserService;
     }
 
     public async Task<LoginUserManagement> LoginMember(LoginUserVM resource)
     {
         var existedUser = await _userManager.FindByNameAsync(resource.UserName);
-        if (existedUser == null)
+        if (existedUser == null || existedUser.Deleted)
         {
             return new LoginUserManagement
             {
@@ -94,7 +98,7 @@ internal class UserService : IUserService
         quantity = _checkQuantityTaken.check(quantity);
 
         var userList = _unitOfWork.UserRepository
-                .Get(u => u.Email.Contains(filter) || u.PhoneNumber.Contains(filter) || u.DisplayName!.Contains(filter))
+                .Get(u => !u.Deleted && (u.Email.Contains(filter) || u.PhoneNumber.Contains(filter) || u.DisplayName!.Contains(filter)))
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                 .Take(quantity);
         return await userList.ToArrayAsync();
@@ -106,7 +110,7 @@ internal class UserService : IUserService
         var cacheData = await _cacheService.GetAsync(key);
         if (cacheData is null)
         {
-            var user = await _unitOfWork.UserRepository.FindAsync(id);
+            var user = await _unitOfWork.UserRepository.Get(u => !u.Deleted && u.Id == id).FirstOrDefaultAsync();
             if (user is not null)
             {
                 await _cacheService.SetAsync(key, user);
@@ -169,7 +173,9 @@ internal class UserService : IUserService
                 LockoutEnd = newEntity.LockoutEnd,
                 EmailConfirmed = false,
                 PhoneNumberConfirmed = false,
-                TwoFactorEnabled = false
+                TwoFactorEnabled = false,
+                CreatedAt = DateTime.Now,
+                CreatedBy = _currentUserService.UserId
             };
 
             if (newEntity.RoleIds.Count() > 0)
@@ -249,5 +255,24 @@ internal class UserService : IUserService
                 Errors = new List<string>() { ex.Message }
             };
         }
+    }
+
+    public async Task<bool> DeleteUser(Guid id)
+    {
+        var existedUser = await _unitOfWork.UserRepository.Get(u => !u.Deleted && u.Id == id).FirstOrDefaultAsync();
+        if(existedUser is null)
+        {
+            return false;
+        }
+        _unitOfWork.UserRepository.Remove(existedUser);
+        var result = await _unitOfWork.SaveChangesAsync();
+
+        if (result)
+        {
+            string key = CacheKeyGenerator.GetKeyById(nameof(User), id.ToString());
+            await _cacheService.RemoveAsync(key);
+        }
+
+        return result;
     }
 }

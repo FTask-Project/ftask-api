@@ -1,5 +1,6 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Repository.Identity;
@@ -20,13 +21,15 @@ namespace FTask.Service.IService
         private readonly UserManager<Lecturer> _userManager;
         private readonly IUnitOfWork _unitOfWork;
         private readonly Cloudinary _cloudinary;
+        private readonly ICurrentUserService _currentUserService;
 
         public LecturerService(
             ICheckQuantityTaken checkQuantityTaken,
             ICacheService<Lecturer> cacheService,
             UserManager<Lecturer> userManager,
             IUnitOfWork unitOfWork,
-            Cloudinary cloudinary
+            Cloudinary cloudinary,
+            ICurrentUserService currentUserService
             )
         {
             _checkQuantityTaken = checkQuantityTaken;
@@ -34,12 +37,13 @@ namespace FTask.Service.IService
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             _cloudinary = cloudinary;
+            _currentUserService = currentUserService;
         }
 
         public async Task<LoginLecturerManagement> LoginLecturer(LoginUserVM resource)
         {
             var existedUser = await _userManager.FindByNameAsync(resource.UserName);
-            if (existedUser == null)
+            if (existedUser == null || existedUser.Deleted)
             {
                 return new LoginLecturerManagement
                 {
@@ -86,7 +90,7 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var lecturerList = _unitOfWork.LecturerRepository
-                    .Get(l => l.Email.Contains(filter) || l.PhoneNumber.Contains(filter) || l.DisplayName!.Contains(filter),
+                    .Get(l => !l.Deleted && (l.Email.Contains(filter) || l.PhoneNumber.Contains(filter) || l.DisplayName!.Contains(filter)),
                         new System.Linq.Expressions.Expression<Func<Lecturer, object>>[1]
                         {
                             l => l.Subjects
@@ -114,7 +118,7 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var lecturer = await _unitOfWork.LecturerRepository.FindAsync(id);
+                var lecturer = await _unitOfWork.LecturerRepository.Get(l => !l.Deleted && l.Id == id).FirstOrDefaultAsync();
                 if (lecturer is not null)
                 {
                     await _cacheService.SetAsync(key, lecturer);
@@ -192,7 +196,9 @@ namespace FTask.Service.IService
                     DepartmentId = newEntity.DepartmentId,
                     EmailConfirmed = false,
                     PhoneNumberConfirmed = false,
-                    TwoFactorEnabled = false
+                    TwoFactorEnabled = false,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = _currentUserService.UserId
                 };
 
                 if (newEntity.SubjectIds.Count() > 0)
@@ -272,6 +278,25 @@ namespace FTask.Service.IService
                     Errors = new List<string>() { ex.Message }
                 };
             }
+        }
+
+        public async Task<bool> DeleteLecturer(Guid id)
+        {
+            var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => !l.Deleted && l.Id == id).FirstOrDefaultAsync();
+            if(existedLecturer is null)
+            {
+                return false;
+            }
+            _unitOfWork.LecturerRepository.Remove(existedLecturer);
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result)
+            {
+                string key = CacheKeyGenerator.GetKeyById(nameof(Lecturer), id.ToString());
+                await _cacheService.RemoveAsync(key);
+            }
+
+            return result;
         }
     }
 }

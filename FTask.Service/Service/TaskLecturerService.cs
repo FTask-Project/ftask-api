@@ -31,7 +31,7 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var taskLecturer = await _unitOfWork.TaskLecturerRepository.FindAsync(id);
+                var taskLecturer = await _unitOfWork.TaskLecturerRepository.Get(t => !t.Deleted && t.TaskLecturerId == id).FirstOrDefaultAsync();
                 if (taskLecturer is not null)
                 {
                     await _cacheService.SetAsync(key, taskLecturer);
@@ -50,7 +50,7 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var taskLecturerList = _unitOfWork.TaskLecturerRepository
-                .FindAll()
+                .Get(tl => !tl.Deleted)
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                 .Take(quantity)
                 .AsNoTracking();
@@ -94,16 +94,11 @@ namespace FTask.Service.IService
 
             var newTaskLecturer = _mapper.Map<TaskLecturer>(newEntity);
 
-            var taskActivities = new List<TaskActivity>();
             if (newTaskLecturer.TaskActivities.Count() > 0)
             {
-                foreach (var activity in newTaskLecturer.TaskActivities)
-                {
-                    taskActivities.Add(activity);
-                }
+                await _unitOfWork.TaskActivityRepository.AddRangeAsync(newTaskLecturer.TaskActivities);
             }
 
-            await _unitOfWork.TaskActivityRepository.AddRangeAsync(taskActivities);
             await _unitOfWork.TaskLecturerRepository.AddAsync(newTaskLecturer);
 
             try
@@ -137,6 +132,25 @@ namespace FTask.Service.IService
                     Errors = new List<string>() { ex.Message }
                 };
             }
+        }
+
+        public async Task<bool> DeleteTaskLecturer(int id)
+        {
+            var existedTaskLecturer = await _unitOfWork.TaskLecturerRepository.Get(tl => !tl.Deleted && tl.TaskLecturerId == id).FirstOrDefaultAsync();
+            if(existedTaskLecturer is null)
+            {
+                return false;
+            }
+            _unitOfWork.TaskLecturerRepository.Remove(existedTaskLecturer);
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result)
+            {
+                string key = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), id.ToString());
+                await _cacheService.RemoveAsync(key);
+            }
+
+            return result;
         }
     }
 }

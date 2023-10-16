@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
@@ -19,14 +20,16 @@ namespace FTask.Service.IService
         private readonly ICacheService<TaskReport> _cacheService;
         private readonly IMapper _mapper;
         private readonly Cloudinary _cloudinary;
+        private readonly ICurrentUserService _currentUserService;
 
-        public TaskReportService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, ICacheService<TaskReport> cacheService, IMapper mapper, Cloudinary cloudinary)
+        public TaskReportService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, ICacheService<TaskReport> cacheService, IMapper mapper, Cloudinary cloudinary, ICurrentUserService currentUserService)
         {
             _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _mapper = mapper;
             _cloudinary = cloudinary;
+            _currentUserService = currentUserService;
         }
 
         public async Task<TaskReport?> GetTaskReportById(int id)
@@ -36,7 +39,7 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var taskReport = await _unitOfWork.TaskReportRepository.FindAsync(id);
+                var taskReport = await _unitOfWork.TaskReportRepository.Get(tr => !tr.Deleted && tr.TaskReportId == id).FirstOrDefaultAsync();
                 if (taskReport is not null)
                 {
                     await _cacheService.SetAsync(key, taskReport);
@@ -56,9 +59,10 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var taskReportList = _unitOfWork.TaskReportRepository
-                .FindAll()
+                .Get(tr => !tr.Deleted)
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                .Take(quantity);
+                .Take(quantity)
+                .AsNoTracking();
 
             if (taskActivityId is not null)
             {
@@ -123,6 +127,8 @@ namespace FTask.Service.IService
                         Evidence evidence = new Evidence
                         {
                             Url = url!,
+                            CreatedAt = DateTime.Now,
+                            CreatedBy = _currentUserService.UserId
                         };
                         await _unitOfWork.EvidenceRepository.AddAsync(evidence);
                         evidences.Add(evidence);
@@ -165,6 +171,25 @@ namespace FTask.Service.IService
                     Errors = new string[1] { ex.Message }
                 };
             }
+        }
+
+        public async Task<bool> DeleteTaskReport(int id)
+        {
+            var existedTaskReport = await _unitOfWork.TaskReportRepository.Get(tr => !tr.Deleted && tr.TaskReportId == id).FirstOrDefaultAsync();
+            if(existedTaskReport is null)
+            {
+                return false;
+            }
+            _unitOfWork.TaskReportRepository.Remove(existedTaskReport);
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result)
+            {
+                string key = CacheKeyGenerator.GetKeyById(nameof(TaskReport), id.ToString());
+                await _cacheService.RemoveAsync(key);
+            }
+
+            return result;
         }
     }
 }

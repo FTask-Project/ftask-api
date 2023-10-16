@@ -9,5 +9,6 @@ namespace FTask.Service.IService
         Task<Task?> GetTaskById(int id);
         Task<IEnumerable<Task>> GetTasks(int page, int quantity, string filter, int? semsesterId, int? departmentId, int? subjectId, int? status);
         Task<ServiceResponse> CreateNewTask(TaskVM newEntity);
+        Task<bool> DeleteTask(int id);
     }
 }

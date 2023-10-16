@@ -3,6 +3,7 @@ using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM.CreateTaskActivity;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FTask.API.Controllers
 {
@@ -67,7 +68,7 @@ namespace FTask.API.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(DepartmentResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
-        public async Task<IActionResult> CreateDepartment([FromBody] CreateTaskActivityVM resource)
+        public async Task<IActionResult> CreateTaskActivity([FromBody] CreateTaskActivityVM resource)
         {
             if (ModelState.IsValid)
             {
@@ -97,6 +98,53 @@ namespace FTask.API.Controllers
                 else
                 {
                     return BadRequest(_mapper.Map<ServiceResponseVM>(result));
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> DeleteTaskActivity([FromQuery] int id)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var result = await _taskActivityService.DeleteTaskActivity(id);
+                    if (result)
+                    {
+                        return Ok(new ServiceResponseVM
+                        {
+                            IsSuccess = true,
+                            Message = "Delete task activity successfully"
+                        });
+                    }
+                    else
+                    {
+                        return BadRequest(new ServiceResponseVM
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to delete task activity"
+                        });
+                    }
+                }
+                catch (DbUpdateException ex)
+                {
+                    return BadRequest(new ServiceResponseVM
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to delete task activity",
+                        Errors = new string[1] { ex.Message }
+                    });
                 }
             }
             else

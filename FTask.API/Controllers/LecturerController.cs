@@ -3,6 +3,7 @@ using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM.CreateLecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FTask.API.Controllers
 {
@@ -99,6 +100,53 @@ namespace FTask.API.Controllers
                 else
                 {
                     return BadRequest(_mapper.Map<ServiceResponseVM>(result));
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> DeleteLecturer([FromQuery] Guid id)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var result = await _lecturerService.DeleteLecturer(id);
+                    if (result)
+                    {
+                        return Ok(new ServiceResponseVM
+                        {
+                            IsSuccess = true,
+                            Message = "Delete lecturer successfully"
+                        });
+                    }
+                    else
+                    {
+                        return BadRequest(new ServiceResponseVM
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to delete lecturer"
+                        });
+                    }
+                }
+                catch (DbUpdateException ex)
+                {
+                    return BadRequest(new ServiceResponseVM
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to delete lecturer",
+                        Errors = new string[1] { ex.Message }
+                    });
                 }
             }
             else

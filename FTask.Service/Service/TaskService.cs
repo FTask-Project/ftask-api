@@ -42,7 +42,7 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var task = await _unitOfWork.TaskRepository.FindAsync(id);
+                var task = await _unitOfWork.TaskRepository.Get(t => !t.Deleted && t.TaskId == id).FirstOrDefaultAsync();
                 if (task is not null)
                 {
                     await _cacheService.SetAsync(key, task);
@@ -62,7 +62,7 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var taskList = _unitOfWork.TaskRepository
-                    .Get(t => t.TaskTitle.Contains(filter))
+                    .Get(t => !t.Deleted && t.TaskTitle.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .AsNoTracking();
@@ -264,6 +264,25 @@ namespace FTask.Service.IService
                     Errors = new List<string>() { ex.Message }
                 };
             }
+        }
+
+        public async Task<bool> DeleteTask(int id)
+        {
+            var existedTask = await _unitOfWork.TaskRepository.Get(t => !t.Deleted && t.TaskId == id).FirstOrDefaultAsync();
+            if(existedTask is null)
+            {
+                return false;
+            }
+            _unitOfWork.TaskRepository.Remove(existedTask);
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result)
+            {
+                string key = CacheKeyGenerator.GetKeyById(nameof(Task), id.ToString());
+                await _cacheService.RemoveAsync(key);
+            }
+
+            return result;
         }
     }
 }

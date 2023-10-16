@@ -8,5 +8,6 @@ namespace FTask.Service.IService
         Task<Department?> GetDepartmentById(int id);
         Task<IEnumerable<Department>> GetDepartments(int page, int quantity, string filter, Guid? headerId);
         Task<ServiceResponse> CreateNewDepartment(Department newEntity);
+        Task<bool> DeleteDepartment(int id);
     }
 }

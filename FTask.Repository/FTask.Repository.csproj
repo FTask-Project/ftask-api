@@ -11,4 +11,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.22" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="application\" />
+  </ItemGroup>
+
 </Project>

@@ -1,4 +1,5 @@
-﻿using FTask.Repository.Data;
+﻿using FTask.Repository.Common;
+using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
@@ -12,15 +13,18 @@ namespace FTask.Service.IService
         private readonly ICheckQuantityTaken _checkQuantityTaken;
         private readonly ICacheService<Department> _cacheService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUserService _currentUserService;
         public DepartmentService(
             ICheckQuantityTaken checkQuantityTaken,
             ICacheService<Department> cacheService,
-            IUnitOfWork unitOfWork
+            IUnitOfWork unitOfWork,
+            ICurrentUserService currentUserService
             )
         {
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _unitOfWork = unitOfWork;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Department?> GetDepartmentById(int id)
@@ -30,7 +34,7 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var department = await _unitOfWork.DepartmentRepository.FindAsync(id);
+                var department = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == id).FirstOrDefaultAsync();
                 if (department is not null)
                 {
                     await _cacheService.SetAsync(key, department);
@@ -50,7 +54,7 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var departmentList = _unitOfWork.DepartmentRepository
-                    .Get(d => d.DepartmentName.Contains(filter) || d.DepartmentCode.Contains(filter))
+                    .Get(d => !d.Deleted && (d.DepartmentName.Contains(filter) || d.DepartmentCode.Contains(filter)))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .AsNoTracking();
@@ -96,10 +100,20 @@ namespace FTask.Service.IService
                     };
                 }
 
+                newEntity.CreatedBy = _currentUserService.UserId;
+                newEntity.CreatedAt = DateTime.Now;
+
                 await _unitOfWork.DepartmentRepository.AddAsync(newEntity);
 
                 if (newEntity.Subjects.Count() > 0)
                 {
+                    var list = newEntity.Subjects.ToList();
+                    for (int i = 0; i < list.Count(); i++)
+                    {
+                        list[i].CreatedBy = _currentUserService.UserId;
+                        list[i].CreatedAt = DateTime.Now;
+                    }
+                    newEntity.Subjects = list;
                     await _unitOfWork.SubjectRepository.AddRangeAsync(newEntity.Subjects);
                 }
 
@@ -132,6 +146,25 @@ namespace FTask.Service.IService
                     Errors = new List<string>() { ex.Message }
                 };
             }
+        }
+
+        public async Task<bool> DeleteDepartment(int id)
+        {
+            var existedDepartment = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == id).FirstOrDefaultAsync();
+            if(existedDepartment is null)
+            {
+                return false;
+            }
+            _unitOfWork.DepartmentRepository.Remove(existedDepartment);
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result)
+            {
+                string key = CacheKeyGenerator.GetKeyById(nameof(Department), id.ToString());
+                await _cacheService.RemoveAsync(key);
+            }
+
+            return result;
         }
     }
 }

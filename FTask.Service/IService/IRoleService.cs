@@ -10,5 +10,6 @@ namespace FTask.Service.IService
         Task<Role?> GetRoleById(Guid id);
         Task<IEnumerable<Role>> GetRoles(int page, int quantity, string filter);
         Task<ServiceResponse> CreateNewRole(RoleVM newEntity);
+        Task<bool> DeleteRole(Guid id);
     }
 }

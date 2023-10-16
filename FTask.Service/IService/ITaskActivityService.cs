@@ -9,5 +9,6 @@ namespace FTask.Service.IService
         Task<TaskActivity?> GetTaskActivityById(int id);
         Task<IEnumerable<TaskActivity>> GetTaskActivities(int page, int quantity, string filter, int? taskLecturerId);
         Task<ServiceResponse> CreateNewActivity(CreateTaskActivityVM newEntity);
+        Task<bool> DeleteTaskActivity(int id);
     }
 }

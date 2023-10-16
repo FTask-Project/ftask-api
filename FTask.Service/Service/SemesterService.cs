@@ -1,4 +1,5 @@
 ﻿using Duende.IdentityServer.Extensions;
+using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
@@ -15,17 +16,20 @@ namespace FTask.Service.IService
         private readonly ICheckQuantityTaken _checkQuantityTaken;
         private readonly ICacheService<Semester> _cacheService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUserService _currentUserService;
         public SemesterService(
             ICheckSemesterPeriod checkSemesterPeriod,
             ICheckQuantityTaken checkQuantityTaken,
             ICacheService<Semester> cacheService,
-            IUnitOfWork unitOfWork
+            IUnitOfWork unitOfWork,
+            ICurrentUserService currentUserService
             )
         {
             _checkSemesterPeriod = checkSemesterPeriod;
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _unitOfWork = unitOfWork;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Semester?> GetSemesterById(int id)
@@ -35,7 +39,7 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var semester = await _unitOfWork.SemesterRepository.FindAsync(id);
+                var semester = await _unitOfWork.SemesterRepository.Get(s => !s.Deleted && s.SemesterId == id).FirstOrDefaultAsync();
                 if (semester is not null)
                 {
                     await _cacheService.SetAsync(key, semester);
@@ -55,7 +59,7 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var semesterList = _unitOfWork.SemesterRepository
-                    .Get(s => s.SemesterCode.Contains(filter))
+                    .Get(s => !s.Deleted && s.SemesterCode.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity);
             return await semesterList.ToArrayAsync();
@@ -120,7 +124,9 @@ namespace FTask.Service.IService
                 {
                     SemesterCode = newEntity.SemesterCode,
                     StartDate = newEntity.StartDate,
-                    EndDate = newEntity.EndDate
+                    EndDate = newEntity.EndDate,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = _currentUserService.UserId
                 };
 
                 await _unitOfWork.SemesterRepository.AddAsync(newSemester);
@@ -153,6 +159,25 @@ namespace FTask.Service.IService
                     Errors = new List<string>() { ex.Message }
                 };
             }
+        }
+
+        public async Task<bool> DeleteSemester(int id)
+        {
+            var existedSemester = await _unitOfWork.SemesterRepository.Get(s => !s.Deleted && s.SemesterId == id).FirstOrDefaultAsync();
+            if(existedSemester is null)
+            {
+                return false;
+            }
+            _unitOfWork.SemesterRepository.Remove(existedSemester);
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result)
+            {
+                string key = CacheKeyGenerator.GetKeyById(nameof(Semester), id.ToString());
+                await _cacheService.RemoveAsync(key);
+            }
+
+            return result;
         }
     }
 }

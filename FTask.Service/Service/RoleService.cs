@@ -1,4 +1,6 @@
-﻿using FTask.Repository.Data;
+﻿using FTask.Repository.Common;
+using FTask.Repository.Data;
+using FTask.Repository.Entity;
 using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
@@ -15,21 +17,24 @@ namespace FTask.Service.IService
         private readonly ICacheService<Role> _cacheService;
         private readonly RoleManager<Role> _roleManager;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUserService _currentUserService;
         public RoleService(
             ICheckQuantityTaken checkQuantityTaken,
             ICacheService<Role> cacheService,
             RoleManager<Role> roleManager,
-            IUnitOfWork unitOfWork
+            IUnitOfWork unitOfWork,
+            ICurrentUserService currentUserService
             )
         {
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _roleManager = roleManager;
             _unitOfWork = unitOfWork;
+            _currentUserService = currentUserService;
         }
         public async Task<IEnumerable<Role>> GetRolesByName(IEnumerable<string> roleNames)
         {
-            return await _roleManager.Roles.Where(r => roleNames.Contains(r.Name)).ToArrayAsync();
+            return await _roleManager.Roles.Where(r => !r.Deleted && roleNames.Contains(r.Name)).ToArrayAsync();
         }
 
         public async Task<Role?> GetRoleById(Guid id)
@@ -39,7 +44,7 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var role = await _roleManager.FindByIdAsync(id.ToString());
+                var role = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && r.Id == id).FirstOrDefaultAsync();
                 if (role is not null)
                 {
                     await _cacheService.SetAsync(key, role);
@@ -59,7 +64,7 @@ namespace FTask.Service.IService
             quantity = _checkQuantityTaken.check(quantity);
 
             var roleList = _roleManager.Roles
-                    .Where(r => r.Name.Contains(filter))
+                    .Where(r => !r.Deleted && r.Name.Contains(filter))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity);
             return await roleList.ToArrayAsync();
@@ -82,6 +87,8 @@ namespace FTask.Service.IService
                 Role newRole = new Role
                 {
                     Name = newEntity.RoleName,
+                    CreatedBy = _currentUserService.UserId,
+                    CreatedAt = DateTime.Now
                 };
 
                 var result = await _roleManager.CreateAsync(newRole);
@@ -115,6 +122,25 @@ namespace FTask.Service.IService
                     Errors = new List<string>() { ex.Message }
                 };
             }
+        }
+
+        public async Task<bool> DeleteRole(Guid id)
+        {
+            var existedRole = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && r.Id == id).FirstOrDefaultAsync();
+            if(existedRole is null)
+            {
+                return false;
+            }
+            _unitOfWork.RoleRepository.Remove(existedRole);
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result)
+            {
+                string key = CacheKeyGenerator.GetKeyById(nameof(Role), id.ToString());
+                await _cacheService.RemoveAsync(key);
+            }
+
+            return result;
         }
     }
 }

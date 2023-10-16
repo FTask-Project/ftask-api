@@ -4,6 +4,7 @@ using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM.CreateDepartment;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FTask.API.Controllers
 {
@@ -101,6 +102,53 @@ namespace FTask.API.Controllers
                 else
                 {
                     return BadRequest(_mapper.Map<ServiceResponseVM>(result));
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> DeleteDepartment([FromQuery] int id)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var result = await _departmentService.DeleteDepartment(id);
+                    if (result)
+                    {
+                        return Ok(new ServiceResponseVM
+                        {
+                            IsSuccess = true,
+                            Message = "Delete department successfully"
+                        });
+                    }
+                    else
+                    {
+                        return BadRequest(new ServiceResponseVM
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to delete department"
+                        });
+                    }
+                }
+                catch(DbUpdateException ex)
+                {
+                    return BadRequest(new ServiceResponseVM
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to delete department",
+                        Errors = new string[1] { ex.Message }
+                    });
                 }
             }
             else

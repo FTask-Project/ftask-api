@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Serialization;
 using System.Reflection;
 
-namespace FTask.Service.Utilize
+namespace FTask.Service.Common
 {
     public class PrivateResolver : DefaultContractResolver
     {

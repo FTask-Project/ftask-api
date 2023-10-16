@@ -1,4 +1,4 @@
-﻿using FTask.Repository.application;
+﻿using FTask.Repository.Common;
 using System.Security.Claims;
 
 namespace FTask.API.Service;
@@ -12,11 +12,9 @@ public class CurrentUserService : ICurrentUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public Guid UserId =>
-        Guid.Parse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ??
-            throw new InvalidOperationException("Unauthenticated User"));
+    public string UserId =>
+        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "Unauthenticated User";
 
     public string UserName =>
-        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name) ??
-            throw new InvalidOperationException("Unauthenticated User");
+        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name) ?? "Unauthenticated User";
 }

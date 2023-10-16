@@ -9,5 +9,6 @@ namespace FTask.Service.IService
         Task<Semester?> GetSemesterById(int id);
         Task<IEnumerable<Semester>> GetSemesters(int page, int quantity, string filter);
         Task<ServiceResponse> CreateNewSemester(SemesterVM newEntity);
+        Task<bool> DeleteSemester(int id);
     }
 }

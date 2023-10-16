@@ -5,7 +5,7 @@ using FTask.API.Middleware;
 using FTask.API.Permission;
 using FTask.API.Service;
 using FTask.Repository;
-using FTask.Repository.application;
+using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Identity;
 using FTask.Service;
