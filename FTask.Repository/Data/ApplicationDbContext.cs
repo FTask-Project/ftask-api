@@ -1,5 +1,4 @@
-﻿using FTask.Repository.application;
-using FTask.Repository.Entity;
+﻿using FTask.Repository.Entity;
 using FTask.Repository.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
