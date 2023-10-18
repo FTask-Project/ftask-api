@@ -1,4 +1,5 @@
-﻿using CloudinaryDotNet;
+﻿using AutoMapper;
+using CloudinaryDotNet;
 using FTask.API.Common;
 using FTask.API.Mapper;
 using FTask.API.Middleware;
@@ -122,13 +123,22 @@ namespace FTask.API
 
             services.AddRepository(Configuration);
             services.AddService(Configuration);
-            services.AddAutoMapper(typeof(ModelToResponse), typeof(RequestToModel));
+
+            //services.AddAutoMapper(typeof(ModelToResponse), typeof(RequestToModel));
+
+
             services.AddScoped<IBackgroundTaskService, BackgroundTaskService>();
             services.AddScoped<IJWTTokenService<IdentityUser<Guid>>, JWTTokenService<IdentityUser<Guid>>>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
             services.AddSingleton<IAuthorizationPolicyProvider, AuthorizationPolicyProvider>();
             services.AddScoped<IAuthorizationHandler, HasScopeHandler>();
+
+            services.AddSingleton(provider => new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new RequestToModel(provider.GetService<ICurrentUserService>()!));
+                cfg.AddProfile(new ModelToResponse());
+            }).CreateMapper());
 
             services.AddControllers(options =>
             {

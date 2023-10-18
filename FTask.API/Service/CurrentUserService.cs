@@ -17,4 +17,7 @@ public class CurrentUserService : ICurrentUserService
 
     public string UserName =>
         _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name) ?? "Unauthenticated User";
+
+    public IEnumerable<string> Roles =>
+        _httpContextAccessor.HttpContext?.User?.FindAll(c => c.Type == "Scope").Select(c => c.Value) ?? Enumerable.Empty<string>();
 }
