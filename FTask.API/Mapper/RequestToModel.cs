@@ -2,6 +2,7 @@
 using FTask.Repository.Common;
 using FTask.Repository.Entity;
 using FTask.Service.ViewModel.RequestVM.CreateDepartment;
+using FTask.Service.ViewModel.RequestVM.CreateSemester;
 using FTask.Service.ViewModel.RequestVM.CreateSubject;
 using FTask.Service.ViewModel.RequestVM.CreateTask;
 using FTask.Service.ViewModel.RequestVM.CreateTaskActivity;
@@ -23,6 +24,10 @@ namespace FTask.API.Mapper
 
             CreateMap<DepartmentVM, Department>()
                 .ForMember(dest => dest.Subjects, opt => opt.MapFrom(src => src.Subjects));
+
+            CreateMap<SemesterVM, Semester>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.Now))
+                .ForMember(dest => dest.CreatedBy, opt => opt.MapFrom(src => _currentUserService.UserId));
 
             CreateMap<TaskVM, Task>()
                 .ForMember(dest => dest.TaskLecturers, opt => opt.MapFrom(src => src.TaskLecturers))

@@ -12,18 +12,21 @@ public class ModelToResponse : Profile
     {
         CreateMap<ServiceResponse, ServiceResponseVM>();
 
-        CreateMap<User, UserInformationResponseVM>();
-
         CreateMap<Role, RoleResponseVM>();
 
-        CreateMap<Lecturer, UserInformationResponseVM>();
+        CreateMap<User, UserInformationResponseVM>()
+            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles));
+
+        CreateMap<Lecturer, LecturerInformationResponseVM>()
+            .ForMember(dest => dest.Subjects, opt => opt.MapFrom(src => src.Subjects));
 
         CreateMap<Lecturer, LecturerResponseVM>();
 
         CreateMap<Subject, SubjectResponseVM>();
 
         CreateMap<Task, TaskResponseVM>()
-            .ForMember(dest => dest.TaskLecturers, opt => opt.MapFrom(src => src.TaskLecturers));
+            .ForMember(dest => dest.TaskLecturers, opt => opt.MapFrom(src => src.TaskLecturers))
+            .ForMember(dest => dest.Attachments, opt => opt.MapFrom(src => src.Attachments));
 
         CreateMap<Department, DepartmentResponseVM>()
             .ForMember(dest => dest.DepartmentHead, opt => opt.MapFrom(src => src.DepartmentHead))
@@ -33,11 +36,16 @@ public class ModelToResponse : Profile
 
         CreateMap<Semester, SemesterResponseVM>();
 
-        CreateMap<TaskLecturer, TaskLecturerResponseVM>();
+        CreateMap<TaskLecturer, TaskLecturerResponseVM>()
+            .ForMember(dest => dest.TaskActivities, opt => opt.MapFrom(src => src.TaskActivities));
 
         CreateMap<TaskActivity, TaskActivityResponseVM>();
 
         CreateMap<TaskReport, TaskReportResponseVM>()
-            .ForMember(dest => dest.Evidences, opt => opt.MapFrom(src => src.Evidences.Select(e => e.Url)));
+            .ForMember(dest => dest.Evidences, opt => opt.MapFrom(src => src.Evidences));
+
+        CreateMap<Evidence, EvidenceResponseVM>();
+
+        CreateMap<Attachment, AttachmentResponseVM>();
     }
 }
