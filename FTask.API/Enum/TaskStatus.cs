@@ -4,7 +4,6 @@
     {
         ToDo = 1,
         InProgress = 2,
-        Done = 3,
-        Overdue = 4
+        End = 3
     }
 }

@@ -96,6 +96,7 @@ public class TaskResponseVM : Auditable
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public int TaskLevel { get; set; }
+    public int TaskStatus { get; set; }
     public string? Location { get; set; }
     public SemesterResponseVM? Semester { get; set; }
     public DepartmentResponseVM? Department { get; set; }
@@ -126,6 +127,7 @@ public class TaskActivityResponseVM : Auditable
     public string? ActivityTitle { get; set; }
     public string? ActivityDescription { get; set; }
     public DateTime Deadline { get; set; }
+    public int TaskActivityStatus { get; set; }
     public TaskLecturerResponseVM? TaskLecturer { get; set; }
     public TaskReportResponseVM? TaskReport { get; set; }
 }
