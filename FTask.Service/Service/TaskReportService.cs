@@ -5,6 +5,7 @@ using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
+using FTask.Service.Enum;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM.CreateTaskReport;
 using FTask.Service.ViewModel.ResposneVM;
@@ -82,14 +83,29 @@ namespace FTask.Service.IService
 
         public async Task<ServiceResponse> CreateNewTaskReport(TaskReportVM newEntity)
         {
-            var existedTaskActivity = await _unitOfWork.TaskActivityRepository.FindAsync(newEntity.TaskActivityId);
+            var existedTaskActivity = await _unitOfWork.TaskActivityRepository
+                .Get(ta => ta.TaskActivityId == newEntity.TaskActivityId, new Expression<Func<TaskActivity, object>>[]
+                {
+                    ta => ta.TaskReport!
+                }).FirstOrDefaultAsync();
+
             if (existedTaskActivity is null)
             {
                 return new ServiceResponse
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task report",
-                    Errors = new string[1] { "Can not find provided task activity" }
+                    Errors = new string[1] { "Can not find task activity" }
+                };
+            }
+
+            if(existedTaskActivity.TaskReport is not null)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new task report",
+                    Errors = new string[1] { "You already made task report for this activity" }
                 };
             }
 
@@ -113,10 +129,14 @@ namespace FTask.Service.IService
                             errors.Enqueue(uploadResult.Error.Message);
                             return null;
                         }
-                        return uploadResult.SecureUrl.ToString();
+                        return new
+                        {
+                            Url = uploadResult.SecureUrl.ToString(),
+                            FileName = file.FileName
+                        };
                     });
 
-                var urls = await System.Threading.Tasks.Task.WhenAll(uploadTasks);
+                var uploadResult = await System.Threading.Tasks.Task.WhenAll(uploadTasks);
 
                 if (errors.Count() > 0)
                 {
@@ -127,14 +147,15 @@ namespace FTask.Service.IService
                         Errors = errors
                     };
                 }
-                if (urls.Count() > 0)
+                if (uploadResult.Count() > 0)
                 {
                     var evidences = new List<Evidence>();
-                    foreach (var url in urls)
+                    foreach (var item in uploadResult)
                     {
                         Evidence evidence = new Evidence
                         {
-                            Url = url!,
+                            Url = item!.Url,
+                            FileName = item!.FileName,
                             CreatedAt = DateTime.Now,
                             CreatedBy = _currentUserService.UserId
                         };
@@ -143,6 +164,16 @@ namespace FTask.Service.IService
                     }
                     newTaskReport.Evidences = evidences;
                 }
+            }
+
+            if(existedTaskActivity.TaskActivityStatus != (int)TaskActivityStatus.Overdue && existedTaskActivity.TaskActivityStatus != (int)TaskActivityStatus.Done)
+            {
+                existedTaskActivity.TaskActivityStatus = (int)TaskActivityStatus.Done;
+                _unitOfWork.TaskActivityRepository.Update(existedTaskActivity);
+
+                // Need to remove cache data after update
+                string key = CacheKeyGenerator.GetKeyById(nameof(TaskActivity), existedTaskActivity.TaskActivityId.ToString());
+                var task = _cacheService.RemoveAsync(key);
             }
 
             await _unitOfWork.TaskReportRepository.AddAsync(newTaskReport);

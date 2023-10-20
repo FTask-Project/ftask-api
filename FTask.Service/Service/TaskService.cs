@@ -4,6 +4,7 @@ using CloudinaryDotNet.Actions;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
+using FTask.Service.Enum;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM.CreateTask;
 using FTask.Service.ViewModel.ResposneVM;
@@ -11,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using Task = FTask.Repository.Entity.Task;
+using TaskStatus = FTask.Service.Enum.TaskStatus;
 
 namespace FTask.Service.IService
 {
@@ -134,7 +136,7 @@ namespace FTask.Service.IService
                 };
             }
 
-            int level = 1;
+            int level = (int)TaskLevel.Semester;
             if (newEntity.DepartmentId is not null)
             {
                 var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(newEntity.DepartmentId ?? 0);
@@ -147,7 +149,7 @@ namespace FTask.Service.IService
                         Errors = new string[1] { "Department not found "}
                     };
                 }
-                level = 2;
+                level = (int)TaskLevel.Department;
                 if (newEntity.SubjectId is not null)
                 {
                     var existedSubject = await _unitOfWork.SubjectRepository.FindAsync(newEntity.SubjectId ?? 0);
@@ -160,7 +162,7 @@ namespace FTask.Service.IService
                             Errors = new string[1] { "Subject not found"}
                         };
                     }
-                    level = 3;
+                    level = (int)TaskLevel.Subject;
                 }
             }
 
@@ -184,6 +186,15 @@ namespace FTask.Service.IService
             var newTask = _mapper.Map<Task>(newEntity);
             newTask.TaskLevel = level;
             newTask.Semester = currentSemester;
+
+            if(currentDateTime >= newTask.StartDate)
+            {
+                newTask.TaskStatus = (int)TaskStatus.InProgress;
+            }
+            else
+            {
+                newTask.TaskStatus = (int)TaskStatus.ToDo;
+            }
 
             var options = new ParallelOptions
             {

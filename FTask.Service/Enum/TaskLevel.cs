@@ -1,4 +1,4 @@
-﻿namespace FTask.API.Enum
+﻿namespace FTask.Service.Enum
 {
     public enum TaskLevel
     {

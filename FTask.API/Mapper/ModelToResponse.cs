@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
-using FTask.API.Enum;
 using FTask.Repository.Entity;
 using FTask.Repository.Identity;
 using FTask.Service.ViewModel.ResposneVM;
 using Task = FTask.Repository.Entity.Task;
-using TaskStatus = FTask.API.Enum.TaskStatus;
 
 namespace FTask.API.Mapper;
 

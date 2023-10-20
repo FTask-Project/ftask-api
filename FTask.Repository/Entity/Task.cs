@@ -12,7 +12,7 @@ public class Task : Auditable
     public DateTime EndDate { get; set; }
     public int TaskLevel { get; set; } = 1;
     public string? Location { get; set; }
-    public int TaskStatus { get; set; }
+    public int TaskStatus { get; set; } = 1;
 
     public IEnumerable<TaskLecturer> TaskLecturers { get; set; } = new List<TaskLecturer>();
 
