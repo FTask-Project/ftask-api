@@ -6,6 +6,7 @@ using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FTask.Service.IService
 {
@@ -31,7 +32,15 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var taskLecturer = await _unitOfWork.TaskLecturerRepository.Get(t => !t.Deleted && t.TaskLecturerId == id).FirstOrDefaultAsync();
+                var include = new Expression<Func<TaskLecturer, object>>[]
+                {
+                    tl => tl.Task!,
+                    tl => tl.Lecturer!,
+                    tl => tl.TaskActivities
+                };
+                var taskLecturer = await _unitOfWork.TaskLecturerRepository
+                    .Get(t => !t.Deleted && t.TaskLecturerId == id, include)
+                    .FirstOrDefaultAsync();
                 if (taskLecturer is not null)
                 {
                     await _cacheService.SetAsync(key, taskLecturer);
@@ -130,6 +139,15 @@ namespace FTask.Service.IService
                     IsSuccess = false,
                     Message = "Failed to assign task",
                     Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to assign task",
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }

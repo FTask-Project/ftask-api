@@ -10,6 +10,7 @@ using FTask.Service.ViewModel.RequestVM.CreateTaskReport;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
+using System.Linq.Expressions;
 
 namespace FTask.Service.IService
 {
@@ -39,7 +40,14 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var taskReport = await _unitOfWork.TaskReportRepository.Get(tr => !tr.Deleted && tr.TaskReportId == id).FirstOrDefaultAsync();
+                var include = new Expression<Func<TaskReport, object>>[]
+                {
+                    tr => tr.TaskActivity!,
+                    tr => tr.Evidences
+                };
+                var taskReport = await _unitOfWork.TaskReportRepository
+                    .Get(tr => !tr.Deleted && tr.TaskReportId == id, include)
+                    .FirstOrDefaultAsync();
                 if (taskReport is not null)
                 {
                     await _cacheService.SetAsync(key, taskReport);
@@ -169,6 +177,15 @@ namespace FTask.Service.IService
                     IsSuccess = false,
                     Message = "Failed to create new task report",
                     Errors = new string[1] { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new task report",
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }

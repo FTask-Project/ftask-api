@@ -6,6 +6,7 @@ using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using CreateTaskActivityVM = FTask.Service.ViewModel.RequestVM.CreateTaskActivity.CreateTaskActivityVM;
 
 namespace FTask.Service.IService
@@ -34,7 +35,11 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var taskActivity = await _unitOfWork.TaskActivityRepository.Get(a => !a.Deleted && a.TaskActivityId == id).FirstOrDefaultAsync();
+                var taskActivity = await _unitOfWork.TaskActivityRepository
+                    .Get(a => !a.Deleted && a.TaskActivityId == id)
+                    .Include(nameof(TaskActivity.TaskReport) + "." + nameof(TaskReport.Evidences))
+                    .Include(nameof(TaskActivity.TaskLecturer) + "." + nameof(TaskLecturer.Task))
+                    .FirstOrDefaultAsync();
                 if (taskActivity is not null)
                 {
                     await _cacheService.SetAsync(key, taskActivity);
@@ -113,6 +118,15 @@ namespace FTask.Service.IService
                     IsSuccess = false,
                     Message = "Failed to create new task",
                     Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new task",
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }

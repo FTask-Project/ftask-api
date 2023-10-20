@@ -9,6 +9,7 @@ using FTask.Service.ViewModel.RequestVM.CreateTask;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.Service.IService
@@ -20,19 +21,22 @@ namespace FTask.Service.IService
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly Cloudinary _cloudinary;
+        private readonly ICreateTaskValidation _createTaskValidation;
 
         public TaskService(
             IUnitOfWork unitOfWork,
             ICheckQuantityTaken checkQuantityTaken,
             ICacheService<Task> cacheService,
             IMapper mapper,
-            Cloudinary cloudinary)
+            Cloudinary cloudinary,
+            ICreateTaskValidation createTaskValidation)
         {
             _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _mapper = mapper;
             _cloudinary = cloudinary;
+            _createTaskValidation = createTaskValidation;
         }
 
         public async Task<Task?> GetTaskById(int id)
@@ -42,7 +46,17 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var task = await _unitOfWork.TaskRepository.Get(t => !t.Deleted && t.TaskId == id).FirstOrDefaultAsync();
+                var include = new Expression<Func<Task, object>>[]
+                {
+                    t => t.Semester!,
+                    t => t.Department!,
+                    t => t.Subject!,
+                    t => t.Attachments,
+                };
+                var task = await _unitOfWork.TaskRepository
+                    .Get(t => !t.Deleted && t.TaskId == id, include)
+                    .Include(nameof(Task.TaskLecturers) + "." + nameof(TaskLecturer.Lecturer))
+                    .FirstOrDefaultAsync();
                 if (task is not null)
                 {
                     await _cacheService.SetAsync(key, task);
@@ -92,7 +106,23 @@ namespace FTask.Service.IService
 
         public async Task<ServiceResponse> CreateNewTask(TaskVM newEntity)
         {
-            int level = 1;
+            var serviceResponse = await _createTaskValidation.CanAssignTask(newEntity.TaskLecturers.Select(t => t.LecturerId), _unitOfWork.DepartmentRepository);
+            if (!serviceResponse.IsSuccess)
+            {
+                return serviceResponse;
+            }
+
+            var currentDateTime = DateTime.Now;
+            var currentSemester = await _unitOfWork.SemesterRepository.Get(s => currentDateTime >= s.StartDate && currentDateTime <= s.EndDate).FirstOrDefaultAsync();
+            if (currentSemester is null)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new task",
+                    Errors = new string[1] { "New Semester has not yet started" }
+                };
+            }
 
             if (newEntity.StartDate > newEntity.EndDate)
             {
@@ -104,6 +134,7 @@ namespace FTask.Service.IService
                 };
             }
 
+            int level = 1;
             if (newEntity.DepartmentId is not null)
             {
                 var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(newEntity.DepartmentId ?? 0);
@@ -150,18 +181,6 @@ namespace FTask.Service.IService
                 }
             }
 
-            var currentDateTime = DateTime.Now;
-            var currentSemester = await _unitOfWork.SemesterRepository.Get(s => currentDateTime >= s.StartDate && currentDateTime <= s.EndDate).FirstOrDefaultAsync();
-            if (currentSemester is null)
-            {
-                return new ServiceResponse
-                {
-                    IsSuccess = false,
-                    Message = "Failed to create new task",
-                    Errors = new string[1] { "Can not find semester" }
-                };
-            }
-
             var newTask = _mapper.Map<Task>(newEntity);
             newTask.TaskLevel = level;
             newTask.Semester = currentSemester;
@@ -189,10 +208,15 @@ namespace FTask.Service.IService
                             errors.Enqueue(uploadResult.Error.Message);
                             return null;
                         }
-                        return uploadResult.SecureUrl.ToString();
+                        return new
+                        {
+                            Url = uploadResult.SecureUrl.ToString(),
+                            FileName = file.FileName
+                        };
+                        //return uploadResult.SecureUrl.ToString();
                     });
 
-                var urls = await System.Threading.Tasks.Task.WhenAll(uploadTasks);
+                var result = await System.Threading.Tasks.Task.WhenAll(uploadTasks);
 
                 if (errors.Count() > 0)
                 {
@@ -203,32 +227,21 @@ namespace FTask.Service.IService
                         Errors = errors
                     };
                 }
-                if (urls.Count() > 0)
+                if (result.Count() > 0)
                 {
                     var attachments = new List<Attachment>();
-                    foreach (var url in urls)
+                    foreach (var item in result)
                     {
                         Attachment attachment = new Attachment
                         {
-                            Url = url!,
+                            Url = item!.Url,
+                            FileName = item!.FileName,
                         };
                         await _unitOfWork.AttachmentRepository.AddAsync(attachment);
                         attachments.Add(attachment);
                     }
                     newTask.Attachments = attachments;
                 }
-            }
-
-            if (newTask.TaskLecturers.Count() > 0)
-            {
-                Parallel.ForEach(newTask.TaskLecturers, options, async taskLecturer =>
-                {
-                    await _unitOfWork.TaskLecturerRepository.AddAsync(taskLecturer);
-                    foreach (var activity in taskLecturer.TaskActivities)
-                    {
-                        await _unitOfWork.TaskActivityRepository.AddAsync(activity);
-                    }
-                });
             }
 
             await _unitOfWork.TaskRepository.AddAsync(newTask);
@@ -262,6 +275,15 @@ namespace FTask.Service.IService
                     IsSuccess = false,
                     Message = "Failed to create new task",
                     Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new task",
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }

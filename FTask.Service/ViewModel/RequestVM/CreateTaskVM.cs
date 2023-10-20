@@ -8,7 +8,9 @@ public class TaskVM
     [Required]
     public string TaskTitle { get; set; } = "No Title";
     public string? TaskContent { get; set; }
+    [Required]
     public DateTime StartDate { get; set; }
+    [Required]
     public DateTime EndDate { get; set; }
     public string? Location { get; set; }
     public int? SubjectId { get; set; }

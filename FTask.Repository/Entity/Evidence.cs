@@ -7,6 +7,7 @@ namespace FTask.Repository.Entity
         [Key]
         public int EvidenceId { get; set; }
         public string Url { get; set; } = "Undefined";
+        public string FileName { get; set; } = "Undefined";
 
         public TaskReport? TaskReport { get; set; }
         public int TaskReportId { get; set; }
