@@ -72,25 +72,25 @@ namespace FTask.Service.IService
 
         public async Task<ServiceResponse> CreateNewRole(RoleVM newEntity)
         {
+            var existedRole = await _roleManager.FindByNameAsync(newEntity.RoleName);
+            if (existedRole is not null)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new role",
+                    Errors = new string[1] { $"Role name {newEntity.RoleName} is already taken" }
+                };
+            }
+            Role newRole = new Role
+            {
+                Name = newEntity.RoleName,
+                CreatedBy = _currentUserService.UserId,
+                CreatedAt = DateTime.Now
+            };
+
             try
             {
-                var existedRole = await _roleManager.FindByNameAsync(newEntity.RoleName);
-                if (existedRole is not null)
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new role",
-                        Errors = new string[1] { $"Role name {newEntity.RoleName} is already taken" }
-                    };
-                }
-                Role newRole = new Role
-                {
-                    Name = newEntity.RoleName,
-                    CreatedBy = _currentUserService.UserId,
-                    CreatedAt = DateTime.Now
-                };
-
                 var result = await _roleManager.CreateAsync(newRole);
                 if (result.Succeeded)
                 {
@@ -120,6 +120,15 @@ namespace FTask.Service.IService
                     IsSuccess = false,
                     Message = "Failed to create new role",
                     Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new role",
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }

@@ -5,6 +5,7 @@ using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FTask.Service.IService
 {
@@ -34,7 +35,13 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var subject = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && s.SubjectId == id).FirstOrDefaultAsync();
+                var include = new Expression<Func<Subject, object>>[1]
+                {
+                    s => s.Department!
+                };
+                var subject = await _unitOfWork.SubjectRepository
+                    .Get(s => !s.Deleted && s.SubjectId == id, include)
+                    .FirstOrDefaultAsync();
                 if (subject is not null)
                 {
                     await _cacheService.SetAsync(key, subject);
@@ -128,6 +135,15 @@ namespace FTask.Service.IService
                     IsSuccess = false,
                     Message = "Failed to create new subject",
                     Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new subject",
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }

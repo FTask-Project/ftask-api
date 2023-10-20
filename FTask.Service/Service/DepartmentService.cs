@@ -1,10 +1,12 @@
-﻿using FTask.Repository.Common;
+﻿using CloudinaryDotNet;
+using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FTask.Service.IService
 {
@@ -34,7 +36,13 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var department = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == id).FirstOrDefaultAsync();
+                Expression<Func<Department, object>>[] includes = new Expression<Func<Department, object>>[3]
+                {
+                    d => d.Lecturers,
+                    d => d.DepartmentHead!,
+                    d => d.Subjects
+                };
+                var department = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == id, includes).FirstOrDefaultAsync();
                 if (department is not null)
                 {
                     await _cacheService.SetAsync(key, department);
@@ -53,6 +61,7 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
+
             var departmentList = _unitOfWork.DepartmentRepository
                     .Get(d => !d.Deleted && (d.DepartmentName.Contains(filter) || d.DepartmentCode.Contains(filter)))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
@@ -69,54 +78,54 @@ namespace FTask.Service.IService
 
         public async Task<ServiceResponse> CreateNewDepartment(Department newEntity)
         {
-            // For create update delete, should catch DbUpdateException
-            try
+            // Check if lecturer with the given id exist
+            if (newEntity.DepartmentHeadId is not null)
             {
-                // Check if lecturer with the given id exist
-                if (newEntity.DepartmentHeadId is not null)
-                {
-                    var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync((Guid)newEntity.DepartmentHeadId);
-                    if (existedLecturer is null)
-                    {
-                        return new ServiceResponse
-                        {
-                            IsSuccess = false,
-                            Message = "Lecturer not found"
-                        };
-                    }
-                }
-
-                // check code and name are unique or not
-                var existedDepartment = await _unitOfWork.DepartmentRepository
-                    .Get(d => d.DepartmentCode == newEntity.DepartmentCode || d.DepartmentName == newEntity.DepartmentName)
-                    .FirstOrDefaultAsync();
-                if (existedDepartment is not null)
+                var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync((Guid)newEntity.DepartmentHeadId);
+                if (existedLecturer is null)
                 {
                     return new ServiceResponse
                     {
                         IsSuccess = false,
-                        Message = "Failed to create new department",
-                        Errors = new string[1] { "Department code or name already exist" }
+                        Message = "Lecturer not found"
                     };
                 }
+            }
 
-                newEntity.CreatedBy = _currentUserService.UserId;
-                newEntity.CreatedAt = DateTime.Now;
-
-                await _unitOfWork.DepartmentRepository.AddAsync(newEntity);
-
-                if (newEntity.Subjects.Count() > 0)
+            // check code and name are unique or not
+            var existedDepartment = await _unitOfWork.DepartmentRepository
+                .Get(d => d.DepartmentCode == newEntity.DepartmentCode || d.DepartmentName == newEntity.DepartmentName)
+                .FirstOrDefaultAsync();
+            if (existedDepartment is not null)
+            {
+                return new ServiceResponse
                 {
-                    var list = newEntity.Subjects.ToList();
-                    for (int i = 0; i < list.Count(); i++)
-                    {
-                        list[i].CreatedBy = _currentUserService.UserId;
-                        list[i].CreatedAt = DateTime.Now;
-                    }
-                    newEntity.Subjects = list;
-                    await _unitOfWork.SubjectRepository.AddRangeAsync(newEntity.Subjects);
-                }
+                    IsSuccess = false,
+                    Message = "Failed to create new department",
+                    Errors = new string[1] { "Department code or name already exist" }
+                };
+            }
 
+            newEntity.CreatedBy = _currentUserService.UserId;
+            newEntity.CreatedAt = DateTime.Now;
+
+            await _unitOfWork.DepartmentRepository.AddAsync(newEntity);
+
+            if (newEntity.Subjects.Count() > 0)
+            {
+                var list = newEntity.Subjects.ToList();
+                for (int i = 0; i < list.Count(); i++)
+                {
+                    list[i].CreatedBy = _currentUserService.UserId;
+                    list[i].CreatedAt = DateTime.Now;
+                }
+                newEntity.Subjects = list;
+                await _unitOfWork.SubjectRepository.AddRangeAsync(newEntity.Subjects);
+            }
+
+            // For create update delete, should catch DbUpdateException
+            try
+            {
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
@@ -143,7 +152,16 @@ namespace FTask.Service.IService
                 {
                     IsSuccess = false,
                     Message = "Failed to create new department",
-                    Errors = new List<string>() { ex.Message }
+                    Errors = new string[1] { ex.Message }
+                };
+            }
+            catch(OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new department",
+                    Errors = new string[1] {"The operation has been cancelled"}
                 };
             }
         }
