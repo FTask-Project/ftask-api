@@ -10,6 +10,7 @@ using FTask.Service.ViewModel.RequestVM.CreateUser;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using Role = FTask.Repository.Identity.Role;
 
 namespace FTask.Service.IService;
@@ -110,7 +111,13 @@ internal class UserService : IUserService
         var cacheData = await _cacheService.GetAsync(key);
         if (cacheData is null)
         {
-            var user = await _unitOfWork.UserRepository.Get(u => !u.Deleted && u.Id == id).FirstOrDefaultAsync();
+            var include = new Expression<Func<User, object>>[]
+            {
+                u => u.Roles
+            };
+            var user = await _unitOfWork.UserRepository
+                .Get(u => !u.Deleted && u.Id == id, include)
+                .FirstOrDefaultAsync();
             if (user is not null)
             {
                 await _cacheService.SetAsync(key, user);
@@ -123,109 +130,109 @@ internal class UserService : IUserService
 
     public async Task<ServiceResponse> CreateNewUser(UserVM newEntity)
     {
-        try
+        var existedUser = await _userManager.FindByNameAsync(newEntity.UserName);
+        if (existedUser is not null)
         {
-            var existedUser = await _userManager.FindByNameAsync(newEntity.UserName);
-            if (existedUser is not null)
+            return new ServiceResponse
+            {
+                IsSuccess = false,
+                Message = $"Failed to create new user",
+                Errors = new string[1] { "Username is already taken" }
+            };
+        }
+
+        if (newEntity.Email is not null)
+        {
+            var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.Email.Equals(l.Email)).FirstOrDefaultAsync();
+            if (existedLecturer is not null)
             {
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = $"Failed to create new user",
-                    Errors = new string[1] { "Username is already taken" }
+                    Message = "Failed to create new user",
+                    Errors = new string[1] { "Email is already taken" }
                 };
             }
+        }
 
-            if (newEntity.Email is not null)
+        if (newEntity.PhoneNumber is not null)
+        {
+            var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.PhoneNumber.Equals(l.PhoneNumber)).FirstOrDefaultAsync();
+            if (existedLecturer is not null)
             {
-                var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.Email.Equals(l.Email)).FirstOrDefaultAsync();
-                if (existedLecturer is not null)
+                return new ServiceResponse
                 {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new user",
-                        Errors = new string[1] { "Email is already taken" }
-                    };
-                }
-            }
-
-            if (newEntity.PhoneNumber is not null)
-            {
-                var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.PhoneNumber.Equals(l.PhoneNumber)).FirstOrDefaultAsync();
-                if (existedLecturer is not null)
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new user",
-                        Errors = new string[1] { "Phone is already taken" }
-                    };
-                }
-            }
-
-            User newUser = new User
-            {
-                UserName = newEntity.UserName,
-                PhoneNumber = newEntity.PhoneNumber,
-                Email = newEntity.Email,
-                LockoutEnabled = newEntity.LockoutEnabled ?? true,
-                LockoutEnd = newEntity.LockoutEnd,
-                EmailConfirmed = false,
-                PhoneNumberConfirmed = false,
-                TwoFactorEnabled = false,
-                CreatedAt = DateTime.Now,
-                CreatedBy = _currentUserService.UserId
-            };
-
-            if (newEntity.RoleIds.Count() > 0)
-            {
-                List<Role> roles = new List<Role>();
-                foreach (Guid id in newEntity.RoleIds)
-                {
-                    var existedRole = await _unitOfWork.RoleRepository.FindAsync(id);
-                    if (existedRole is null)
-                    {
-                        return new ServiceResponse
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new user",
-                            Errors = new List<string>() { "Role not found"}
-                        };
-                    }
-                    else
-                    {
-                        roles.Add(existedRole);
-                    }
-                }
-                if (roles.Count() > 0)
-                {
-                    newUser.Roles = roles;
-                }
-            }
-
-            //Upload file
-            var file = newEntity.Avatar;
-            if (file is not null && file.Length > 0)
-            {
-                var uploadFile = new ImageUploadParams
-                {
-                    File = new FileDescription(file.FileName, file.OpenReadStream())
+                    IsSuccess = false,
+                    Message = "Failed to create new user",
+                    Errors = new string[1] { "Phone is already taken" }
                 };
-                var uploadResult = await _cloudinary.UploadAsync(uploadFile);
+            }
+        }
 
-                if (uploadResult.Error is not null)
+        User newUser = new User
+        {
+            UserName = newEntity.UserName,
+            PhoneNumber = newEntity.PhoneNumber,
+            Email = newEntity.Email,
+            LockoutEnabled = newEntity.LockoutEnabled ?? true,
+            LockoutEnd = newEntity.LockoutEnd,
+            EmailConfirmed = false,
+            PhoneNumberConfirmed = false,
+            TwoFactorEnabled = false,
+            CreatedAt = DateTime.Now,
+            CreatedBy = _currentUserService.UserId
+        };
+
+        if (newEntity.RoleIds.Count() > 0)
+        {
+            List<Role> roles = new List<Role>();
+            foreach (Guid id in newEntity.RoleIds)
+            {
+                var existedRole = await _unitOfWork.RoleRepository.FindAsync(id);
+                if (existedRole is null)
                 {
                     return new ServiceResponse
                     {
                         IsSuccess = false,
                         Message = "Failed to create new user",
-                        Errors = new string[1] { "Error when upload image" }
+                        Errors = new List<string>() { "Role not found" }
                     };
                 }
-                newUser.FilePath = uploadResult.SecureUrl.ToString();
-            };
+                else
+                {
+                    roles.Add(existedRole);
+                }
+            }
+            if (roles.Count() > 0)
+            {
+                newUser.Roles = roles;
+            }
+        }
 
+        //Upload file
+        var file = newEntity.Avatar;
+        if (file is not null && file.Length > 0)
+        {
+            var uploadFile = new ImageUploadParams
+            {
+                File = new FileDescription(file.FileName, file.OpenReadStream())
+            };
+            var uploadResult = await _cloudinary.UploadAsync(uploadFile);
+
+            if (uploadResult.Error is not null)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new user",
+                    Errors = new string[1] { "Error when upload image" }
+                };
+            }
+            newUser.FilePath = uploadResult.SecureUrl.ToString();
+        };
+
+        try
+        {
             var identityResult = await _userManager.CreateAsync(newUser, newEntity.Password);
             if (!identityResult.Succeeded)
             {
@@ -253,6 +260,15 @@ internal class UserService : IUserService
                 IsSuccess = false,
                 Message = "Failed to create new user",
                 Errors = new List<string>() { ex.Message }
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            return new ServiceResponse
+            {
+                IsSuccess = false,
+                Message = "Failed to create new user",
+                Errors = new string[1] { "The operation has been cancelled" }
             };
         }
     }

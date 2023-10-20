@@ -1,4 +1,5 @@
-﻿using Duende.IdentityServer.Extensions;
+﻿using AutoMapper;
+using Duende.IdentityServer.Extensions;
 using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
@@ -12,24 +13,27 @@ namespace FTask.Service.IService
 {
     internal class SemesterService : ISemesterService
     {
-        private readonly ICheckSemesterPeriod _checkSemesterPeriod;
+        private readonly ISemesterValidation _semesterValidation;
         private readonly ICheckQuantityTaken _checkQuantityTaken;
         private readonly ICacheService<Semester> _cacheService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IMapper _mapper;
         public SemesterService(
-            ICheckSemesterPeriod checkSemesterPeriod,
+            ISemesterValidation semesterValidation,
             ICheckQuantityTaken checkQuantityTaken,
             ICacheService<Semester> cacheService,
             IUnitOfWork unitOfWork,
-            ICurrentUserService currentUserService
+            ICurrentUserService currentUserService,
+            IMapper mapper
             )
         {
-            _checkSemesterPeriod = checkSemesterPeriod;
+            _semesterValidation = semesterValidation;
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
+            _mapper = mapper;
         }
 
         public async Task<Semester?> GetSemesterById(int id)
@@ -39,7 +43,9 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var semester = await _unitOfWork.SemesterRepository.Get(s => !s.Deleted && s.SemesterId == id).FirstOrDefaultAsync();
+                var semester = await _unitOfWork.SemesterRepository
+                    .Get(s => !s.Deleted && s.SemesterId == id)
+                    .FirstOrDefaultAsync();
                 if (semester is not null)
                 {
                     await _cacheService.SetAsync(key, semester);
@@ -67,69 +73,39 @@ namespace FTask.Service.IService
 
         public async Task<ServiceResponse> CreateNewSemester(SemesterVM newEntity)
         {
+            if (newEntity.SemesterCode.IsNullOrEmpty())
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new semester",
+                    Errors = new string[1] { "Invalid semester code" }
+                };
+            }
+
+            var existedSemester = await _unitOfWork.SemesterRepository.Get(s => newEntity.SemesterCode!.Equals(s.SemesterCode)).FirstOrDefaultAsync();
+            if (existedSemester is not null)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new semester",
+                    Errors = new string[1] { "Semester code is already taken" }
+                };
+            }
+
+            var validationResult = await _semesterValidation.validateSemester(newEntity.StartDate, newEntity.EndDate, _unitOfWork.SemesterRepository);
+            if (!validationResult.IsSuccess)
+            {
+                return validationResult;
+            }
+            
+            var newSemester = _mapper.Map<Semester>(newEntity);
+
+            await _unitOfWork.SemesterRepository.AddAsync(newSemester);
+
             try
             {
-                if (newEntity.SemesterCode.IsNullOrEmpty())
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new semester",
-                        Errors = new string[1] { "Invalid semester code" }
-                    };
-                }
-
-                var existedSemester = await _unitOfWork.SemesterRepository.Get(s => newEntity.SemesterCode!.Equals(s.SemesterCode)).FirstOrDefaultAsync();
-                if (existedSemester is not null)
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new semester",
-                        Errors = new string[1] {"Semester code is already taken"}
-                    };
-                }
-
-                if (newEntity.EndDate < newEntity.StartDate)
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new semester",
-                        Errors = new string[1] {"End date must be greater than start date"}
-                    };
-                }
-
-                if (!_checkSemesterPeriod.CheckValidDuration(newEntity.StartDate, newEntity.EndDate))
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new semester",
-                        Errors = new string[1] { $"The duration of semester must be greater than {_checkSemesterPeriod.MinimumDuration} days and less than {_checkSemesterPeriod.MaximumDuration} days" }
-                    };
-                }
-
-                if (!(await _checkSemesterPeriod.IsValidStartDate(newEntity.StartDate, _unitOfWork)))
-                {
-                    return new ServiceResponse
-                    {
-                        IsSuccess = false,
-                        Message = "Failed to create new semester",
-                        Errors = new string[1] { "The new semester must start after the latest semester" }
-                    };
-                }
-
-                var newSemester = new Semester
-                {
-                    SemesterCode = newEntity.SemesterCode,
-                    StartDate = newEntity.StartDate,
-                    EndDate = newEntity.EndDate,
-                    CreatedAt = DateTime.Now,
-                    CreatedBy = _currentUserService.UserId
-                };
-
-                await _unitOfWork.SemesterRepository.AddAsync(newSemester);
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
@@ -146,7 +122,7 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = false,
                         Message = "Failed to create new semester",
-                        Errors = new List<string>() { "Error at create new semester service", "Can not save changes" }
+                        Errors = new List<string>() { "Can not save changes" }
                     };
                 }
             }
@@ -157,6 +133,15 @@ namespace FTask.Service.IService
                     IsSuccess = false,
                     Message = "Failed to create new semester",
                     Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new semester",
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }
