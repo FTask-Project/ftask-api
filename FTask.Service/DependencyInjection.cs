@@ -32,7 +32,8 @@ public static class DependencyInjection
 
         #region Validation
         services.AddSingleton<ICheckQuantityTaken, CheckQuantityTaken>();
-        services.AddSingleton<ICheckSemesterPeriod, CheckSemesterPeriod>();
+        services.AddSingleton<ISemesterValidation, SemesterValidation>();
+        services.AddSingleton<ICreateTaskValidation, CreateTaskValidation>();
         #endregion
 
 
