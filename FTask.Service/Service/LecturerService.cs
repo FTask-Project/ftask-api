@@ -11,6 +11,7 @@ using FTask.Service.ViewModel.RequestVM.CreateLecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FTask.Service.IService
 {
@@ -118,7 +119,15 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var lecturer = await _unitOfWork.LecturerRepository.Get(l => !l.Deleted && l.Id == id).FirstOrDefaultAsync();
+                Expression<Func<Lecturer, object>>[] includes = new Expression<Func<Lecturer, object>>[3]
+                {
+                    l => l.DepartmentHead!,
+                    l => l.Department!,
+                    l => l.Subjects
+                };
+                var lecturer = await _unitOfWork.LecturerRepository
+                    .Get(l => !l.Deleted && l.Id == id)
+                    .FirstOrDefaultAsync();
                 if (lecturer is not null)
                 {
                     await _cacheService.SetAsync(key, lecturer);
@@ -131,124 +140,124 @@ namespace FTask.Service.IService
 
         public async Task<ServiceResponse> CreateNewLecturer(LecturerVM newEntity)
         {
-            try
+            var existedUser = await _userManager.FindByNameAsync(newEntity.UserName);
+            if (existedUser is not null)
             {
-                var existedUser = await _userManager.FindByNameAsync(newEntity.UserName);
-                if (existedUser is not null)
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new lecturer",
+                    Errors = new string[1] { "Username is already taken" }
+                };
+            }
+
+            if (newEntity.Email is not null)
+            {
+                var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.Email.Equals(l.Email)).FirstOrDefaultAsync();
+                if (existedLecturer is not null)
                 {
                     return new ServiceResponse
                     {
                         IsSuccess = false,
                         Message = "Failed to create new lecturer",
-                        Errors = new string[1] { "Username is already taken" }
+                        Errors = new string[1] { "Email is already exist" }
                     };
                 }
+            }
 
-                if (newEntity.Email is not null)
+            if (newEntity.PhoneNumber is not null)
+            {
+                var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.PhoneNumber.Equals(l.PhoneNumber)).FirstOrDefaultAsync();
+                if (existedLecturer is not null)
                 {
-                    var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.Email.Equals(l.Email)).FirstOrDefaultAsync();
-                    if (existedLecturer is not null)
+                    return new ServiceResponse
                     {
-                        return new ServiceResponse
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new lecturer",
-                            Errors = new string[1] {"Email is already exist"}
-                        };
-                    }
-                }
-
-                if (newEntity.PhoneNumber is not null)
-                {
-                    var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.PhoneNumber.Equals(l.PhoneNumber)).FirstOrDefaultAsync();
-                    if (existedLecturer is not null)
-                    {
-                        return new ServiceResponse
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new lecturer",
-                            Errors = new string[1] {"Phone is already taken"}
-                        };
-                    }
-                }
-
-                if (newEntity.DepartmentId is not null)
-                {
-                    var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(newEntity.DepartmentId ?? 0);
-                    if (existedDepartment is null)
-                    {
-                        return new ServiceResponse
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new lecturer",
-                            Errors = new string[1] {"Department not found"}
-                        };
-                    }
-                }
-
-                Lecturer newLecturer = new Lecturer
-                {
-                    UserName = newEntity.UserName,
-                    PhoneNumber = newEntity.PhoneNumber,
-                    Email = newEntity.Email,
-                    LockoutEnabled = newEntity.LockoutEnabled ?? true,
-                    LockoutEnd = newEntity.LockoutEnd,
-                    DepartmentId = newEntity.DepartmentId,
-                    EmailConfirmed = false,
-                    PhoneNumberConfirmed = false,
-                    TwoFactorEnabled = false,
-                    CreatedAt = DateTime.Now,
-                    CreatedBy = _currentUserService.UserId
-                };
-
-                if (newEntity.SubjectIds.Count() > 0)
-                {
-                    List<Subject> subjects = new List<Subject>();
-                    foreach (int id in newEntity.SubjectIds)
-                    {
-                        var existedSubject = await _unitOfWork.SubjectRepository.FindAsync(id);
-                        if (existedSubject is null)
-                        {
-                            return new ServiceResponse
-                            {
-                                IsSuccess = false,
-                                Message = "Failed to create new lecturer",
-                                Errors = new string[1] { "Subject not found with the given id :" + id }
-                            };
-                        }
-                        else
-                        {
-                            subjects.Add(existedSubject);
-                        }
-                    }
-                    if (subjects.Count() > 0)
-                    {
-                        newLecturer.Subjects = subjects;
-                    }
-                }
-
-                //Upload file
-                var file = newEntity.Avatar;
-                if (file is not null && file.Length > 0)
-                {
-                    var uploadFile = new ImageUploadParams
-                    {
-                        File = new FileDescription(file.FileName, file.OpenReadStream())
+                        IsSuccess = false,
+                        Message = "Failed to create new lecturer",
+                        Errors = new string[1] { "Phone is already taken" }
                     };
-                    var uploadResult = await _cloudinary.UploadAsync(uploadFile);
+                }
+            }
 
-                    if (uploadResult.Error is not null)
+            if (newEntity.DepartmentId is not null)
+            {
+                var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(newEntity.DepartmentId ?? 0);
+                if (existedDepartment is null)
+                {
+                    return new ServiceResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to create new lecturer",
+                        Errors = new string[1] { "Department not found" }
+                    };
+                }
+            }
+
+            Lecturer newLecturer = new Lecturer
+            {
+                UserName = newEntity.UserName,
+                PhoneNumber = newEntity.PhoneNumber,
+                Email = newEntity.Email,
+                LockoutEnabled = newEntity.LockoutEnabled ?? true,
+                LockoutEnd = newEntity.LockoutEnd,
+                DepartmentId = newEntity.DepartmentId,
+                EmailConfirmed = false,
+                PhoneNumberConfirmed = false,
+                TwoFactorEnabled = false,
+                CreatedAt = DateTime.Now,
+                CreatedBy = _currentUserService.UserId
+            };
+
+            if (newEntity.SubjectIds.Count() > 0)
+            {
+                List<Subject> subjects = new List<Subject>();
+                foreach (int id in newEntity.SubjectIds)
+                {
+                    var existedSubject = await _unitOfWork.SubjectRepository.FindAsync(id);
+                    if (existedSubject is null)
                     {
                         return new ServiceResponse
                         {
                             IsSuccess = false,
                             Message = "Failed to create new lecturer",
-                            Errors = new string[1] { "Failed to upload image" }
+                            Errors = new string[1] { "Subject not found with the given id :" + id }
                         };
                     }
-                    newLecturer.FilePath = uploadResult.SecureUrl.ToString();
-                };
+                    else
+                    {
+                        subjects.Add(existedSubject);
+                    }
+                }
+                if (subjects.Count() > 0)
+                {
+                    newLecturer.Subjects = subjects;
+                }
+            }
 
+            //Upload file
+            var file = newEntity.Avatar;
+            if (file is not null && file.Length > 0)
+            {
+                var uploadFile = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, file.OpenReadStream())
+                };
+                var uploadResult = await _cloudinary.UploadAsync(uploadFile);
+
+                if (uploadResult.Error is not null)
+                {
+                    return new ServiceResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to create new lecturer",
+                        Errors = new string[1] { "Failed to upload image" }
+                    };
+                }
+                newLecturer.FilePath = uploadResult.SecureUrl.ToString();
+            };
+
+            try
+            {
                 var identityResult = await _userManager.CreateAsync(newLecturer, newEntity.Password);
                 if (!identityResult.Succeeded)
                 {
@@ -274,8 +283,17 @@ namespace FTask.Service.IService
                 return new ServiceResponse
                 {
                     IsSuccess = false,
-                    Message = "Some error happened",
+                    Message = "Failed to create new lecturer",
                     Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Message = "Failed to create new lecturer",
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }

@@ -24,7 +24,7 @@ namespace FTask.API.Controllers
         }
 
         [HttpGet("{id}", Name = nameof(GetLecturerById))]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserInformationResponseVM))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LecturerInformationResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public async Task<IActionResult> GetLecturerById(Guid id)
@@ -36,7 +36,7 @@ namespace FTask.API.Controllers
                 {
                     return NotFound("Not found");
                 }
-                return Ok(_mapper.Map<UserInformationResponseVM>(lecturerResult));
+                return Ok(_mapper.Map<LecturerInformationResponseVM>(lecturerResult));
             }
             else
             {
@@ -49,14 +49,14 @@ namespace FTask.API.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserInformationResponseVM>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<LecturerInformationResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> GetLecturers([FromQuery] int page, [FromQuery] int quantity, [FromQuery] string? filter, [FromQuery] int? departmentId, [FromQuery] int? subjectId)
         {
             if (ModelState.IsValid)
             {
                 var lecturerList = await _lecturerService.GetLecturers(page, quantity, filter ?? "", departmentId, subjectId);
-                return Ok(_mapper.Map<IEnumerable<UserInformationResponseVM>>(lecturerList));
+                return Ok(_mapper.Map<IEnumerable<LecturerInformationResponseVM>>(lecturerList));
             }
             else
             {
@@ -69,7 +69,7 @@ namespace FTask.API.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(UserInformationResponseVM))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(LecturerInformationResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> CreateNewLecturer([FromForm] LecturerVM resource)
         {
@@ -85,7 +85,7 @@ namespace FTask.API.Controllers
                         return CreatedAtAction(nameof(GetLecturerById), new
                         {
                             id = id
-                        }, _mapper.Map<UserInformationResponseVM>(existedLecturer));
+                        }, _mapper.Map<LecturerInformationResponseVM>(existedLecturer));
                     }
                     else
                     {

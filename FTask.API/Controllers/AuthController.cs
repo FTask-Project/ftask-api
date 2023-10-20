@@ -5,6 +5,7 @@ using FTask.API.Service;
 using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.ResposneVM;
+using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -94,7 +95,7 @@ namespace FTask.API.Controllers
                         return Ok(new AuthenticateResponseVM
                         {
                             Token = tokenString,
-                            UserInformation = _mapper.Map<UserInformationResponseVM>(result.LoginUser!)
+                            LecturerInformation = _mapper.Map<LecturerInformationResponseVM>(result.LoginUser!)
                         });
                     }
                     else
@@ -128,12 +129,12 @@ namespace FTask.API.Controllers
         [HttpPost("login/google/lecturer")]
         public async Task<IActionResult> LoginGoogleLecturer([FromQuery] string idToken)
         {
-            // Initialize the Firebase app
+            /*// Initialize the Firebase app
             if (FirebaseApp.DefaultInstance is null)
             {
                 FirebaseApp.Create(new AppOptions()
                 {
-                    Credential = GoogleCredential.FromFile("serviceAccountKey.json"),
+                    //Credential = GoogleCredential.FromFile("serviceAccountKey.json"),
                 });
             }
 
@@ -147,7 +148,29 @@ namespace FTask.API.Controllers
             var pictureUrl = decodedToken.Claims["picture"].ToString();
 
             // Use the user data
-            return Ok(decodedToken.ToString());
+            return Ok(decodedToken.ToString());*/
+
+            try
+            {
+                // Verify the ID token using Google's libraries
+                var payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
+
+                // Extract user data from the payload
+                var uid = payload.Subject;
+                var displayName = payload.Name;
+                var email = payload.Email;
+
+                // Handle user data (e.g., store in database)
+                // ...
+
+                // Return a response, such as an access token
+                return Ok(new { Message = "User data handled successfully" });
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error handling user data: {ex}");
+                return StatusCode(500, new { Error = "Internal server error" });
+            }
         }
     }
 }
