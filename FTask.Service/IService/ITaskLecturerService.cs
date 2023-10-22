@@ -10,5 +10,6 @@ namespace FTask.Service.IService
         Task<ServiceResponse<TaskLecturer>> CreateNewTaskLecturer(CreateTaskLecturerVM newEntity);
         Task<IEnumerable<TaskLecturer>> GetTaskLecturers(int page, int quantity, int? taskId, Guid? lecturerId);
         Task<bool> DeleteTaskLecturer(int id);
+        Task<ServiceResponse<TaskLecturer>> UpdateTaskLecturer(UpdateTaskLecturerVM updateTaskLecturer, int id);
     }
 }

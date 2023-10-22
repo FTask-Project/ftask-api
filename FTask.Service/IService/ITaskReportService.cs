@@ -10,5 +10,6 @@ namespace FTask.Service.IService
         Task<IEnumerable<TaskReport>> GetTaskReports(int page, int quantity, int? taskActivityId);
         Task<ServiceResponse<TaskReport>> CreateNewTaskReport(TaskReportVM newEntity);
         Task<bool> DeleteTaskReport(int id);
+        Task<ServiceResponse<TaskReport>> UpdateTaskReport(UpdateTaskReportVM updateTaskReport, int id);
     }
 }

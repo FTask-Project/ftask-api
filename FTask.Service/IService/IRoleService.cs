@@ -11,5 +11,6 @@ namespace FTask.Service.IService
         Task<IEnumerable<Role>> GetRoles(int page, int quantity, string filter);
         Task<ServiceResponse<Role>> CreateNewRole(RoleVM newEntity);
         Task<bool> DeleteRole(Guid id);
+        Task<ServiceResponse<Role>> UpdateRole(UpdateRoleVM updateRole, Guid id);
     }
 }
