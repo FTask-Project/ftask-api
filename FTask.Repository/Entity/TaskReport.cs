@@ -13,5 +13,5 @@ public class TaskReport : Auditable
 
     public IEnumerable<Evidence> Evidences { get; set; } = new List<Evidence>();
 
-    public bool Deleted { get; set; } = false;
+    //public bool Deleted { get; set; } = false;
 }

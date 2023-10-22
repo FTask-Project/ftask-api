@@ -16,5 +16,5 @@ public class TaskActivity : Auditable
 
     public TaskReport? TaskReport { get; set; }
 
-    public bool Deleted { get; set; } = false;
+    //public bool Deleted { get; set; } = false;
 }

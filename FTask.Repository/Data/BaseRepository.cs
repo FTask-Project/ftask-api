@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FTask.Repository.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Task = System.Threading.Tasks.Task;
 
 namespace FTask.Repository.Data;
 

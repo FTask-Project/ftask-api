@@ -17,5 +17,5 @@ public class TaskLecturer : Auditable
 
     public IEnumerable<TaskActivity> TaskActivities { get; set; } = new List<TaskActivity>();
 
-    public bool Deleted { get; set; } = false;
+    //public bool Deleted { get; set; } = false;
 }

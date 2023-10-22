@@ -139,7 +139,7 @@ namespace FTask.Service.IService
             {
                 return false;
             }
-            _unitOfWork.RoleRepository.Remove(existedRole);
+            existedRole.Deleted = true;
             var result = await _unitOfWork.SaveChangesAsync();
 
             if (result)

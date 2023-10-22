@@ -12,6 +12,6 @@ namespace FTask.Repository.Entity
         public Task? Task { get; set; }
         public int TaskId { get; set; }
 
-        public bool Deleted { get; set; } = false;
+        //public bool Deleted { get; set; } = false;
     }
 }

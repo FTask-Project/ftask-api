@@ -27,5 +27,5 @@ public class Task : Auditable
     public Department? Department { get; set; }
     public int? DepartmentId { get; set; }
 
-    public bool Deleted { get; set; } = false;
+    //public bool Deleted { get; set; } = false;
 }

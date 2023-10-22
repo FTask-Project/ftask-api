@@ -327,7 +327,7 @@ namespace FTask.Service.IService
             {
                 return false;
             }
-            _unitOfWork.TaskRepository.Remove(existedTask);
+            existedTask.Deleted = true;
             var result = await _unitOfWork.SaveChangesAsync();
 
             if (result)

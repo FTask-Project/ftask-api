@@ -13,5 +13,5 @@ public class Semester : Auditable
 
     public IEnumerable<Task> Tasks { get; set; } = new List<Task>();
 
-    public bool Deleted { get; set; } = false;
+    //public bool Deleted { get; set; } = false;
 }

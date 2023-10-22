@@ -168,7 +168,7 @@ namespace FTask.Service.IService
             {
                 return false;
             }
-            _unitOfWork.SubjectRepository.Remove(existedSubject);
+            existedSubject.Deleted = true;
             var result = await _unitOfWork.SaveChangesAsync();
 
             if (result)

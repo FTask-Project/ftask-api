@@ -23,6 +23,7 @@ public abstract class Auditable
 {
     public string CreatedBy { get; set; } = "Undefined";
     public DateTime CreatedAt { get; set; }
+    public bool Deleted { get; set; } = false;
 }
 
 public enum AuditType

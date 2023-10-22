@@ -140,7 +140,7 @@ namespace FTask.Service.IService
             {
                 return false;
             }
-            _unitOfWork.TaskActivityRepository.Remove(existedTaskActivity);
+            existedTaskActivity.Deleted = true;
             var result = await _unitOfWork.SaveChangesAsync();
 
             if (result)

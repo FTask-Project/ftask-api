@@ -197,7 +197,7 @@ namespace FTask.Service.IService
             {
                 return false;
             }
-            _unitOfWork.DepartmentRepository.Remove(existedDepartment);
+            existedDepartment.Deleted = true;
             var result = await _unitOfWork.SaveChangesAsync();
 
             if (result)

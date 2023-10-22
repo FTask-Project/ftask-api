@@ -280,7 +280,7 @@ internal class UserService : IUserService
         {
             return false;
         }
-        _unitOfWork.UserRepository.Remove(existedUser);
+        existedUser.Deleted = true;
         var result = await _unitOfWork.SaveChangesAsync();
 
         if (result)
