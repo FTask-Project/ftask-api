@@ -36,12 +36,12 @@ namespace FTask.Service.IService
 
             if (cachedData is null)
             {
-                var include = new Expression<Func<Subject, object>>[1]
+                var includes = new Expression<Func<Subject, object>>[]
                 {
                     s => s.Department!
                 };
                 var subject = await _unitOfWork.SubjectRepository
-                    .Get(s => !s.Deleted && s.SubjectId == id, include)
+                    .Get(s => !s.Deleted && s.SubjectId == id, includes)
                     .FirstOrDefaultAsync();
                 if (subject is not null)
                 {
@@ -61,8 +61,13 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
+            var includes = new Expression<Func<Subject, object>>[]
+            {
+                s => s.Department!
+            };
+
             var subjectList = _unitOfWork.SubjectRepository
-                    .Get(s => !s.Deleted && (s.SubjectName.Contains(filter) || s.SubjectCode.Contains(filter)))
+                    .Get(s => !s.Deleted && (s.SubjectName.Contains(filter) || s.SubjectCode.Contains(filter)), includes)
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity); ;
 
@@ -116,6 +121,9 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(Subject), subjectEntity.SubjectId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
                     return new ServiceResponse<Subject>
                     {
                         IsSuccess = true,
@@ -219,7 +227,7 @@ namespace FTask.Service.IService
 
             if(updateSubject.DepartmentId is not null)
             {
-                    var existedDepartment = await _unitOfWork.DepartmentRepository
+                var existedDepartment = await _unitOfWork.DepartmentRepository
                     .Get(d => d.DepartmentId == updateSubject.DepartmentId)
                     .FirstOrDefaultAsync();
 

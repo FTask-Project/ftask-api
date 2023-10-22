@@ -88,14 +88,14 @@ namespace FTask.Service.IService
 
             await _unitOfWork.TaskActivityRepository.AddAsync(newTaskActivity);
 
-            string key = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), existedTaskLecturer.TaskLecturerId.ToString());
-            var task = _cacheService.RemoveAsync(key);
-
             try
             {
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), existedTaskLecturer.TaskLecturerId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
                     return new ServiceResponse<TaskActivity>
                     {
                         Entity = newTaskActivity,
@@ -118,7 +118,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse<TaskActivity>
                 {
                     IsSuccess = false,
-                    Message = "Failed to create new task",
+                    Message = "Failed to create new task activity",
                     Errors = new List<string>() { ex.Message }
                 };
             }
@@ -127,7 +127,7 @@ namespace FTask.Service.IService
                 return new ServiceResponse<TaskActivity>
                 {
                     IsSuccess = false,
-                    Message = "Failed to create new task",
+                    Message = "Failed to create new task activity",
                     Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
@@ -150,6 +150,73 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<TaskActivity>> UpdateTaskActivity(UpdateTaskActivityVM updateTaskActivity, int id)
+        {
+            var existedTaskActivity = await _unitOfWork.TaskActivityRepository
+                .Get(ta => !ta.Deleted && ta.TaskActivityId == id)
+                .FirstOrDefaultAsync();
+
+            if(existedTaskActivity is null)
+            {
+                return new ServiceResponse<TaskActivity>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update activity",
+                    Errors = new string[] { "Activity not found" }
+                };
+            }
+
+            existedTaskActivity.ActivityTitle = updateTaskActivity.ActivityTitle ?? existedTaskActivity.ActivityTitle;
+            existedTaskActivity.ActivityDescription = updateTaskActivity.ActivityDescription ?? existedTaskActivity.ActivityDescription;
+            existedTaskActivity.Deadline = updateTaskActivity.Deadline ?? existedTaskActivity.Deadline;
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key1 = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), existedTaskActivity.TaskLecturerId.ToString());
+                    string key2 = CacheKeyGenerator.GetKeyById(nameof(TaskActivity), existedTaskActivity.TaskActivityId.ToString());
+                    var task1 = _cacheService.RemoveAsync(key1);
+                    var task2 = _cacheService.RemoveAsync(key2);
+
+                    return new ServiceResponse<TaskActivity>
+                    {
+                        Entity = existedTaskActivity,
+                        IsSuccess = true,
+                        Message = "Update activity successfully"
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<TaskActivity>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update activity",
+                        Errors = new string[1] { "Can not save changes" }
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<TaskActivity>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update activity",
+                    Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<TaskActivity>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update activity",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }

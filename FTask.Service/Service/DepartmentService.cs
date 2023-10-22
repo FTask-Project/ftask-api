@@ -44,7 +44,9 @@ namespace FTask.Service.IService
                     d => d.DepartmentHead!,
                     d => d.Subjects
                 };
-                var department = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == id, includes).FirstOrDefaultAsync();
+                var department = await _unitOfWork.DepartmentRepository
+                    .Get(d => !d.Deleted && d.DepartmentId == id, includes)
+                    .FirstOrDefaultAsync();
                 if (department is not null)
                 {
                     await _cacheService.SetAsync(key, department);
@@ -63,9 +65,14 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
+            var includes = new Expression<Func<Department, object>>[]
+            {
+                d => d.Subjects,
+                d => d.DepartmentHead!
+            };
 
             var departmentList = _unitOfWork.DepartmentRepository
-                    .Get(d => !d.Deleted && (d.DepartmentName.Contains(filter) || d.DepartmentCode.Contains(filter)))
+                    .Get(d => !d.Deleted && (d.DepartmentName.Contains(filter) || d.DepartmentCode.Contains(filter)), includes)
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                     .Take(quantity)
                     .AsNoTracking();

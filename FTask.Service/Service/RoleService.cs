@@ -97,7 +97,7 @@ namespace FTask.Service.IService
                     {
                         Entity = newRole,
                         IsSuccess = true,
-                        Message = "Create new roles successfully"
+                        Message = "Create new role successfully"
                     };
                 }
                 else
@@ -149,6 +149,79 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<Role>> UpdateRole(UpdateRoleVM updateRole, Guid id)
+        {
+            var existedRole = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && r.Id == id).FirstOrDefaultAsync();
+            if(existedRole is null)
+            {
+                return new ServiceResponse<Role>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update role",
+                    Errors = new string[] { "Role not found" }
+                };
+            }
+
+            if(updateRole.RoleName is not null)
+            {
+                var checkRoleName = _unitOfWork.RoleRepository.Get(r => r.Name.Equals(updateRole.RoleName)).FirstOrDefault() is not null;
+                if (checkRoleName)
+                {
+                    return new ServiceResponse<Role>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update role",
+                        Errors = new string[] { "Role name is already taken" }
+                    };
+                }
+                existedRole.Name = updateRole.RoleName;
+            }
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(Role), existedRole.Id.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
+                    return new ServiceResponse<Role>
+                    {
+                        Entity = existedRole,
+                        IsSuccess = true,
+                        Message = "Update role successfully"
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<Role>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update role",
+                        Errors = new string[] {"Can not save changes"}
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<Role>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update role",
+                    Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<Role>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update role",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }

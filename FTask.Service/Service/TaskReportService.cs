@@ -12,7 +12,6 @@ using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
-
 namespace FTask.Service.IService
 {
     internal class TaskReportService : ITaskReportService
@@ -238,6 +237,141 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<TaskReport>> UpdateTaskReport(UpdateTaskReportVM updateTaskReport, int id)
+        {
+            var includes = new Expression<Func<TaskReport, object>>[]
+            {
+                r => r.Evidences
+            };
+            var existedTaskReport = await _unitOfWork.TaskReportRepository
+                .Get(tr => !tr.Deleted && tr.TaskReportId == id, includes)
+                .FirstOrDefaultAsync();
+
+            if(existedTaskReport is null)
+            {
+                return new ServiceResponse<TaskReport>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update task report",
+                    Errors = new string[] { "Task report not found" }
+                };
+            }
+
+            var evidences = existedTaskReport.Evidences.ToList();
+
+            if(updateTaskReport.DeleteEvidences.Count() > 0)
+            {
+                foreach(var evidence in evidences)
+                {
+                    if (updateTaskReport.DeleteEvidences.Contains(evidence.EvidenceId))
+                    {
+                        evidence.Deleted = true;
+                    }
+                }
+            }
+
+            if(updateTaskReport.AddEvidences.Count() > 0)
+            {
+                var errors = new ConcurrentQueue<string>();
+
+                var uploadFiles = updateTaskReport.AddEvidences
+                    .Where(file => file is not null && file.Length > 0)
+                    .Select(async file =>
+                    {
+                        var uploadFile = new RawUploadParams
+                        {
+                            File = new FileDescription(file.FileName, file.OpenReadStream())
+                        };
+                        var uploadResult = await _cloudinary.UploadAsync(uploadFile);
+                        if (uploadResult.Error is not null)
+                        {
+                            errors.Enqueue(uploadResult.Error.Message);
+                            return null;
+                        }
+                        return new
+                        {
+                            Url = uploadResult.SecureUrl.ToString(),
+                            FileName = file.FileName
+                        };
+                    });
+
+                var result = await System.Threading.Tasks.Task.WhenAll(uploadFiles);
+
+                if (errors.Count() > 0)
+                {
+                    return new ServiceResponse<TaskReport>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update task report",
+                        Errors = errors
+                    };
+                }
+
+                if (result.Count() > 0)
+                {
+                    foreach (var item in result)
+                    {
+                        Evidence evidence = new Evidence
+                        {
+                            Url = item!.Url,
+                            FileName = item!.FileName,
+                            CreatedBy = _currentUserService.UserId,
+                            CreatedAt = DateTime.Now
+                        };
+                        evidences.Add(evidence);
+                    }
+                }
+            }
+
+            existedTaskReport.Evidences = evidences;
+
+            existedTaskReport.ReportContent = updateTaskReport.ReportContent ?? existedTaskReport.ReportContent;
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(TaskReport), existedTaskReport.TaskReportId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
+                    return new ServiceResponse<TaskReport>
+                    {
+                        Entity = existedTaskReport,
+                        IsSuccess = true,
+                        Message = "Update task report successfully"
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<TaskReport>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update task report",
+                        Errors = new string[1] { "Can not save changes" }
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<TaskReport>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update task report",
+                    Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<TaskReport>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update task report",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }

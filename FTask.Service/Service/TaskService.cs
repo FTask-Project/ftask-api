@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
@@ -24,6 +25,7 @@ namespace FTask.Service.IService
         private readonly IMapper _mapper;
         private readonly Cloudinary _cloudinary;
         private readonly ICreateTaskValidation _createTaskValidation;
+        private readonly ICurrentUserService _currentUserService;
 
         public TaskService(
             IUnitOfWork unitOfWork,
@@ -31,7 +33,8 @@ namespace FTask.Service.IService
             ICacheService<Task> cacheService,
             IMapper mapper,
             Cloudinary cloudinary,
-            ICreateTaskValidation createTaskValidation)
+            ICreateTaskValidation createTaskValidation,
+            ICurrentUserService currentUserService)
         {
             _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
@@ -39,6 +42,7 @@ namespace FTask.Service.IService
             _mapper = mapper;
             _cloudinary = cloudinary;
             _createTaskValidation = createTaskValidation;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Task?> GetTaskById(int id)
@@ -139,7 +143,10 @@ namespace FTask.Service.IService
             int level = (int)TaskLevel.Semester;
             if (newEntity.DepartmentId is not null)
             {
-                var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(newEntity.DepartmentId ?? 0);
+                var existedDepartment = await _unitOfWork.DepartmentRepository
+                    .Get(d => !d.Deleted && d.DepartmentId == newEntity.DepartmentId)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
                 if (existedDepartment is null)
                 {
                     return new ServiceResponse<Task>
@@ -152,7 +159,10 @@ namespace FTask.Service.IService
                 level = (int)TaskLevel.Department;
                 if (newEntity.SubjectId is not null)
                 {
-                    var existedSubject = await _unitOfWork.SubjectRepository.FindAsync(newEntity.SubjectId ?? 0);
+                    var existedSubject = await _unitOfWork.SubjectRepository
+                        .Get(s => !s.Deleted && s.SubjectId == newEntity.SubjectId)
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync();
                     if (existedSubject is null)
                     {
                         return new ServiceResponse<Task>
@@ -160,6 +170,15 @@ namespace FTask.Service.IService
                             IsSuccess = false,
                             Message = "Failed to create new task",
                             Errors = new string[1] { "Subject not found"}
+                        };
+                    }
+                    if(existedSubject.DepartmentId != existedDepartment.DepartmentId)
+                    {
+                        return new ServiceResponse<Task>
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to create new task",
+                            Errors = new string[1] { $"Subject '{existedSubject.SubjectName}' does not belong to '{existedDepartment.DepartmentName}'" }
                         };
                     }
                     level = (int)TaskLevel.Subject;
@@ -247,6 +266,8 @@ namespace FTask.Service.IService
                         {
                             Url = item!.Url,
                             FileName = item!.FileName,
+                            CreatedBy = _currentUserService.UserId,
+                            CreatedAt = DateTime.Now
                         };
                         await _unitOfWork.AttachmentRepository.AddAsync(attachment);
                         attachments.Add(attachment);
@@ -316,6 +337,242 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<Task>> UpdateTask(UpdateTaskVM updateTask, int id)
+        {
+            var includes = new Expression<Func<Task, object>>[]
+            {
+                t => t.Semester!,
+                t => t.Department!,
+                t => t.Subject!,
+                t => t.Attachments
+            };
+            var existedTask = _unitOfWork.TaskRepository
+                .Get(t => !t.Deleted && t.TaskId == id, includes)
+                .FirstOrDefault();
+            if(existedTask is null)
+            {
+                return new ServiceResponse<Repository.Entity.Task>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update task",
+                    Errors = new string[] {"Task not found"}
+                };
+            }
+
+            var attachments = existedTask.Attachments.ToList();
+
+            var startDate = updateTask.StartDate ?? existedTask.StartDate;
+            var endDate = updateTask.EndDate ?? existedTask.EndDate;
+
+            if (startDate > endDate)
+            {
+                return new ServiceResponse<Task>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update task",
+                    Errors = new string[1] { "End date must be greater than start date" }
+                };
+            }
+
+            if(updateTask.DepartmentId is not null)
+            {
+                if(updateTask.DepartmentId == 0)
+                {
+                    existedTask.DepartmentId = null;
+                }
+                else
+                {
+                    var existedDepartment = await _unitOfWork.DepartmentRepository
+                    .Get(d => !d.Deleted && d.DepartmentId == updateTask.DepartmentId)
+                    .FirstOrDefaultAsync();
+
+                    if (existedDepartment is null)
+                    {
+                        return new ServiceResponse<Repository.Entity.Task>
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to update task",
+                            Errors = new string[] { "Department not found" }
+                        };
+                    }
+
+                    existedTask.DepartmentId = updateTask.DepartmentId;
+                    existedTask.Department = existedDepartment;
+                }
+            }
+
+            if(updateTask.SubjectId is not null)
+            {
+                if(updateTask.SubjectId == 0)
+                {
+                    existedTask.SubjectId = null;
+                }
+                else
+                {
+                    if(existedTask.DepartmentId is not null)
+                    {
+                        var existedSubject = await _unitOfWork.SubjectRepository
+                            .Get(s => !s.Deleted && s.SubjectId == updateTask.SubjectId)
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync();
+
+                        if(existedSubject is null)
+                        {
+                            return new ServiceResponse<Repository.Entity.Task>
+                            {
+                                IsSuccess = false,
+                                Message = "Failed to update task",
+                                Errors = new string[] { "Subject not found" }
+                            };
+                        }
+
+                        if(existedSubject.DepartmentId != existedTask.DepartmentId)
+                        {
+                            return new ServiceResponse<Repository.Entity.Task>
+                            {
+                                IsSuccess = false,
+                                Message = "Failed to update task",
+                                Errors = new string[] { $"Subejct '{existedSubject.SubjectName}' does not belong to '{existedTask.Department!.DepartmentName}'" }
+                            };
+                        }
+
+                        existedTask.SubjectId = updateTask.SubjectId;
+                        existedTask.Subject = existedSubject;
+                    }
+                }
+            }
+
+            if(existedTask.DepartmentId is not null)
+            {
+                if(existedTask.SubjectId is not null)
+                {
+                    existedTask.TaskLevel = (int)TaskLevel.Subject;
+                }
+                else
+                {
+                    existedTask.TaskLevel = (int)TaskLevel.Department;
+                }
+            }
+            else
+            {
+                existedTask.TaskLevel = (int)TaskLevel.Semester;
+            }
+
+            if(updateTask.DeleteAttachment.Count() > 0)
+            {
+                foreach (var attachment in attachments)
+                {
+                    if (updateTask.DeleteAttachment.Contains(attachment.AttachmentId))
+                    {
+                        attachment.Deleted = true;
+                    }
+                }
+            }
+
+            if(updateTask.AddAttachments.Count() > 0)
+            {
+                var errors = new ConcurrentQueue<string>();
+
+                var uploadFiles = updateTask.AddAttachments
+                    .Where(file => file is not null && file.Length > 0)
+                    .Select(async file =>
+                    {
+                        var uploadFile = new RawUploadParams
+                        {
+                            File = new FileDescription(file.FileName, file.OpenReadStream())
+                        };
+                        var uploadResult = await _cloudinary.UploadAsync(uploadFile);
+                        if (uploadResult.Error is not null)
+                        {
+                            errors.Enqueue(uploadResult.Error.Message);
+                            return null;
+                        }
+                        return new
+                        {
+                            Url = uploadResult.SecureUrl.ToString(),
+                            FileName = file.FileName
+                        };
+                    });
+
+                var result = await System.Threading.Tasks.Task.WhenAll(uploadFiles);
+
+                if (errors.Count() > 0)
+                {
+                    return new ServiceResponse<Task>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update task",
+                        Errors = errors
+                    };
+                }
+
+                if (result.Count() > 0)
+                {
+                    foreach (var item in result)
+                    {
+                        Attachment attachment = new Attachment
+                        {
+                            Url = item!.Url,
+                            FileName = item!.FileName,
+                            CreatedBy = _currentUserService.UserId,
+                            CreatedAt = DateTime.Now
+                        };
+                        attachments.Add(attachment);
+                    }
+                }
+            }
+
+            existedTask.Attachments = attachments;
+
+            existedTask.TaskTitle = updateTask.TaskTitle ?? existedTask.TaskTitle;
+            existedTask.TaskContent = updateTask.TaskContent ?? existedTask.TaskContent;
+            existedTask.Location = updateTask.Location ?? existedTask.Location;
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(Task), existedTask.TaskId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
+                    return new ServiceResponse<Task>
+                    {
+                        Entity = existedTask,
+                        IsSuccess = true,
+                        Message = "Update task successfully"
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<Task>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update task",
+                        Errors = new string[1] { "Can not save changes" }
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<Task>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update task",
+                    Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<Task>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update task",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }

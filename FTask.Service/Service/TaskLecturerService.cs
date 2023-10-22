@@ -121,9 +121,6 @@ namespace FTask.Service.IService
                 await _unitOfWork.TaskActivityRepository.AddRangeAsync(newTaskLecturer.TaskActivities);
             }
 
-            string key = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.Task), exsitedTask.TaskId.ToString());
-            var task = _cacheService.RemoveAsync(key);
-
             await _unitOfWork.TaskLecturerRepository.AddAsync(newTaskLecturer);
 
             try
@@ -131,6 +128,9 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.Task), exsitedTask.TaskId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
                     return new ServiceResponse<TaskLecturer>
                     {
                         Entity = newTaskLecturer,
@@ -185,6 +185,69 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<TaskLecturer>> UpdateTaskLecturer(UpdateTaskLecturerVM updateTaskLecturer, int id)
+        {
+            var existedTaskLecturer = await _unitOfWork.TaskLecturerRepository
+                .Get(tl => !tl.Deleted && tl.TaskLecturerId == id)
+                .FirstOrDefaultAsync();
+
+            if(existedTaskLecturer is null)
+            {
+                return new ServiceResponse<TaskLecturer>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update",
+                    Errors = new string[] { "The task has not been assigned to lecturer" }
+                };
+            }
+
+            existedTaskLecturer.Note = updateTaskLecturer.Note ?? existedTaskLecturer.Note;
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), existedTaskLecturer.TaskLecturerId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
+                    return new ServiceResponse<TaskLecturer>
+                    {
+                        Entity = existedTaskLecturer,
+                        IsSuccess = true,
+                        Message = "Update successfully"
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<TaskLecturer>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update",
+                        Errors = new string[1] { "Can not save changes" }
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<TaskLecturer>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update",
+                    Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<TaskLecturer>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }
