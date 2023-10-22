@@ -33,3 +33,16 @@ public class TaskActivityVM
     public string ActivityDescription { get; set; } = "No description";
     public DateTime Deadline { get; set; }
 }
+
+public class UpdateTaskVM
+{
+    public string? TaskTitle { get; set; }
+    public string? TaskContent { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public string? Location { get; set; }
+    public int? SubjectId { get; set; }
+    public int? DepartmentId { get; set; }
+    public IEnumerable<IFormFile> AddAttachments { get; set; } = new List<IFormFile>();
+    public IEnumerable<int> DeleteAttachment { get; set; } = new List<int>();
+}

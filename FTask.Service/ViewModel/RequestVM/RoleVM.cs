@@ -7,3 +7,8 @@ public class RoleVM
     [Required]
     public string? RoleName { get; set; }
 }
+
+public class UpdateRoleVM
+{
+    public string? RoleName { get; set; }
+}

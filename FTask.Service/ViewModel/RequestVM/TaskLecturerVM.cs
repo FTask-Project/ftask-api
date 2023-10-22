@@ -12,3 +12,8 @@ public class CreateTaskLecturerVM
     public Guid LecturerId { get; set; }
     public IEnumerable<TaskActivityVM> TaskActivities { get; set; } = new List<TaskActivityVM>();
 }
+
+public class UpdateTaskLecturerVM
+{
+    public string? Note { get; set; }
+}

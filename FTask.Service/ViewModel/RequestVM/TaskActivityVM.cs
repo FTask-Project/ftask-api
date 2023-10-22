@@ -11,3 +11,10 @@ public class CreateTaskActivityVM
     [Required]
     public int TaskLecturerId { get; set; }
 }
+
+public class UpdateTaskActivityVM
+{
+    public string? ActivityTitle { get; set; }
+    public string? ActivityDescription { get; set; }
+    public DateTime? Deadline { get; set; }
+}
