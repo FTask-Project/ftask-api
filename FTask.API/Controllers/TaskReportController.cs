@@ -145,5 +145,32 @@ namespace FTask.API.Controllers
                 });
             }
         }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TaskReportResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> UpdateTaskReport([FromForm] UpdateTaskReportVM resource, int id)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _taskReportService.UpdateTaskReport(resource, id);
+                if (result.IsSuccess)
+                {
+                    return Ok(_mapper.Map<TaskReportResponseVM>(result.Entity));
+                }
+                else
+                {
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
     }
 }

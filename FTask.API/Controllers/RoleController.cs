@@ -144,5 +144,32 @@ namespace FTask.API.Controllers
                 });
             }
         }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RoleResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> UpdateRole(UpdateRoleVM resource, Guid id)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _roleService.UpdateRole(resource, id);
+                if (result.IsSuccess)
+                {
+                    return Ok(_mapper.Map<RoleResponseVM>(result.Entity));
+                }
+                else
+                {
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
     }
 }
