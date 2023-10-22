@@ -1,5 +1,4 @@
-﻿using FTask.Repository.Data;
-using FTask.Repository.Entity;
+﻿using FTask.Repository.Entity;
 using FTask.Repository.IRepository;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +17,7 @@ namespace FTask.Service.Validation
 
         public async Task<ServiceResponse<Semester>> ValidateSemester(DateTime startDate, DateTime endDate, ISemesterRepository semesterRepository)
         {
-            if(endDate < startDate)
+            if (endDate < startDate)
             {
                 return new ServiceResponse<Semester>
                 {

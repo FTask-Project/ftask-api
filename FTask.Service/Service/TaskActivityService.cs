@@ -136,7 +136,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteTaskActivity(int id)
         {
             var existedTaskActivity = await _unitOfWork.TaskActivityRepository.Get(a => !a.Deleted && a.TaskActivityId == id).FirstOrDefaultAsync();
-            if(existedTaskActivity is null)
+            if (existedTaskActivity is null)
             {
                 return false;
             }
@@ -158,7 +158,7 @@ namespace FTask.Service.IService
                 .Get(ta => !ta.Deleted && ta.TaskActivityId == id)
                 .FirstOrDefaultAsync();
 
-            if(existedTaskActivity is null)
+            if (existedTaskActivity is null)
             {
                 return new ServiceResponse<TaskActivity>
                 {

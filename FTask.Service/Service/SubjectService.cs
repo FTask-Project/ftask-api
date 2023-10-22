@@ -76,7 +76,7 @@ namespace FTask.Service.IService
                 subjectList = subjectList.Where(s => s.DepartmentId == departmentId);
             }
 
-            if(status is not null)
+            if (status is not null)
             {
                 subjectList = subjectList.Where(s => s.Status == status);
             }
@@ -137,7 +137,7 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = false,
                         Message = "Failed to create new subject",
-                        Errors = new string[1] {"Can not save changes"}
+                        Errors = new string[1] { "Can not save changes" }
                     };
                 }
             }
@@ -164,7 +164,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteSubject(int id)
         {
             var existedSubject = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && s.SubjectId == id).FirstOrDefaultAsync();
-            if(existedSubject is null)
+            if (existedSubject is null)
             {
                 return false;
             }
@@ -183,7 +183,7 @@ namespace FTask.Service.IService
         public async Task<ServiceResponse<Subject>> UpdateSubject(UpdateSubjectVM updateSubject, int id)
         {
             var existedSubject = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && s.SubjectId == id).FirstOrDefaultAsync();
-            if(existedSubject is null)
+            if (existedSubject is null)
             {
                 return new ServiceResponse<Subject>
                 {
@@ -211,7 +211,7 @@ namespace FTask.Service.IService
                 existedSubject.SubjectName = updateSubject.SubjectName;
             }
 
-            if(updateSubject.SubjectCode is not null)
+            if (updateSubject.SubjectCode is not null)
             {
                 if (checkSubject.Any(s => s.SubjectCode.Equals(updateSubject.SubjectCode)))
                 {
@@ -225,13 +225,13 @@ namespace FTask.Service.IService
                 existedSubject.SubjectCode = updateSubject.SubjectCode;
             }
 
-            if(updateSubject.DepartmentId is not null)
+            if (updateSubject.DepartmentId is not null)
             {
                 var existedDepartment = await _unitOfWork.DepartmentRepository
                     .Get(d => d.DepartmentId == updateSubject.DepartmentId)
                     .FirstOrDefaultAsync();
 
-                if(existedDepartment is null)
+                if (existedDepartment is null)
                 {
                     return new ServiceResponse<Subject>
                     {
@@ -240,7 +240,7 @@ namespace FTask.Service.IService
                         Errors = new string[] { "Department not found" }
                     };
                 }
-                existedSubject.DepartmentId = (int) updateSubject.DepartmentId;
+                existedSubject.DepartmentId = (int)updateSubject.DepartmentId;
             }
 
             try

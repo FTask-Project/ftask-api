@@ -276,7 +276,7 @@ internal class UserService : IUserService
     public async Task<bool> DeleteUser(Guid id)
     {
         var existedUser = await _unitOfWork.UserRepository.Get(u => !u.Deleted && u.Id == id).FirstOrDefaultAsync();
-        if(existedUser is null)
+        if (existedUser is null)
         {
             return false;
         }
@@ -303,7 +303,7 @@ internal class UserService : IUserService
             .Get(u => !u.Deleted && u.Id == id, includes)
             .FirstOrDefaultAsync();
 
-        if(existedUser is null)
+        if (existedUser is null)
         {
             return new ServiceResponse<User>
             {
@@ -313,7 +313,7 @@ internal class UserService : IUserService
             };
         }
 
-        if(updateUser.Email is not null)
+        if (updateUser.Email is not null)
         {
             var checkEmail = _unitOfWork.UserRepository.Get(u => u.Email.Equals(updateUser.Email)).FirstOrDefault() is not null;
             if (checkEmail)
@@ -328,7 +328,7 @@ internal class UserService : IUserService
             existedUser.Email = updateUser.Email;
         }
 
-        if(updateUser.PhoneNumber is not null)
+        if (updateUser.PhoneNumber is not null)
         {
             var checkPhoneNumber = _unitOfWork.UserRepository.Get(u => u.PhoneNumber.Equals(updateUser.PhoneNumber)).FirstOrDefault() is not null;
             if (checkPhoneNumber)
@@ -343,7 +343,7 @@ internal class UserService : IUserService
             existedUser.PhoneNumber = updateUser.PhoneNumber;
         }
 
-        if(updateUser.Avatar is not null && updateUser.Avatar.Length > 0)
+        if (updateUser.Avatar is not null && updateUser.Avatar.Length > 0)
         {
             var uploadFile = new ImageUploadParams
             {
@@ -364,7 +364,7 @@ internal class UserService : IUserService
             existedUser.FilePath = uploadResult.SecureUrl.ToString();
         }
 
-        if(updateUser.RoleIds is not null)
+        if (updateUser.RoleIds is not null)
         {
             var roleList = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && updateUser.RoleIds.Contains(r.Id)).ToListAsync();
             existedUser.Roles = roleList;

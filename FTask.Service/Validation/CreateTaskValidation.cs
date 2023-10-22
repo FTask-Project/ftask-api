@@ -1,7 +1,6 @@
 ﻿using FTask.Repository.Common;
 using FTask.Repository.Entity;
 using FTask.Repository.IRepository;
-using FTask.Service.IService;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -50,10 +49,10 @@ namespace FTask.Service.Validation
                 };
             }
 
-            if(!HEADER_CAN_ASSIGN_TASK || !roles.Any(r => OTHER_ROLES.Contains(r)))
+            if (!HEADER_CAN_ASSIGN_TASK || !roles.Any(r => OTHER_ROLES.Contains(r)))
             {
                 return new ServiceResponse<Task>
-                { 
+                {
                     IsSuccess = false,
                     Message = "Failed to create new task",
                     Errors = new string[1] { "You don't have sufficient privileges" }
@@ -66,7 +65,7 @@ namespace FTask.Service.Validation
                 {
                     d => d.Lecturers
                 }).FirstOrDefaultAsync();
-            if(department is null)
+            if (department is null)
             {
                 return new ServiceResponse<Task>
                 {
@@ -76,7 +75,7 @@ namespace FTask.Service.Validation
                 };
             }
 
-            if(taskRecipients.Count() > MAXIMUM_ASSIGN)
+            if (taskRecipients.Count() > MAXIMUM_ASSIGN)
             {
                 return new ServiceResponse<Task>
                 {

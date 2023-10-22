@@ -135,7 +135,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteRole(Guid id)
         {
             var existedRole = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && r.Id == id).FirstOrDefaultAsync();
-            if(existedRole is null)
+            if (existedRole is null)
             {
                 return false;
             }
@@ -154,7 +154,7 @@ namespace FTask.Service.IService
         public async Task<ServiceResponse<Role>> UpdateRole(UpdateRoleVM updateRole, Guid id)
         {
             var existedRole = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && r.Id == id).FirstOrDefaultAsync();
-            if(existedRole is null)
+            if (existedRole is null)
             {
                 return new ServiceResponse<Role>
                 {
@@ -164,7 +164,7 @@ namespace FTask.Service.IService
                 };
             }
 
-            if(updateRole.RoleName is not null)
+            if (updateRole.RoleName is not null)
             {
                 var checkRoleName = _unitOfWork.RoleRepository.Get(r => r.Name.Equals(updateRole.RoleName)).FirstOrDefault() is not null;
                 if (checkRoleName)
@@ -200,7 +200,7 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = false,
                         Message = "Failed to update role",
-                        Errors = new string[] {"Can not save changes"}
+                        Errors = new string[] { "Can not save changes" }
                     };
                 }
             }

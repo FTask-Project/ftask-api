@@ -53,7 +53,7 @@ namespace FTask.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SubjectResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> GetSubjects(
-            [FromQuery] int page, 
+            [FromQuery] int page,
             [FromQuery] int amount,
             [FromQuery] string? filter,
             [FromQuery] int? departmentId,
@@ -85,8 +85,8 @@ namespace FTask.API.Controllers
                 if (result.IsSuccess)
                 {
                     return CreatedAtAction(nameof(GetSubjectById),
-                            new 
-                            { 
+                            new
+                            {
                                 id = result.Entity!.SubjectId
                             },
                             _mapper.Map<SubjectResponseVM>(result.Entity!)
@@ -157,7 +157,7 @@ namespace FTask.API.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SubjectResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
-        public async Task<IActionResult> UpdateSubject([FromBody] UpdateSubjectVM resource ,int id)
+        public async Task<IActionResult> UpdateSubject([FromBody] UpdateSubjectVM resource, int id)
         {
             if (ModelState.IsValid)
             {

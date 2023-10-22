@@ -98,7 +98,7 @@ namespace FTask.Service.IService
                 };
             }
 
-            if(existedTaskActivity.TaskReport is not null)
+            if (existedTaskActivity.TaskReport is not null)
             {
                 return new ServiceResponse<TaskReport>
                 {
@@ -165,7 +165,7 @@ namespace FTask.Service.IService
                 }
             }
 
-            if(existedTaskActivity.TaskActivityStatus != (int)TaskActivityStatus.Overdue && existedTaskActivity.TaskActivityStatus != (int)TaskActivityStatus.Done)
+            if (existedTaskActivity.TaskActivityStatus != (int)TaskActivityStatus.Overdue && existedTaskActivity.TaskActivityStatus != (int)TaskActivityStatus.Done)
             {
                 existedTaskActivity.TaskActivityStatus = (int)TaskActivityStatus.Done;
                 _unitOfWork.TaskActivityRepository.Update(existedTaskActivity);
@@ -223,7 +223,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteTaskReport(int id)
         {
             var existedTaskReport = await _unitOfWork.TaskReportRepository.Get(tr => !tr.Deleted && tr.TaskReportId == id).FirstOrDefaultAsync();
-            if(existedTaskReport is null)
+            if (existedTaskReport is null)
             {
                 return false;
             }
@@ -249,7 +249,7 @@ namespace FTask.Service.IService
                 .Get(tr => !tr.Deleted && tr.TaskReportId == id, includes)
                 .FirstOrDefaultAsync();
 
-            if(existedTaskReport is null)
+            if (existedTaskReport is null)
             {
                 return new ServiceResponse<TaskReport>
                 {
@@ -261,9 +261,9 @@ namespace FTask.Service.IService
 
             var evidences = existedTaskReport.Evidences.ToList();
 
-            if(updateTaskReport.DeleteEvidences.Count() > 0)
+            if (updateTaskReport.DeleteEvidences.Count() > 0)
             {
-                foreach(var evidence in evidences)
+                foreach (var evidence in evidences)
                 {
                     if (updateTaskReport.DeleteEvidences.Contains(evidence.EvidenceId))
                     {
@@ -272,7 +272,7 @@ namespace FTask.Service.IService
                 }
             }
 
-            if(updateTaskReport.AddEvidences.Count() > 0)
+            if (updateTaskReport.AddEvidences.Count() > 0)
             {
                 var errors = new ConcurrentQueue<string>();
 

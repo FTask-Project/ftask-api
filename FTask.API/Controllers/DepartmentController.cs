@@ -127,7 +127,7 @@ namespace FTask.API.Controllers
                         });
                     }
                 }
-                catch(DbUpdateException ex)
+                catch (DbUpdateException ex)
                 {
                     return BadRequest(new ServiceResponseVM
                     {

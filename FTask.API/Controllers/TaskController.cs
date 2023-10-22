@@ -92,7 +92,7 @@ namespace FTask.API.Controllers
                     return CreatedAtAction(nameof(GetTaskById), new
                     {
                         id = result.Entity!.TaskId,
-                    },_mapper.Map<TaskResponseVM>(result.Entity!));
+                    }, _mapper.Map<TaskResponseVM>(result.Entity!));
                 }
                 else
                 {

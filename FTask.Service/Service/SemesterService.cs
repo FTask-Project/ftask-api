@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using CloudinaryDotNet.Actions;
 using Duende.IdentityServer.Extensions;
 using FTask.Repository.Common;
 using FTask.Repository.Data;
@@ -100,7 +99,7 @@ namespace FTask.Service.IService
             {
                 return validationResult;
             }
-            
+
             var newSemester = _mapper.Map<Semester>(newEntity);
 
             await _unitOfWork.SemesterRepository.AddAsync(newSemester);
@@ -150,7 +149,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteSemester(int id)
         {
             var existedSemester = await _unitOfWork.SemesterRepository.Get(s => !s.Deleted && s.SemesterId == id).FirstOrDefaultAsync();
-            if(existedSemester is null)
+            if (existedSemester is null)
             {
                 return false;
             }
@@ -169,7 +168,7 @@ namespace FTask.Service.IService
         public async Task<ServiceResponse<Semester>> UpdateSemester(UpdateSemesterVM updateSemester, int semesterId)
         {
             var existedSemester = await _unitOfWork.SemesterRepository.Get(s => !s.Deleted && s.SemesterId == semesterId).FirstOrDefaultAsync();
-            if(existedSemester is null)
+            if (existedSemester is null)
             {
                 return new ServiceResponse<Semester>
                 {
@@ -185,10 +184,10 @@ namespace FTask.Service.IService
                 return validationResult;
             }
 
-            if(updateSemester.SemesterCode is not null)
+            if (updateSemester.SemesterCode is not null)
             {
                 var checkSemester = _unitOfWork.SemesterRepository.Get(s => s.SemesterCode.Equals(updateSemester.SemesterCode));
-                if(checkSemester.Count() > 0)
+                if (checkSemester.Count() > 0)
                 {
                     return new ServiceResponse<Semester>
                     {

@@ -86,7 +86,7 @@ namespace FTask.Service.IService
                 {
                     IsSuccess = false,
                     Message = "Failed to assign task",
-                    Errors = new string[1] {"Can not find task"}
+                    Errors = new string[1] { "Can not find task" }
                 };
             }
 
@@ -97,14 +97,14 @@ namespace FTask.Service.IService
                 {
                     IsSuccess = false,
                     Message = "Failed to assign task",
-                    Errors = new string[1] {"Can not find lecturer"}
+                    Errors = new string[1] { "Can not find lecturer" }
                 };
             }
 
             var existedTaskLecturer = await _unitOfWork.TaskLecturerRepository
                 .Get(tl => tl.TaskId == newEntity.TaskId && tl.LecturerId == newEntity.LecturerId)
                 .FirstOrDefaultAsync();
-            if(existedTaskLecturer is not null)
+            if (existedTaskLecturer is not null)
             {
                 return new ServiceResponse<TaskLecturer>
                 {
@@ -171,7 +171,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteTaskLecturer(int id)
         {
             var existedTaskLecturer = await _unitOfWork.TaskLecturerRepository.Get(tl => !tl.Deleted && tl.TaskLecturerId == id).FirstOrDefaultAsync();
-            if(existedTaskLecturer is null)
+            if (existedTaskLecturer is null)
             {
                 return false;
             }
@@ -193,7 +193,7 @@ namespace FTask.Service.IService
                 .Get(tl => !tl.Deleted && tl.TaskLecturerId == id)
                 .FirstOrDefaultAsync();
 
-            if(existedTaskLecturer is null)
+            if (existedTaskLecturer is null)
             {
                 return new ServiceResponse<TaskLecturer>
                 {

@@ -113,7 +113,7 @@ namespace FTask.Service.IService
         }
 
         public async Task<Lecturer?> GetLectureById(Guid id)
-        
+
         {
             string key = CacheKeyGenerator.GetKeyById(nameof(Lecturer), id.ToString());
             var cachedData = await _cacheService.GetAsync(key);
@@ -303,7 +303,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteLecturer(Guid id)
         {
             var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => !l.Deleted && l.Id == id).FirstOrDefaultAsync();
-            if(existedLecturer is null)
+            if (existedLecturer is null)
             {
                 return false;
             }
@@ -332,7 +332,7 @@ namespace FTask.Service.IService
                 .Get(l => !l.Deleted && l.Id == id, includes)
                 .FirstOrDefaultAsync();
 
-            if(existedLecturer is null)
+            if (existedLecturer is null)
             {
                 return new ServiceResponse<Lecturer>
                 {
@@ -345,9 +345,9 @@ namespace FTask.Service.IService
             var checkLecturer = _unitOfWork.LecturerRepository
                 .Get(l => l.PhoneNumber.Equals(updateLecturer.PhoneNumber) || l.Email.Equals(updateLecturer.Email))
                 .AsNoTracking();
-            if(updateLecturer.Email is not null)
+            if (updateLecturer.Email is not null)
             {
-                if(checkLecturer.Any(l => l.Email.Equals(updateLecturer.Email)))
+                if (checkLecturer.Any(l => l.Email.Equals(updateLecturer.Email)))
                 {
                     return new ServiceResponse<Lecturer>
                     {
@@ -359,9 +359,9 @@ namespace FTask.Service.IService
                 existedLecturer.Email = updateLecturer.Email;
             }
 
-            if(updateLecturer.PhoneNumber is not null)
+            if (updateLecturer.PhoneNumber is not null)
             {
-                if(checkLecturer.Any(l => l.PhoneNumber.Equals(updateLecturer.PhoneNumber)))
+                if (checkLecturer.Any(l => l.PhoneNumber.Equals(updateLecturer.PhoneNumber)))
                 {
                     return new ServiceResponse<Lecturer>
                     {
@@ -373,9 +373,9 @@ namespace FTask.Service.IService
                 existedLecturer.PhoneNumber = updateLecturer.PhoneNumber;
             }
 
-            if(updateLecturer.DepartmentId is not null)
+            if (updateLecturer.DepartmentId is not null)
             {
-                if(updateLecturer.DepartmentId == 0)
+                if (updateLecturer.DepartmentId == 0)
                 {
                     existedLecturer.DepartmentId = null;
                 }
@@ -395,13 +395,13 @@ namespace FTask.Service.IService
                 }
             }
 
-            if(updateLecturer.SubjectIds is not null)
+            if (updateLecturer.SubjectIds is not null)
             {
                 var subjectList = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && updateLecturer.SubjectIds.Contains(s.SubjectId)).ToListAsync();
                 existedLecturer.Subjects = subjectList;
             }
-            
-            if(updateLecturer.Avatar is not null && updateLecturer.Avatar.Length > 0)
+
+            if (updateLecturer.Avatar is not null && updateLecturer.Avatar.Length > 0)
             {
                 var uploadFile = new ImageUploadParams
                 {

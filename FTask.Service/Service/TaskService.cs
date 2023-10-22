@@ -153,7 +153,7 @@ namespace FTask.Service.IService
                     {
                         IsSuccess = false,
                         Message = "Failed to create new task",
-                        Errors = new string[1] { "Department not found "}
+                        Errors = new string[1] { "Department not found " }
                     };
                 }
                 level = (int)TaskLevel.Department;
@@ -169,10 +169,10 @@ namespace FTask.Service.IService
                         {
                             IsSuccess = false,
                             Message = "Failed to create new task",
-                            Errors = new string[1] { "Subject not found"}
+                            Errors = new string[1] { "Subject not found" }
                         };
                     }
-                    if(existedSubject.DepartmentId != existedDepartment.DepartmentId)
+                    if (existedSubject.DepartmentId != existedDepartment.DepartmentId)
                     {
                         return new ServiceResponse<Task>
                         {
@@ -206,7 +206,7 @@ namespace FTask.Service.IService
             newTask.TaskLevel = level;
             newTask.Semester = currentSemester;
 
-            if(currentDateTime >= newTask.StartDate)
+            if (currentDateTime >= newTask.StartDate)
             {
                 newTask.TaskStatus = (int)TaskStatus.InProgress;
             }
@@ -323,7 +323,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteTask(int id)
         {
             var existedTask = await _unitOfWork.TaskRepository.Get(t => !t.Deleted && t.TaskId == id).FirstOrDefaultAsync();
-            if(existedTask is null)
+            if (existedTask is null)
             {
                 return false;
             }
@@ -351,13 +351,13 @@ namespace FTask.Service.IService
             var existedTask = _unitOfWork.TaskRepository
                 .Get(t => !t.Deleted && t.TaskId == id, includes)
                 .FirstOrDefault();
-            if(existedTask is null)
+            if (existedTask is null)
             {
                 return new ServiceResponse<Repository.Entity.Task>
                 {
                     IsSuccess = false,
                     Message = "Failed to update task",
-                    Errors = new string[] {"Task not found"}
+                    Errors = new string[] { "Task not found" }
                 };
             }
 
@@ -376,9 +376,9 @@ namespace FTask.Service.IService
                 };
             }
 
-            if(updateTask.DepartmentId is not null)
+            if (updateTask.DepartmentId is not null)
             {
-                if(updateTask.DepartmentId == 0)
+                if (updateTask.DepartmentId == 0)
                 {
                     existedTask.DepartmentId = null;
                 }
@@ -403,22 +403,22 @@ namespace FTask.Service.IService
                 }
             }
 
-            if(updateTask.SubjectId is not null)
+            if (updateTask.SubjectId is not null)
             {
-                if(updateTask.SubjectId == 0)
+                if (updateTask.SubjectId == 0)
                 {
                     existedTask.SubjectId = null;
                 }
                 else
                 {
-                    if(existedTask.DepartmentId is not null)
+                    if (existedTask.DepartmentId is not null)
                     {
                         var existedSubject = await _unitOfWork.SubjectRepository
                             .Get(s => !s.Deleted && s.SubjectId == updateTask.SubjectId)
                             .AsNoTracking()
                             .FirstOrDefaultAsync();
 
-                        if(existedSubject is null)
+                        if (existedSubject is null)
                         {
                             return new ServiceResponse<Repository.Entity.Task>
                             {
@@ -428,7 +428,7 @@ namespace FTask.Service.IService
                             };
                         }
 
-                        if(existedSubject.DepartmentId != existedTask.DepartmentId)
+                        if (existedSubject.DepartmentId != existedTask.DepartmentId)
                         {
                             return new ServiceResponse<Repository.Entity.Task>
                             {
@@ -444,9 +444,9 @@ namespace FTask.Service.IService
                 }
             }
 
-            if(existedTask.DepartmentId is not null)
+            if (existedTask.DepartmentId is not null)
             {
-                if(existedTask.SubjectId is not null)
+                if (existedTask.SubjectId is not null)
                 {
                     existedTask.TaskLevel = (int)TaskLevel.Subject;
                 }
@@ -460,7 +460,7 @@ namespace FTask.Service.IService
                 existedTask.TaskLevel = (int)TaskLevel.Semester;
             }
 
-            if(updateTask.DeleteAttachment.Count() > 0)
+            if (updateTask.DeleteAttachment.Count() > 0)
             {
                 foreach (var attachment in attachments)
                 {
@@ -471,7 +471,7 @@ namespace FTask.Service.IService
                 }
             }
 
-            if(updateTask.AddAttachments.Count() > 0)
+            if (updateTask.AddAttachments.Count() > 0)
             {
                 var errors = new ConcurrentQueue<string>();
 

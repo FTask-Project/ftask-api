@@ -1,5 +1,4 @@
-﻿using CloudinaryDotNet;
-using FTask.Repository.Common;
+﻿using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Repository.Identity;
@@ -106,7 +105,7 @@ namespace FTask.Service.IService
                         Errors = new string[] { "Lecturer not found" }
                     };
                 }
-                if(existedLecturer.DepartmentHead is not null)
+                if (existedLecturer.DepartmentHead is not null)
                 {
                     return new ServiceResponse<Department>
                     {
@@ -180,13 +179,13 @@ namespace FTask.Service.IService
                     Errors = new string[1] { ex.Message }
                 };
             }
-            catch(OperationCanceledException)
+            catch (OperationCanceledException)
             {
                 return new ServiceResponse<Department>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new department",
-                    Errors = new string[1] {"The operation has been cancelled"}
+                    Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
         }
@@ -194,7 +193,7 @@ namespace FTask.Service.IService
         public async Task<bool> DeleteDepartment(int id)
         {
             var existedDepartment = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == id).FirstOrDefaultAsync();
-            if(existedDepartment is null)
+            if (existedDepartment is null)
             {
                 return false;
             }
@@ -213,7 +212,7 @@ namespace FTask.Service.IService
         public async Task<ServiceResponse<Department>> UpdateDepartment(UpdateDepartmentVM updateDepartment, int id)
         {
             var existedDepartment = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == id).FirstOrDefaultAsync();
-            if(existedDepartment is null)
+            if (existedDepartment is null)
             {
                 return new ServiceResponse<Department>
                 {
@@ -223,9 +222,9 @@ namespace FTask.Service.IService
                 };
             }
 
-            if(updateDepartment.DepartmentHeadId is not null)
+            if (updateDepartment.DepartmentHeadId is not null)
             {
-                if(updateDepartment.DepartmentHeadId == new Guid("00000000-0000-0000-0000-000000000000"))
+                if (updateDepartment.DepartmentHeadId == new Guid("00000000-0000-0000-0000-000000000000"))
                 {
                     existedDepartment.DepartmentHeadId = null;
                 }
@@ -264,9 +263,9 @@ namespace FTask.Service.IService
                 .Get(d => d.DepartmentName.Equals(updateDepartment.DepartmentName) || d.DepartmentCode.Equals(updateDepartment.DepartmentCode))
                 .AsNoTracking();
 
-            if(updateDepartment.DepartmentName is not null)
+            if (updateDepartment.DepartmentName is not null)
             {
-                if(checkDepartment.Any(d => d.DepartmentName.Equals(updateDepartment.DepartmentName)))
+                if (checkDepartment.Any(d => d.DepartmentName.Equals(updateDepartment.DepartmentName)))
                 {
                     return new ServiceResponse<Department>
                     {
@@ -280,7 +279,7 @@ namespace FTask.Service.IService
 
             if (updateDepartment.DepartmentCode is not null)
             {
-                if(checkDepartment.Any(d => d.DepartmentCode.Equals(updateDepartment.DepartmentCode)))
+                if (checkDepartment.Any(d => d.DepartmentCode.Equals(updateDepartment.DepartmentCode)))
                 {
                     return new ServiceResponse<Department>
                     {

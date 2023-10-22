@@ -1,6 +1,5 @@
 ﻿using FTask.Repository.Entity;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace FTask.Repository.Identity
 {

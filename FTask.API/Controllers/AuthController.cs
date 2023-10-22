@@ -1,12 +1,9 @@
 ﻿using AutoMapper;
-using FirebaseAdmin;
-using FirebaseAdmin.Auth;
 using FTask.API.Service;
 using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.ResposneVM;
 using Google.Apis.Auth;
-using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
