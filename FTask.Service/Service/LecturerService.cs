@@ -397,7 +397,7 @@ namespace FTask.Service.IService
 
             if(updateLecturer.SubjectIds is not null)
             {
-                var subjectList = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && updateLecturer.SubjectIds.Contains(s.SubjectId)).ToArrayAsync();
+                var subjectList = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && updateLecturer.SubjectIds.Contains(s.SubjectId)).ToListAsync();
                 existedLecturer.Subjects = subjectList;
             }
             

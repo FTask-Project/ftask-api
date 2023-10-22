@@ -366,7 +366,7 @@ internal class UserService : IUserService
 
         if(updateUser.RoleIds is not null)
         {
-            var roleList = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && updateUser.RoleIds.Contains(r.Id)).ToArrayAsync();
+            var roleList = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && updateUser.RoleIds.Contains(r.Id)).ToListAsync();
             existedUser.Roles = roleList;
         }
 
