@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateLecturer;
+using FTask.Service.ViewModel.RequestVM.Lecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -78,24 +78,10 @@ namespace FTask.API.Controllers
                 var result = await _lecturerService.CreateNewLecturer(resource);
                 if (result.IsSuccess)
                 {
-                    var id = Guid.Parse(result.Id!);
-                    var existedLecturer = await _lecturerService.GetLectureById(id);
-                    if (existedLecturer is not null)
+                    return CreatedAtAction(nameof(GetLecturerById), new
                     {
-                        return CreatedAtAction(nameof(GetLecturerById), new
-                        {
-                            id = id
-                        }, _mapper.Map<LecturerInformationResponseVM>(existedLecturer));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new lecturer",
-                            Errors = new List<string> { "Created lecturer not found" }
-                        });
-                    }
+                        id = result.Entity!.Id
+                    }, _mapper.Map<LecturerInformationResponseVM>(result.Entity!));
                 }
                 else
                 {
@@ -147,6 +133,33 @@ namespace FTask.API.Controllers
                         Message = "Failed to delete lecturer",
                         Errors = new string[1] { ex.Message }
                     });
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LecturerInformationResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> UpdateLecturer([FromForm] UpdateLecturerVM resource, Guid id)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _lecturerService.UpdateLecturer(resource, id);
+                if (result.IsSuccess)
+                {
+                    return Ok(_mapper.Map<LecturerInformationResponseVM>(result.Entity));
+                }
+                else
+                {
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
                 }
             }
             else

@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
+using CloudinaryDotNet.Actions;
 using Duende.IdentityServer.Extensions;
 using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel.RequestVM.CreateSemester;
+using FTask.Service.ViewModel.RequestVM.Semester;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 
@@ -71,11 +72,11 @@ namespace FTask.Service.IService
             return await semesterList.ToArrayAsync();
         }
 
-        public async Task<ServiceResponse> CreateNewSemester(SemesterVM newEntity)
+        public async Task<ServiceResponse<Semester>> CreateNewSemester(SemesterVM newEntity)
         {
             if (newEntity.SemesterCode.IsNullOrEmpty())
             {
-                return new ServiceResponse
+                return new ServiceResponse<Semester>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new semester",
@@ -86,7 +87,7 @@ namespace FTask.Service.IService
             var existedSemester = await _unitOfWork.SemesterRepository.Get(s => newEntity.SemesterCode!.Equals(s.SemesterCode)).FirstOrDefaultAsync();
             if (existedSemester is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Semester>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new semester",
@@ -94,7 +95,7 @@ namespace FTask.Service.IService
                 };
             }
 
-            var validationResult = await _semesterValidation.validateSemester(newEntity.StartDate, newEntity.EndDate, _unitOfWork.SemesterRepository);
+            var validationResult = await _semesterValidation.ValidateSemester(newEntity.StartDate, newEntity.EndDate, _unitOfWork.SemesterRepository);
             if (!validationResult.IsSuccess)
             {
                 return validationResult;
@@ -109,16 +110,16 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Semester>
                     {
-                        Id = newSemester.SemesterId.ToString(),
+                        Entity = newSemester,
                         IsSuccess = true,
                         Message = "Create new semester successfully"
                     };
                 }
                 else
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Semester>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new semester",
@@ -128,7 +129,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Semester>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new semester",
@@ -137,7 +138,7 @@ namespace FTask.Service.IService
             }
             catch (OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Semester>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new semester",
@@ -163,6 +164,88 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<Semester>> UpdateSemester(UpdateSemesterVM updateSemester, int semesterId)
+        {
+            var existedSemester = await _unitOfWork.SemesterRepository.Get(s => !s.Deleted && s.SemesterId == semesterId).FirstOrDefaultAsync();
+            if(existedSemester is null)
+            {
+                return new ServiceResponse<Semester>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update semester",
+                    Errors = new string[] { "Semester not found" }
+                };
+            }
+
+            var validationResult = await _semesterValidation.ValidateSemester(updateSemester.StartDate ?? existedSemester.StartDate, updateSemester.EndDate ?? existedSemester.EndDate, _unitOfWork.SemesterRepository);
+            if (!validationResult.IsSuccess)
+            {
+                return validationResult;
+            }
+
+            if(updateSemester.SemesterCode is not null)
+            {
+                var checkSemester = _unitOfWork.SemesterRepository.Get(s => s.SemesterCode.Equals(updateSemester.SemesterCode));
+                if(checkSemester.Count() > 0)
+                {
+                    return new ServiceResponse<Semester>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update semester",
+                        Errors = new string[] { "Semester code is already taken" }
+                    };
+                }
+                existedSemester.SemesterCode = updateSemester.SemesterCode;
+            }
+
+            existedSemester.StartDate = updateSemester.StartDate ?? existedSemester.StartDate;
+            existedSemester.EndDate = updateSemester.EndDate ?? existedSemester.EndDate;
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(Semester), existedSemester.SemesterId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
+                    return new ServiceResponse<Semester>
+                    {
+                        Entity = existedSemester,
+                        IsSuccess = true,
+                        Message = "Update semester successfully"
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<Semester>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update semester",
+                        Errors = new List<string>() { "Can not save changes" }
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<Semester>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update semester",
+                    Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<Semester>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update semester",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }

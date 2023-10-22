@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using TaskActivityVM = FTask.Service.ViewModel.RequestVM.CreateTask.TaskActivityVM;
+using TaskActivityVM = FTask.Service.ViewModel.RequestVM.Task.TaskActivityVM;
 
-namespace FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
+namespace FTask.Service.ViewModel.RequestVM.TaskLecturer;
 
 public class CreateTaskLecturerVM
 {

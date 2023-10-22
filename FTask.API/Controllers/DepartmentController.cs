@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using FTask.Repository.Entity;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateDepartment;
+using FTask.Service.ViewModel.RequestVM.Department;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -79,25 +79,11 @@ namespace FTask.API.Controllers
                 var result = await _departmentService.CreateNewDepartment(_mapper.Map<Department>(resource));
                 if (result.IsSuccess)
                 {
-                    int id = Int32.Parse(result.Id!);
-                    var existedDepartment = await _departmentService.GetDepartmentById(id);
-                    if (existedDepartment is not null)
-                    {
-                        return CreatedAtAction(nameof(GetDeaprtmentById),
+                    return CreatedAtAction(nameof(GetDeaprtmentById),
                         new
                         {
-                            id = id
-                        }, _mapper.Map<DepartmentResponseVM>(existedDepartment));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new department",
-                            Errors = new List<string> { "Created department not found" }
-                        });
-                    }
+                            id = result.Entity!.DepartmentId
+                        }, _mapper.Map<DepartmentResponseVM>(result.Entity!));
                 }
                 else
                 {
@@ -149,6 +135,33 @@ namespace FTask.API.Controllers
                         Message = "Failed to delete department",
                         Errors = new string[1] { ex.Message }
                     });
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DepartmentResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> UpdateDepartment([FromBody] UpdateDepartmentVM resource, int id)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _departmentService.UpdateDepartment(resource, id);
+                if (result.IsSuccess)
+                {
+                    return Ok(_mapper.Map<DepartmentResponseVM>(result.Entity));
+                }
+                else
+                {
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
                 }
             }
             else

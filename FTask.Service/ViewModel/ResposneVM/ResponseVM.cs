@@ -1,12 +1,13 @@
 ﻿namespace FTask.Service.ViewModel.ResposneVM;
 
-public class ServiceResponse
+public class ServiceResponse<T> where T : class
 {
-    public string? Id { get; set; }
     public bool IsSuccess { get; set; }
     public string? Message { get; set; }
     public IEnumerable<string>? Errors { get; set; }
     //public bool? IsRestored { get; set; } = false;
+
+    public T? Entity { get; set; }
 }
 
 public class ServiceResponseVM

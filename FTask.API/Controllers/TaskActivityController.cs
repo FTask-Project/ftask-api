@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateTaskActivity;
+using FTask.Service.ViewModel.RequestVM.TaskActivity;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -66,7 +66,7 @@ namespace FTask.API.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(DepartmentResponseVM))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TaskActivityResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         public async Task<IActionResult> CreateTaskActivity([FromBody] CreateTaskActivityVM resource)
         {
@@ -75,25 +75,11 @@ namespace FTask.API.Controllers
                 var result = await _taskActivityService.CreateNewActivity(resource);
                 if (result.IsSuccess)
                 {
-                    int id = Int32.Parse(result.Id!);
-                    var existedTaskActivity = await _taskActivityService.GetTaskActivityById(id);
-                    if (existedTaskActivity is not null)
-                    {
-                        return CreatedAtAction(nameof(GetTaskActivityById),
-                        new
-                        {
-                            id = id
-                        }, _mapper.Map<TaskActivityResponseVM>(existedTaskActivity));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new task activity",
-                            Errors = new List<string> { "Created activity not found" }
-                        });
-                    }
+                    return CreatedAtAction(nameof(GetTaskActivityById),
+                       new
+                       {
+                           id = result.Entity!.TaskActivityId
+                       }, _mapper.Map<TaskActivityResponseVM>(result.Entity!));
                 }
                 else
                 {

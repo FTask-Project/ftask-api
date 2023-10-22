@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateRole;
+using FTask.Service.ViewModel.RequestVM.Role;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -78,24 +78,10 @@ namespace FTask.API.Controllers
                 var result = await _roleService.CreateNewRole(resource);
                 if (result.IsSuccess)
                 {
-                    var id = Guid.Parse(result.Id!);
-                    var role = await _roleService.GetRoleById(id);
-                    if (role is not null)
+                    return CreatedAtAction(nameof(GetRoleById), new
                     {
-                        return CreatedAtAction(nameof(GetRoleById), new
-                        {
-                            id = id,
-                        }, _mapper.Map<RoleResponseVM>(role));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new role",
-                            Errors = new List<string> { "Created role not found" }
-                        });
-                    }
+                        id = result.Entity!.Id,
+                    }, _mapper.Map<RoleResponseVM>(result.Entity!));
                 }
                 else
                 {

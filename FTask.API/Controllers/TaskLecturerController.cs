@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
+using FTask.Service.ViewModel.RequestVM.TaskLecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -80,25 +80,10 @@ namespace FTask.API.Controllers
                 var result = await _taskLecturerService.CreateNewTaskLecturer(resource);
                 if (result.IsSuccess)
                 {
-                    int id = Int32.Parse(result.Id!);
-                    var existedTaskLecturer = await _taskLecturerService.GetTaskLecturerById(id);
-                    if (existedTaskLecturer is not null)
+                    return CreatedAtAction(nameof(GetTaskLecturerById), new
                     {
-                        return CreatedAtAction(nameof(GetTaskLecturerById), new
-                        {
-                            id = id,
-                        },
-                        _mapper.Map<TaskLecturerResponseVM>(existedTaskLecturer));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to assign task",
-                            Errors = new List<string> {"Assigned task not found" }
-                        });
-                    }
+                        id = result.Entity!.TaskLecturerId,
+                    }, _mapper.Map<TaskLecturerResponseVM>(result.Entity!));
                 }
                 else
                 {

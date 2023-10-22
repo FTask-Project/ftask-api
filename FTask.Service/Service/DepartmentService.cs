@@ -2,8 +2,10 @@
 using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
+using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
+using FTask.Service.ViewModel.RequestVM.Department;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -76,18 +78,34 @@ namespace FTask.Service.IService
             return await departmentList.ToArrayAsync();
         }
 
-        public async Task<ServiceResponse> CreateNewDepartment(Department newEntity)
+        public async Task<ServiceResponse<Department>> CreateNewDepartment(Department newEntity)
         {
             // Check if lecturer with the given id exist
             if (newEntity.DepartmentHeadId is not null)
             {
-                var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync((Guid)newEntity.DepartmentHeadId);
+                var existedLecturer = await _unitOfWork.LecturerRepository
+                    .Get(l => l.Id == newEntity.DepartmentHeadId,
+                    new Expression<Func<Lecturer, object>>[]
+                    {
+                        l => l.DepartmentHead!
+                    })
+                    .FirstOrDefaultAsync();
                 if (existedLecturer is null)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Department>
                     {
                         IsSuccess = false,
-                        Message = "Lecturer not found"
+                        Message = "Failed to create new department",
+                        Errors = new string[] { "Lecturer not found" }
+                    };
+                }
+                if(existedLecturer.DepartmentHead is not null)
+                {
+                    return new ServiceResponse<Department>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to create new department",
+                        Errors = new string[] { $"Lecturer already is head of department '{existedLecturer.DepartmentHead.DepartmentName}'" }
                     };
                 }
             }
@@ -98,7 +116,7 @@ namespace FTask.Service.IService
                 .FirstOrDefaultAsync();
             if (existedDepartment is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Department>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new department",
@@ -129,16 +147,16 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Department>
                     {
                         IsSuccess = true,
                         Message = "Created new department successfully",
-                        Id = newEntity.DepartmentId.ToString()
+                        Entity = newEntity
                     };
                 }
                 else
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Department>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new department",
@@ -148,7 +166,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Department>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new department",
@@ -157,7 +175,7 @@ namespace FTask.Service.IService
             }
             catch(OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Department>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new department",
@@ -183,6 +201,133 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<Department>> UpdateDepartment(UpdateDepartmentVM updateDepartment, int id)
+        {
+            var existedDepartment = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == id).FirstOrDefaultAsync();
+            if(existedDepartment is null)
+            {
+                return new ServiceResponse<Department>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update department",
+                    Errors = new string[] { "Department not found" }
+                };
+            }
+
+            if(updateDepartment.DepartmentHeadId is not null)
+            {
+                if(updateDepartment.DepartmentHeadId == new Guid("00000000-0000-0000-0000-000000000000"))
+                {
+                    existedDepartment.DepartmentHeadId = null;
+                }
+                else
+                {
+                    var existedLecturer = await _unitOfWork.LecturerRepository
+                    .Get(l => l.Id == updateDepartment.DepartmentHeadId,
+                    new Expression<Func<Lecturer, object>>[]
+                    {
+                        l => l.DepartmentHead!
+                    })
+                    .FirstOrDefaultAsync();
+                    if (existedLecturer is null)
+                    {
+                        return new ServiceResponse<Department>
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to update department",
+                            Errors = new string[] { "Lecturer not found" }
+                        };
+                    }
+                    if (existedLecturer.DepartmentHead is not null)
+                    {
+                        return new ServiceResponse<Department>
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to update department",
+                            Errors = new string[] { $"Lecturer is already head of department '{existedLecturer.DepartmentHead.DepartmentName}'" }
+                        };
+                    }
+                    existedDepartment.DepartmentHeadId = updateDepartment.DepartmentHeadId;
+                }
+            }
+
+            var checkDepartment = _unitOfWork.DepartmentRepository
+                .Get(d => d.DepartmentName.Equals(updateDepartment.DepartmentName) || d.DepartmentCode.Equals(updateDepartment.DepartmentCode))
+                .AsNoTracking();
+
+            if(updateDepartment.DepartmentName is not null)
+            {
+                if(checkDepartment.Any(d => d.DepartmentName.Equals(updateDepartment.DepartmentName)))
+                {
+                    return new ServiceResponse<Department>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update department",
+                        Errors = new string[] { "Department name is already taken" }
+                    };
+                }
+                existedDepartment.DepartmentName = updateDepartment.DepartmentName;
+            }
+
+            if (updateDepartment.DepartmentCode is not null)
+            {
+                if(checkDepartment.Any(d => d.DepartmentCode.Equals(updateDepartment.DepartmentCode)))
+                {
+                    return new ServiceResponse<Department>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update department",
+                        Errors = new string[] { "Department code is already taken" }
+                    };
+                }
+                existedDepartment.DepartmentCode = updateDepartment.DepartmentCode;
+            }
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(Department), existedDepartment.DepartmentId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
+                    return new ServiceResponse<Department>
+                    {
+                        IsSuccess = true,
+                        Message = "Update department successfully",
+                        Entity = existedDepartment
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<Department>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update department",
+                        Errors = new List<string>() { "Can not save changes" }
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<Department>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update department",
+                    Errors = new string[1] { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<Department>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update department",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }

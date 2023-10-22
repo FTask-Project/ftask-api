@@ -7,7 +7,7 @@ using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Enum;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel.RequestVM.CreateTaskReport;
+using FTask.Service.ViewModel.RequestVM.TaskReport;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
@@ -81,7 +81,7 @@ namespace FTask.Service.IService
             return await taskReportList.ToArrayAsync();
         }
 
-        public async Task<ServiceResponse> CreateNewTaskReport(TaskReportVM newEntity)
+        public async Task<ServiceResponse<TaskReport>> CreateNewTaskReport(TaskReportVM newEntity)
         {
             var existedTaskActivity = await _unitOfWork.TaskActivityRepository
                 .Get(ta => ta.TaskActivityId == newEntity.TaskActivityId, new Expression<Func<TaskActivity, object>>[]
@@ -91,7 +91,7 @@ namespace FTask.Service.IService
 
             if (existedTaskActivity is null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskReport>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task report",
@@ -101,7 +101,7 @@ namespace FTask.Service.IService
 
             if(existedTaskActivity.TaskReport is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskReport>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task report",
@@ -140,7 +140,7 @@ namespace FTask.Service.IService
 
                 if (errors.Count() > 0)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<TaskReport>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new task report",
@@ -184,16 +184,16 @@ namespace FTask.Service.IService
 
                 if (result)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<TaskReport>
                     {
-                        Id = newTaskReport.TaskReportId.ToString(),
+                        Entity = newTaskReport,
                         IsSuccess = true,
                         Message = "Create new task report successfully"
                     };
                 }
                 else
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<TaskReport>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new task report",
@@ -203,7 +203,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskReport>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task report",
@@ -212,7 +212,7 @@ namespace FTask.Service.IService
             }
             catch (OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskReport>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task report",

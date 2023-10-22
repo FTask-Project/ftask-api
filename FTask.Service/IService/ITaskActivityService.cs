@@ -1,5 +1,5 @@
 ﻿using FTask.Repository.Entity;
-using FTask.Service.ViewModel.RequestVM.CreateTaskActivity;
+using FTask.Service.ViewModel.RequestVM.TaskActivity;
 using FTask.Service.ViewModel.ResposneVM;
 
 namespace FTask.Service.IService
@@ -8,7 +8,7 @@ namespace FTask.Service.IService
     {
         Task<TaskActivity?> GetTaskActivityById(int id);
         Task<IEnumerable<TaskActivity>> GetTaskActivities(int page, int quantity, string filter, int? taskLecturerId);
-        Task<ServiceResponse> CreateNewActivity(CreateTaskActivityVM newEntity);
+        Task<ServiceResponse<TaskActivity>> CreateNewActivity(CreateTaskActivityVM newEntity);
         Task<bool> DeleteTaskActivity(int id);
     }
 }

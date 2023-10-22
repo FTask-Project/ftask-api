@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace FTask.Service.ViewModel.RequestVM.CreateUser;
+namespace FTask.Service.ViewModel.RequestVM.User;
 
 public class UserVM
 {
@@ -18,5 +18,17 @@ public class UserVM
     [AllowNull]
     public string? Email { get; set; }
     public IEnumerable<Guid> RoleIds { get; set; } = new List<Guid>();
+    public IFormFile? Avatar { get; set; }
+}
+
+public class UpdateUserVM
+{
+    public string? DisplayName { get; set; }
+    public string? PhoneNumber { get; set; }
+    public bool? LockoutEnabled { get; set; }
+    public DateTimeOffset? LockoutEnd { get; set; }
+    [EmailAddress]
+    public string? Email { get; set; }
+    public IEnumerable<Guid>? RoleIds { get; set; }
     public IFormFile? Avatar { get; set; }
 }

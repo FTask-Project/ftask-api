@@ -4,18 +4,14 @@ using FTask.Repository.IRepository;
 using FTask.Service.IService;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.Service.Validation
 {
     public interface ICreateTaskValidation
     {
-        Task<ServiceResponse> CanAssignTask(IEnumerable<Guid> taskRecipients, IDepartmentRepository departmentRepository);
+        Task<ServiceResponse<Task>> CanAssignTask(IEnumerable<Guid> taskRecipients, IDepartmentRepository departmentRepository);
     }
 
     internal class CreateTaskValidation : ICreateTaskValidation
@@ -32,12 +28,12 @@ namespace FTask.Service.Validation
             _currentUserService = currentUserService;
         }
 
-        public async Task<ServiceResponse> CanAssignTask(IEnumerable<Guid> taskRecipients, IDepartmentRepository departmentRepository)
+        public async Task<ServiceResponse<Task>> CanAssignTask(IEnumerable<Guid> taskRecipients, IDepartmentRepository departmentRepository)
         {
             var check = Guid.TryParse(_currentUserService.UserId, out var currentUserId);
             if (!check)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Task>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",
@@ -48,7 +44,7 @@ namespace FTask.Service.Validation
             var roles = _currentUserService.Roles;
             if (roles.Any(r => ALLOWED_ROLES.Contains(r)))
             {
-                return new ServiceResponse
+                return new ServiceResponse<Task>
                 {
                     IsSuccess = true
                 };
@@ -56,7 +52,7 @@ namespace FTask.Service.Validation
 
             if(!HEADER_CAN_ASSIGN_TASK || !roles.Any(r => OTHER_ROLES.Contains(r)))
             {
-                return new ServiceResponse 
+                return new ServiceResponse<Task>
                 { 
                     IsSuccess = false,
                     Message = "Failed to create new task",
@@ -72,7 +68,7 @@ namespace FTask.Service.Validation
                 }).FirstOrDefaultAsync();
             if(department is null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Task>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",
@@ -82,7 +78,7 @@ namespace FTask.Service.Validation
 
             if(taskRecipients.Count() > MAXIMUM_ASSIGN)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Task>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",
@@ -95,7 +91,7 @@ namespace FTask.Service.Validation
             {
                 if (!lecturerIds.Contains(lecturer))
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Task>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new task",
@@ -104,7 +100,7 @@ namespace FTask.Service.Validation
                 }
             }
 
-            return new ServiceResponse
+            return new ServiceResponse<Task>
             {
                 IsSuccess = true
             };

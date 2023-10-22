@@ -7,7 +7,7 @@ using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM;
-using FTask.Service.ViewModel.RequestVM.CreateLecturer;
+using FTask.Service.ViewModel.RequestVM.Lecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -113,6 +113,7 @@ namespace FTask.Service.IService
         }
 
         public async Task<Lecturer?> GetLectureById(Guid id)
+        
         {
             string key = CacheKeyGenerator.GetKeyById(nameof(Lecturer), id.ToString());
             var cachedData = await _cacheService.GetAsync(key);
@@ -126,7 +127,7 @@ namespace FTask.Service.IService
                     l => l.Subjects
                 };
                 var lecturer = await _unitOfWork.LecturerRepository
-                    .Get(l => !l.Deleted && l.Id == id)
+                    .Get(l => !l.Deleted && l.Id == id, includes)
                     .FirstOrDefaultAsync();
                 if (lecturer is not null)
                 {
@@ -138,12 +139,12 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<ServiceResponse> CreateNewLecturer(LecturerVM newEntity)
+        public async Task<ServiceResponse<Lecturer>> CreateNewLecturer(LecturerVM newEntity)
         {
             var existedUser = await _userManager.FindByNameAsync(newEntity.UserName);
             if (existedUser is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Lecturer>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new lecturer",
@@ -156,7 +157,7 @@ namespace FTask.Service.IService
                 var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.Email.Equals(l.Email)).FirstOrDefaultAsync();
                 if (existedLecturer is not null)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Lecturer>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new lecturer",
@@ -170,7 +171,7 @@ namespace FTask.Service.IService
                 var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.PhoneNumber.Equals(l.PhoneNumber)).FirstOrDefaultAsync();
                 if (existedLecturer is not null)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Lecturer>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new lecturer",
@@ -184,7 +185,7 @@ namespace FTask.Service.IService
                 var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(newEntity.DepartmentId ?? 0);
                 if (existedDepartment is null)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Lecturer>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new lecturer",
@@ -196,6 +197,7 @@ namespace FTask.Service.IService
             Lecturer newLecturer = new Lecturer
             {
                 UserName = newEntity.UserName,
+                DisplayName = newEntity.DisplayName,
                 PhoneNumber = newEntity.PhoneNumber,
                 Email = newEntity.Email,
                 LockoutEnabled = newEntity.LockoutEnabled ?? true,
@@ -216,7 +218,7 @@ namespace FTask.Service.IService
                     var existedSubject = await _unitOfWork.SubjectRepository.FindAsync(id);
                     if (existedSubject is null)
                     {
-                        return new ServiceResponse
+                        return new ServiceResponse<Lecturer>
                         {
                             IsSuccess = false,
                             Message = "Failed to create new lecturer",
@@ -246,7 +248,7 @@ namespace FTask.Service.IService
 
                 if (uploadResult.Error is not null)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Lecturer>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new lecturer",
@@ -261,7 +263,7 @@ namespace FTask.Service.IService
                 var identityResult = await _userManager.CreateAsync(newLecturer, newEntity.Password);
                 if (!identityResult.Succeeded)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Lecturer>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new lecturer",
@@ -270,9 +272,9 @@ namespace FTask.Service.IService
                 }
                 else
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Lecturer>
                     {
-                        Id = newLecturer.Id.ToString(),
+                        Entity = newLecturer,
                         IsSuccess = true,
                         Message = "Create new lecturer successfully"
                     };
@@ -280,7 +282,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Lecturer>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new lecturer",
@@ -289,7 +291,7 @@ namespace FTask.Service.IService
             }
             catch (OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Lecturer>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new lecturer",
@@ -315,6 +317,158 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<Lecturer>> UpdateLecturer(UpdateLecturerVM updateLecturer, Guid id)
+        {
+            Expression<Func<Lecturer, object>>[] includes = new Expression<Func<Lecturer, object>>[3]
+                {
+                    l => l.DepartmentHead!,
+                    l => l.Department!,
+                    l => l.Subjects
+                };
+
+            var existedLecturer = await _unitOfWork.LecturerRepository
+                .Get(l => !l.Deleted && l.Id == id, includes)
+                .FirstOrDefaultAsync();
+
+            if(existedLecturer is null)
+            {
+                return new ServiceResponse<Lecturer>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update lecturer",
+                    Errors = new string[] { "Lecturer not found" }
+                };
+            }
+
+            var checkLecturer = _unitOfWork.LecturerRepository
+                .Get(l => l.PhoneNumber.Equals(updateLecturer.PhoneNumber) || l.Email.Equals(updateLecturer.Email))
+                .AsNoTracking();
+            if(updateLecturer.Email is not null)
+            {
+                if(checkLecturer.Any(l => l.Email.Equals(updateLecturer.Email)))
+                {
+                    return new ServiceResponse<Lecturer>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update lecturer",
+                        Errors = new string[] { "Email is already taken" }
+                    };
+                }
+                existedLecturer.Email = updateLecturer.Email;
+            }
+
+            if(updateLecturer.PhoneNumber is not null)
+            {
+                if(checkLecturer.Any(l => l.PhoneNumber.Equals(updateLecturer.PhoneNumber)))
+                {
+                    return new ServiceResponse<Lecturer>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update lecturer",
+                        Errors = new string[] { "Phone number is already taken" }
+                    };
+                }
+                existedLecturer.PhoneNumber = updateLecturer.PhoneNumber;
+            }
+
+            if(updateLecturer.DepartmentId is not null)
+            {
+                if(updateLecturer.DepartmentId == 0)
+                {
+                    existedLecturer.DepartmentId = null;
+                }
+                else
+                {
+                    var existedDepartment = await _unitOfWork.DepartmentRepository.Get(d => !d.Deleted && d.DepartmentId == updateLecturer.DepartmentId).FirstOrDefaultAsync();
+                    if (existedDepartment is null)
+                    {
+                        return new ServiceResponse<Lecturer>
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to update lecturer",
+                            Errors = new string[] { "Department not found" }
+                        };
+                    }
+                    existedLecturer.DepartmentId = updateLecturer.DepartmentId;
+                }
+            }
+
+            if(updateLecturer.SubjectIds is not null)
+            {
+                var subjectList = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && updateLecturer.SubjectIds.Contains(s.SubjectId)).ToArrayAsync();
+                existedLecturer.Subjects = subjectList;
+            }
+            
+            if(updateLecturer.Avatar is not null && updateLecturer.Avatar.Length > 0)
+            {
+                var uploadFile = new ImageUploadParams
+                {
+                    File = new FileDescription(updateLecturer.Avatar.FileName, updateLecturer.Avatar.OpenReadStream())
+                };
+                var uploadResult = await _cloudinary.UploadAsync(uploadFile);
+
+                if (uploadResult.Error is not null)
+                {
+                    return new ServiceResponse<Lecturer>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update lecturer",
+                        Errors = new string[1] { "Failed to upload image" }
+                    };
+                }
+
+                existedLecturer.FilePath = uploadResult.SecureUrl.ToString();
+            }
+
+            existedLecturer.LockoutEnabled = updateLecturer.LockoutEnabled ?? existedLecturer.LockoutEnabled;
+            existedLecturer.LockoutEnd = updateLecturer.LockoutEnd ?? existedLecturer.LockoutEnd;
+            existedLecturer.DisplayName = updateLecturer.DisplayName ?? existedLecturer.DisplayName;
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(Lecturer), existedLecturer.Id.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
+                    return new ServiceResponse<Lecturer>
+                    {
+                        IsSuccess = true,
+                        Message = "Update lecturer successfully",
+                        Entity = existedLecturer
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<Lecturer>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update lecturer",
+                        Errors = new string[1] { "Can not save changes" }
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<Lecturer>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update lecturer",
+                    Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<Lecturer>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update lecturer",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }

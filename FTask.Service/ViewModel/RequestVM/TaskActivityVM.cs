@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FTask.Service.ViewModel.RequestVM.CreateTaskActivity;
+namespace FTask.Service.ViewModel.RequestVM.TaskActivity;
 
 public class CreateTaskActivityVM
 {

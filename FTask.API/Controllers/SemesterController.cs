@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateSemester;
+using FTask.Service.ViewModel.RequestVM.Semester;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -78,24 +78,10 @@ namespace FTask.API.Controllers
                 var result = await _semesterService.CreateNewSemester(resource);
                 if (result.IsSuccess)
                 {
-                    var id = Int32.Parse(result.Id!);
-                    var existedSemester = await _semesterService.GetSemesterById(id);
-                    if (existedSemester is not null)
+                    return CreatedAtAction(nameof(GetSemesterById), new
                     {
-                        return CreatedAtAction(nameof(GetSemesterById), new
-                        {
-                            id = id
-                        }, _mapper.Map<SemesterResponseVM>(existedSemester));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new semester",
-                            Errors = new List<string> { "Created semester not found" }
-                        });
-                    }
+                        id = result.Entity!.SemesterId
+                    }, _mapper.Map<SemesterResponseVM>(result.Entity!));
                 }
                 else
                 {
@@ -155,6 +141,33 @@ namespace FTask.API.Controllers
                 {
                     IsSuccess = false,
                     Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SemesterResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> UpdateSemester([FromBody] UpdateSemesterVM resource, int id)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _semesterService.UpdateSemester(resource, id);
+                if (result.IsSuccess)
+                {
+                    return Ok(_mapper.Map<SemesterResponseVM>(result.Entity));
+                }
+                else
+                {
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input",
                 });
             }
         }

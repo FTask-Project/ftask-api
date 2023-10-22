@@ -1,4 +1,5 @@
 ﻿using FTask.Repository.Data;
+using FTask.Repository.Entity;
 using FTask.Repository.IRepository;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,7 @@ namespace FTask.Service.Validation
 {
     public interface ISemesterValidation
     {
-        Task<ServiceResponse> validateSemester(DateTime startDate, DateTime endDate, ISemesterRepository semesterRepository);
+        Task<ServiceResponse<Semester>> ValidateSemester(DateTime startDate, DateTime endDate, ISemesterRepository semesterRepository);
     }
 
     internal class SemesterValidation : ISemesterValidation
@@ -15,11 +16,11 @@ namespace FTask.Service.Validation
         private static TimeSpan MINIMUM_DURATION = TimeSpan.FromDays(30);
         private static TimeSpan MAXIMUM_DURATION = TimeSpan.FromDays(90);
 
-        public async Task<ServiceResponse> validateSemester(DateTime startDate, DateTime endDate, ISemesterRepository semesterRepository)
+        public async Task<ServiceResponse<Semester>> ValidateSemester(DateTime startDate, DateTime endDate, ISemesterRepository semesterRepository)
         {
             if(endDate < startDate)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Semester>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new semester",
@@ -27,10 +28,10 @@ namespace FTask.Service.Validation
                 };
             }
 
-            var checkSemester = await semesterRepository.Get(s => s.EndDate > startDate).FirstOrDefaultAsync();
+            var checkSemester = await semesterRepository.Get(s => s.EndDate > startDate && s.StartDate < startDate).FirstOrDefaultAsync();
             if (checkSemester is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Semester>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new semester",
@@ -41,7 +42,7 @@ namespace FTask.Service.Validation
             var duration = (endDate - startDate).TotalDays;
             if (duration < MINIMUM_DURATION.Days || duration > MAXIMUM_DURATION.Days)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Semester>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new semester",
@@ -49,7 +50,7 @@ namespace FTask.Service.Validation
                 };
             }
 
-            return new ServiceResponse
+            return new ServiceResponse<Semester>
             {
                 IsSuccess = true
             };

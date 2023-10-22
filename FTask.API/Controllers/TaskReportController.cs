@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateTaskReport;
+using FTask.Service.ViewModel.RequestVM.TaskReport;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -79,25 +79,10 @@ namespace FTask.API.Controllers
                 var result = await _taskReportService.CreateNewTaskReport(resource);
                 if (result.IsSuccess)
                 {
-                    int id = Int32.Parse(result.Id!);
-                    var existedTaskReport = await _taskReportService.GetTaskReportById(id);
-                    if (existedTaskReport is not null)
+                    return CreatedAtAction(nameof(GetTaskReportById), new
                     {
-                        return CreatedAtAction(nameof(GetTaskReportById), new
-                        {
-                            id = id,
-                        },
-                        _mapper.Map<TaskReportResponseVM>(existedTaskReport));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new task report",
-                            Errors = new string[1] { "Created report not found" }
-                        });
-                    }
+                        id = result.Entity!.TaskReportId,
+                    }, _mapper.Map<TaskReportResponseVM>(result.Entity!));
                 }
                 else
                 {

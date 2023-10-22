@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateUser;
+using FTask.Service.ViewModel.RequestVM.User;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -78,24 +78,10 @@ namespace FTask.API.Controllers
                 var result = await _userService.CreateNewUser(resource);
                 if (result.IsSuccess)
                 {
-                    var id = Guid.Parse(result.Id!);
-                    var existedUser = await _userService.GetUserById(id);
-                    if (existedUser is not null)
+                    return CreatedAtAction(nameof(GetUserById), new
                     {
-                        return CreatedAtAction(nameof(GetUserById), new
-                        {
-                            id = id
-                        }, _mapper.Map<UserInformationResponseVM>(existedUser));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new user",
-                            Errors = new List<string> { "Created user not found" }
-                        });
-                    }
+                        id = result.Entity!.Id
+                    }, _mapper.Map<UserInformationResponseVM>(result.Entity));
                 }
                 return BadRequest(_mapper.Map<ServiceResponseVM>(result));
             }
@@ -144,6 +130,33 @@ namespace FTask.API.Controllers
                         Message = "Failed to delete user",
                         Errors = new string[1] { ex.Message }
                     });
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserInformationResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> UpdateUser([FromForm] UpdateUserVM resource, Guid id)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _userService.UpdateUser(resource, id);
+                if (result.IsSuccess)
+                {
+                    return Ok(_mapper.Map<UserInformationResponseVM>(result.Entity));
+                }
+                else
+                {
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
                 }
             }
             else

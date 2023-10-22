@@ -10,7 +10,16 @@ public class ModelToResponse : Profile
 {
     public ModelToResponse()
     {
-        CreateMap<ServiceResponse, ServiceResponseVM>();
+        CreateMap<ServiceResponse<Department>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<Lecturer>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<Role>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<Semester>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<Subject>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<TaskActivity>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<Task>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<TaskLecturer>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<TaskReport>, ServiceResponseVM>();
+        CreateMap<ServiceResponse<User>, ServiceResponseVM>();
 
         CreateMap<Role, RoleResponseVM>();
 

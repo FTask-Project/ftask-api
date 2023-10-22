@@ -6,7 +6,7 @@ using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Enum;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel.RequestVM.CreateTask;
+using FTask.Service.ViewModel.RequestVM.Task;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
@@ -106,7 +106,7 @@ namespace FTask.Service.IService
             return await taskList.ToArrayAsync();
         }
 
-        public async Task<ServiceResponse> CreateNewTask(TaskVM newEntity)
+        public async Task<ServiceResponse<Task>> CreateNewTask(TaskVM newEntity)
         {
             var serviceResponse = await _createTaskValidation.CanAssignTask(newEntity.TaskLecturers.Select(t => t.LecturerId), _unitOfWork.DepartmentRepository);
             if (!serviceResponse.IsSuccess)
@@ -118,7 +118,7 @@ namespace FTask.Service.IService
             var currentSemester = await _unitOfWork.SemesterRepository.Get(s => currentDateTime >= s.StartDate && currentDateTime <= s.EndDate).FirstOrDefaultAsync();
             if (currentSemester is null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Task>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",
@@ -128,7 +128,7 @@ namespace FTask.Service.IService
 
             if (newEntity.StartDate > newEntity.EndDate)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Task>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",
@@ -142,7 +142,7 @@ namespace FTask.Service.IService
                 var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(newEntity.DepartmentId ?? 0);
                 if (existedDepartment is null)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Task>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new task",
@@ -155,7 +155,7 @@ namespace FTask.Service.IService
                     var existedSubject = await _unitOfWork.SubjectRepository.FindAsync(newEntity.SubjectId ?? 0);
                     if (existedSubject is null)
                     {
-                        return new ServiceResponse
+                        return new ServiceResponse<Task>
                         {
                             IsSuccess = false,
                             Message = "Failed to create new task",
@@ -173,7 +173,7 @@ namespace FTask.Service.IService
                     var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync(assignedlecturer.LecturerId);
                     if (existedLecturer is null)
                     {
-                        return new ServiceResponse
+                        return new ServiceResponse<Task>
                         {
                             IsSuccess = false,
                             Message = "Failed to create new task",
@@ -231,7 +231,7 @@ namespace FTask.Service.IService
 
                 if (errors.Count() > 0)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Task>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new task",
@@ -262,16 +262,16 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Task>
                     {
-                        Id = newTask.TaskId.ToString(),
+                        Entity = newTask,
                         IsSuccess = true,
                         Message = "Create new task successfully"
                     };
                 }
                 else
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Task>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new task",
@@ -281,7 +281,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Task>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",
@@ -290,7 +290,7 @@ namespace FTask.Service.IService
             }
             catch (OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Task>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",

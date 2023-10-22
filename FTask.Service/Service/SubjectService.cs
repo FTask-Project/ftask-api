@@ -3,6 +3,7 @@ using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
+using FTask.Service.ViewModel.RequestVM.Subject;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -52,7 +53,7 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<IEnumerable<Subject>> GetSubjectAllSubject(int page, int quantity, string filter, int? departmentId)
+        public async Task<IEnumerable<Subject>> GetSubjectAllSubject(int page, int quantity, string filter, int? departmentId, bool? status)
         {
             if (page == 0)
             {
@@ -60,29 +61,33 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
-            var subjectList = await _unitOfWork.SubjectRepository
+            var subjectList = _unitOfWork.SubjectRepository
                     .Get(s => !s.Deleted && (s.SubjectName.Contains(filter) || s.SubjectCode.Contains(filter)))
                     .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                    .Take(quantity)
-                    .ToArrayAsync();
+                    .Take(quantity); ;
 
             if (departmentId is not null)
             {
-                subjectList = subjectList.Where(s => s.DepartmentId == departmentId).ToArray();
+                subjectList = subjectList.Where(s => s.DepartmentId == departmentId);
             }
 
-            return subjectList;
+            if(status is not null)
+            {
+                subjectList = subjectList.Where(s => s.Status == status);
+            }
+
+            return await subjectList.ToArrayAsync();
         }
 
-        public async Task<ServiceResponse> CreateNewSubject(Subject subjectEntity)
+        public async Task<ServiceResponse<Subject>> CreateNewSubject(Subject subjectEntity)
         {
             var isExist = await _unitOfWork.SubjectRepository
                     .Get(subject => subject.SubjectCode == subjectEntity.SubjectCode
-                    || subject.SubjectName == subject.SubjectName)
+                    || subject.SubjectName == subjectEntity.SubjectName)
                     .FirstOrDefaultAsync();
             if (isExist is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Subject>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new subject",
@@ -93,7 +98,7 @@ namespace FTask.Service.IService
             var existedDepartment = await _unitOfWork.DepartmentRepository.FindAsync(subjectEntity.DepartmentId);
             if (existedDepartment is null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Subject>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new subject",
@@ -111,16 +116,16 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Subject>
                     {
                         IsSuccess = true,
                         Message = "Create new subject successfully",
-                        Id = subjectEntity.SubjectId.ToString()
+                        Entity = subjectEntity
                     };
                 }
                 else
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Subject>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new subject",
@@ -130,7 +135,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Subject>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new subject",
@@ -139,7 +144,7 @@ namespace FTask.Service.IService
             }
             catch (OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Subject>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new subject",
@@ -165,6 +170,114 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<ServiceResponse<Subject>> UpdateSubject(UpdateSubjectVM updateSubject, int id)
+        {
+            var existedSubject = await _unitOfWork.SubjectRepository.Get(s => !s.Deleted && s.SubjectId == id).FirstOrDefaultAsync();
+            if(existedSubject is null)
+            {
+                return new ServiceResponse<Subject>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update subject",
+                    Errors = new string[] { "Subject not found" }
+                };
+            }
+
+            var checkSubject = _unitOfWork.SubjectRepository
+                .Get(s => s.SubjectName.Equals(updateSubject.SubjectName) || s.SubjectCode.Equals(updateSubject.SubjectCode))
+                .AsNoTracking();
+
+            if (updateSubject.SubjectName is not null)
+            {
+                if (checkSubject.Any(s => s.SubjectName.Equals(updateSubject.SubjectName)))
+                {
+                    return new ServiceResponse<Subject>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update subject",
+                        Errors = new string[] { $"Subject name '{updateSubject.SubjectName}' is already taken" }
+                    };
+                }
+                existedSubject.SubjectName = updateSubject.SubjectName;
+            }
+
+            if(updateSubject.SubjectCode is not null)
+            {
+                if (checkSubject.Any(s => s.SubjectCode.Equals(updateSubject.SubjectCode)))
+                {
+                    return new ServiceResponse<Subject>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update subject",
+                        Errors = new string[] { $"Subject name '{updateSubject.SubjectName}' is already taken" }
+                    };
+                }
+                existedSubject.SubjectCode = updateSubject.SubjectCode;
+            }
+
+            if(updateSubject.DepartmentId is not null)
+            {
+                    var existedDepartment = await _unitOfWork.DepartmentRepository
+                    .Get(d => d.DepartmentId == updateSubject.DepartmentId)
+                    .FirstOrDefaultAsync();
+
+                if(existedDepartment is null)
+                {
+                    return new ServiceResponse<Subject>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update subject",
+                        Errors = new string[] { "Department not found" }
+                    };
+                }
+                existedSubject.DepartmentId = (int) updateSubject.DepartmentId;
+            }
+
+            try
+            {
+                var result = await _unitOfWork.SaveChangesAsync();
+                if (result)
+                {
+                    string key = CacheKeyGenerator.GetKeyById(nameof(Subject), existedSubject.SubjectId.ToString());
+                    var task = _cacheService.RemoveAsync(key);
+
+                    return new ServiceResponse<Subject>
+                    {
+                        IsSuccess = true,
+                        Message = "Update subject successfully",
+                        Entity = existedSubject
+                    };
+                }
+                else
+                {
+                    return new ServiceResponse<Subject>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to update subject",
+                        Errors = new string[1] { "Can not save changes" }
+                    };
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new ServiceResponse<Subject>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update subject",
+                    Errors = new List<string>() { ex.Message }
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ServiceResponse<Subject>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update subject",
+                    Errors = new string[1] { "The operation has been cancelled" }
+                };
+            }
         }
     }
 }

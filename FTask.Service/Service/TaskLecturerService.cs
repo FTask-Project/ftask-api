@@ -3,7 +3,7 @@ using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel.RequestVM.CreateTaskLecturer;
+using FTask.Service.ViewModel.RequestVM.TaskLecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -77,12 +77,12 @@ namespace FTask.Service.IService
             return await taskLecturerList.ToArrayAsync();
         }
 
-        public async Task<ServiceResponse> CreateNewTaskLecturer(CreateTaskLecturerVM newEntity)
+        public async Task<ServiceResponse<TaskLecturer>> CreateNewTaskLecturer(CreateTaskLecturerVM newEntity)
         {
             var exsitedTask = await _unitOfWork.TaskRepository.FindAsync(newEntity.TaskId);
             if (exsitedTask is null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskLecturer>
                 {
                     IsSuccess = false,
                     Message = "Failed to assign task",
@@ -93,11 +93,24 @@ namespace FTask.Service.IService
             var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync(newEntity.LecturerId);
             if (existedLecturer is null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskLecturer>
                 {
                     IsSuccess = false,
                     Message = "Failed to assign task",
                     Errors = new string[1] {"Can not find lecturer"}
+                };
+            }
+
+            var existedTaskLecturer = await _unitOfWork.TaskLecturerRepository
+                .Get(tl => tl.TaskId == newEntity.TaskId && tl.LecturerId == newEntity.LecturerId)
+                .FirstOrDefaultAsync();
+            if(existedTaskLecturer is not null)
+            {
+                return new ServiceResponse<TaskLecturer>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to assign task",
+                    Errors = new string[] { "Lecturers has been already assigned the task before" }
                 };
             }
 
@@ -108,6 +121,9 @@ namespace FTask.Service.IService
                 await _unitOfWork.TaskActivityRepository.AddRangeAsync(newTaskLecturer.TaskActivities);
             }
 
+            string key = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.Task), exsitedTask.TaskId.ToString());
+            var task = _cacheService.RemoveAsync(key);
+
             await _unitOfWork.TaskLecturerRepository.AddAsync(newTaskLecturer);
 
             try
@@ -115,16 +131,16 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<TaskLecturer>
                     {
-                        Id = newTaskLecturer.TaskLecturerId.ToString(),
+                        Entity = newTaskLecturer,
                         IsSuccess = true,
                         Message = "Assign task successfully"
                     };
                 }
                 else
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<TaskLecturer>
                     {
                         IsSuccess = false,
                         Message = "Failed to assign task",
@@ -134,7 +150,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskLecturer>
                 {
                     IsSuccess = false,
                     Message = "Failed to assign task",
@@ -143,7 +159,7 @@ namespace FTask.Service.IService
             }
             catch (OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskLecturer>
                 {
                     IsSuccess = false,
                     Message = "Failed to assign task",

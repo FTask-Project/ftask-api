@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Duende.IdentityServer.Extensions;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateTask;
+using FTask.Service.ViewModel.RequestVM.Task;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -89,25 +89,10 @@ namespace FTask.API.Controllers
                 var result = await _taskService.CreateNewTask(resource);
                 if (result.IsSuccess)
                 {
-                    int id = Int32.Parse(result.Id!);
-                    var existedTask = await _taskService.GetTaskById(id);
-                    if (existedTask is not null)
+                    return CreatedAtAction(nameof(GetTaskById), new
                     {
-                        return CreatedAtAction(nameof(GetTaskById), new
-                        {
-                            id = id,
-                        },
-                        _mapper.Map<TaskResponseVM>(existedTask));
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new task",
-                            Errors = new List<string> { "Created task not found" }
-                        });
-                    }
+                        id = result.Entity!.TaskId,
+                    },_mapper.Map<TaskResponseVM>(result.Entity!));
                 }
                 else
                 {

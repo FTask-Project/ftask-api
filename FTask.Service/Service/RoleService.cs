@@ -1,10 +1,9 @@
 ﻿using FTask.Repository.Common;
 using FTask.Repository.Data;
-using FTask.Repository.Entity;
 using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
-using FTask.Service.ViewModel.RequestVM.CreateRole;
+using FTask.Service.ViewModel.RequestVM.Role;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -70,12 +69,12 @@ namespace FTask.Service.IService
             return await roleList.ToArrayAsync();
         }
 
-        public async Task<ServiceResponse> CreateNewRole(RoleVM newEntity)
+        public async Task<ServiceResponse<Role>> CreateNewRole(RoleVM newEntity)
         {
             var existedRole = await _roleManager.FindByNameAsync(newEntity.RoleName);
             if (existedRole is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Role>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new role",
@@ -94,9 +93,9 @@ namespace FTask.Service.IService
                 var result = await _roleManager.CreateAsync(newRole);
                 if (result.Succeeded)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<Role>
                     {
-                        Id = newRole.Id.ToString(),
+                        Entity = newRole,
                         IsSuccess = true,
                         Message = "Create new roles successfully"
                     };
@@ -105,7 +104,7 @@ namespace FTask.Service.IService
                 {
                     var errors = new List<string> { "Error at create new roles service", "Can not save changes" };
                     errors.AddRange(result.Errors.Select(e => e.Description));
-                    return new ServiceResponse
+                    return new ServiceResponse<Role>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new role",
@@ -115,7 +114,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Role>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new role",
@@ -124,7 +123,7 @@ namespace FTask.Service.IService
             }
             catch (OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<Role>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new role",

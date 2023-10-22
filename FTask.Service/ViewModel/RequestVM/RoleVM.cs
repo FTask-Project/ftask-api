@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FTask.Service.ViewModel.RequestVM.CreateRole;
+namespace FTask.Service.ViewModel.RequestVM.Role;
 
 public class RoleVM
 {

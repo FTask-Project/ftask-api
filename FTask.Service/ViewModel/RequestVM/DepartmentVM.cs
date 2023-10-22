@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FTask.Service.ViewModel.RequestVM.CreateDepartment;
+namespace FTask.Service.ViewModel.RequestVM.Department;
 
 public class DepartmentVM
 {
@@ -18,4 +18,11 @@ public class SubjectVM
     [Required]
     public string? SubjectCode { get; set; }
     public bool Status { get; set; }
+}
+
+public class UpdateDepartmentVM
+{
+    public string? DepartmentName { get; set; }
+    public string? DepartmentCode { get; set; }
+    public Guid? DepartmentHeadId { get; set; }
 }

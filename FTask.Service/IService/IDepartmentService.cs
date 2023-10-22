@@ -1,4 +1,5 @@
 ﻿using FTask.Repository.Entity;
+using FTask.Service.ViewModel.RequestVM.Department;
 using FTask.Service.ViewModel.ResposneVM;
 
 namespace FTask.Service.IService
@@ -7,7 +8,8 @@ namespace FTask.Service.IService
     {
         Task<Department?> GetDepartmentById(int id);
         Task<IEnumerable<Department>> GetDepartments(int page, int quantity, string filter, Guid? headerId);
-        Task<ServiceResponse> CreateNewDepartment(Department newEntity);
+        Task<ServiceResponse<Department>> CreateNewDepartment(Department newEntity);
         Task<bool> DeleteDepartment(int id);
+        Task<ServiceResponse<Department>> UpdateDepartment(UpdateDepartmentVM updateDepartment, int id);
     }
 }

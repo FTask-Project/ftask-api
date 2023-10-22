@@ -6,7 +6,7 @@ using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM;
-using FTask.Service.ViewModel.RequestVM.CreateUser;
+using FTask.Service.ViewModel.RequestVM.User;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -128,12 +128,12 @@ internal class UserService : IUserService
         return cacheData;
     }
 
-    public async Task<ServiceResponse> CreateNewUser(UserVM newEntity)
+    public async Task<ServiceResponse<User>> CreateNewUser(UserVM newEntity)
     {
         var existedUser = await _userManager.FindByNameAsync(newEntity.UserName);
         if (existedUser is not null)
         {
-            return new ServiceResponse
+            return new ServiceResponse<User>
             {
                 IsSuccess = false,
                 Message = $"Failed to create new user",
@@ -146,7 +146,7 @@ internal class UserService : IUserService
             var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.Email.Equals(l.Email)).FirstOrDefaultAsync();
             if (existedLecturer is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<User>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new user",
@@ -160,7 +160,7 @@ internal class UserService : IUserService
             var existedLecturer = await _unitOfWork.LecturerRepository.Get(l => newEntity.PhoneNumber.Equals(l.PhoneNumber)).FirstOrDefaultAsync();
             if (existedLecturer is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<User>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new user",
@@ -191,7 +191,7 @@ internal class UserService : IUserService
                 var existedRole = await _unitOfWork.RoleRepository.FindAsync(id);
                 if (existedRole is null)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<User>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new user",
@@ -221,7 +221,7 @@ internal class UserService : IUserService
 
             if (uploadResult.Error is not null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<User>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new user",
@@ -236,7 +236,7 @@ internal class UserService : IUserService
             var identityResult = await _userManager.CreateAsync(newUser, newEntity.Password);
             if (!identityResult.Succeeded)
             {
-                return new ServiceResponse
+                return new ServiceResponse<User>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new user",
@@ -245,9 +245,9 @@ internal class UserService : IUserService
             }
             else
             {
-                return new ServiceResponse
+                return new ServiceResponse<User>
                 {
-                    Id = newUser.Id.ToString(),
+                    Entity = newUser,
                     IsSuccess = true,
                     Message = "Create new lecturer successfully"
                 };
@@ -255,7 +255,7 @@ internal class UserService : IUserService
         }
         catch (DbUpdateException ex)
         {
-            return new ServiceResponse
+            return new ServiceResponse<User>
             {
                 IsSuccess = false,
                 Message = "Failed to create new user",
@@ -264,7 +264,7 @@ internal class UserService : IUserService
         }
         catch (OperationCanceledException)
         {
-            return new ServiceResponse
+            return new ServiceResponse<User>
             {
                 IsSuccess = false,
                 Message = "Failed to create new user",
@@ -290,5 +290,132 @@ internal class UserService : IUserService
         }
 
         return result;
+    }
+
+    public async Task<ServiceResponse<User>> UpdateUser(UpdateUserVM updateUser, Guid id)
+    {
+        Expression<Func<User, object>>[] includes = new Expression<Func<User, object>>[]
+                {
+                    u => u.Roles
+                };
+
+        var existedUser = await _unitOfWork.UserRepository
+            .Get(u => !u.Deleted && u.Id == id, includes)
+            .FirstOrDefaultAsync();
+
+        if(existedUser is null)
+        {
+            return new ServiceResponse<User>
+            {
+                IsSuccess = false,
+                Message = "Failed to update user",
+                Errors = new string[] { "User not found" }
+            };
+        }
+
+        if(updateUser.Email is not null)
+        {
+            var checkEmail = _unitOfWork.UserRepository.Get(u => u.Email.Equals(updateUser.Email)).FirstOrDefault() is not null;
+            if (checkEmail)
+            {
+                return new ServiceResponse<User>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update user",
+                    Errors = new string[] { "Email is already taken" }
+                };
+            }
+            existedUser.Email = updateUser.Email;
+        }
+
+        if(updateUser.PhoneNumber is not null)
+        {
+            var checkPhoneNumber = _unitOfWork.UserRepository.Get(u => u.PhoneNumber.Equals(updateUser.PhoneNumber)).FirstOrDefault() is not null;
+            if (checkPhoneNumber)
+            {
+                return new ServiceResponse<User>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update user",
+                    Errors = new string[] { "Phone number is already taken" }
+                };
+            }
+            existedUser.PhoneNumber = updateUser.PhoneNumber;
+        }
+
+        if(updateUser.Avatar is not null && updateUser.Avatar.Length > 0)
+        {
+            var uploadFile = new ImageUploadParams
+            {
+                File = new FileDescription(updateUser.Avatar.FileName, updateUser.Avatar.OpenReadStream())
+            };
+            var uploadResult = await _cloudinary.UploadAsync(uploadFile);
+
+            if (uploadResult.Error is not null)
+            {
+                return new ServiceResponse<User>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update user",
+                    Errors = new string[1] { "Failed to upload image" }
+                };
+            }
+
+            existedUser.FilePath = uploadResult.SecureUrl.ToString();
+        }
+
+        if(updateUser.RoleIds is not null)
+        {
+            var roleList = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && updateUser.RoleIds.Contains(r.Id)).ToArrayAsync();
+            existedUser.Roles = roleList;
+        }
+
+        existedUser.DisplayName = updateUser.DisplayName ?? existedUser.DisplayName;
+        existedUser.LockoutEnabled = updateUser.LockoutEnabled ?? existedUser.LockoutEnabled;
+        existedUser.LockoutEnd = updateUser.LockoutEnd ?? existedUser.LockoutEnd;
+
+        try
+        {
+            var result = await _unitOfWork.SaveChangesAsync();
+            if (result)
+            {
+                string key = CacheKeyGenerator.GetKeyById(nameof(User), existedUser.Id.ToString());
+                var task = _cacheService.RemoveAsync(key);
+
+                return new ServiceResponse<User>
+                {
+                    IsSuccess = true,
+                    Message = "Update user successfully",
+                    Entity = existedUser
+                };
+            }
+            else
+            {
+                return new ServiceResponse<User>
+                {
+                    IsSuccess = false,
+                    Message = "Failed to update user",
+                    Errors = new string[1] { "Can not save changes" }
+                };
+            }
+        }
+        catch (DbUpdateException ex)
+        {
+            return new ServiceResponse<User>
+            {
+                IsSuccess = false,
+                Message = "Failed to update user",
+                Errors = new List<string>() { ex.Message }
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            return new ServiceResponse<User>
+            {
+                IsSuccess = false,
+                Message = "Failed to update user",
+                Errors = new string[1] { "The operation has been cancelled" }
+            };
+        }
     }
 }

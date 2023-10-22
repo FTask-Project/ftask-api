@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using FTask.Repository.Entity;
 using FTask.Service.IService;
-using FTask.Service.ViewModel.RequestVM.CreateSubject;
+using FTask.Service.ViewModel.RequestVM.Subject;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -52,11 +52,16 @@ namespace FTask.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SubjectResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
-        public async Task<IActionResult> GetSubjects([FromQuery] int page, [FromQuery] int amount, [FromQuery] string? filter, [FromQuery] int? departmentId)
+        public async Task<IActionResult> GetSubjects(
+            [FromQuery] int page, 
+            [FromQuery] int amount,
+            [FromQuery] string? filter,
+            [FromQuery] int? departmentId,
+            [FromQuery] bool? status)
         {
             if (ModelState.IsValid)
             {
-                var subjectList = await _subjectService.GetSubjectAllSubject(page, amount, filter ?? "", departmentId);
+                var subjectList = await _subjectService.GetSubjectAllSubject(page, amount, filter ?? "", departmentId, status);
                 return Ok(_mapper.Map<IEnumerable<SubjectResponseVM>>(subjectList));
             }
             else
@@ -79,25 +84,13 @@ namespace FTask.API.Controllers
                 var result = await _subjectService.CreateNewSubject(_mapper.Map<Subject>(subject));
                 if (result.IsSuccess)
                 {
-                    var id = Int32.Parse(result.Id!);
-                    var existedSubject = await _subjectService.GetSubjectById(id);
-                    if (existedSubject is not null)
-                    {
-                        return CreatedAtAction(
-                            nameof(GetSubjectById),
-                            new { id = id },
-                            _mapper.Map<SubjectResponseVM>(existedSubject)
+                    return CreatedAtAction(nameof(GetSubjectById),
+                            new 
+                            { 
+                                id = result.Entity!.SubjectId
+                            },
+                            _mapper.Map<SubjectResponseVM>(result.Entity!)
                         );
-                    }
-                    else
-                    {
-                        return BadRequest(new ServiceResponseVM
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new subject",
-                            Errors = new string[1] {"Created subject not found"}
-                        });
-                    }
                 }
                 else
                 {
@@ -149,6 +142,33 @@ namespace FTask.API.Controllers
                         Message = "Failed to delete subject",
                         Errors = new string[1] { ex.Message }
                     });
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SubjectResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> UpdateSubject([FromBody] UpdateSubjectVM resource ,int id)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _subjectService.UpdateSubject(resource, id);
+                if (result.IsSuccess)
+                {
+                    return Ok(_mapper.Map<SubjectResponseVM>(result.Entity));
+                }
+                else
+                {
+                    return BadRequest(_mapper.Map<ServiceResponseVM>(result));
                 }
             }
             else

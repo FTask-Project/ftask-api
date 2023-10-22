@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
-namespace FTask.Service.ViewModel.RequestVM.CreateTaskReport
+namespace FTask.Service.ViewModel.RequestVM.TaskReport
 {
     public class TaskReportVM
     {

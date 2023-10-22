@@ -4,10 +4,9 @@ using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
 using FTask.Service.Validation;
+using FTask.Service.ViewModel.RequestVM.TaskActivity;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using CreateTaskActivityVM = FTask.Service.ViewModel.RequestVM.CreateTaskActivity.CreateTaskActivityVM;
 
 namespace FTask.Service.IService
 {
@@ -72,12 +71,12 @@ namespace FTask.Service.IService
             return await taskActivityList.ToArrayAsync();
         }
 
-        public async Task<ServiceResponse> CreateNewActivity(CreateTaskActivityVM newEntity)
+        public async Task<ServiceResponse<TaskActivity>> CreateNewActivity(CreateTaskActivityVM newEntity)
         {
             var existedTaskLecturer = await _unitOfWork.TaskLecturerRepository.FindAsync(newEntity.TaskLecturerId);
             if (existedTaskLecturer is null)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskActivity>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task activity",
@@ -89,21 +88,24 @@ namespace FTask.Service.IService
 
             await _unitOfWork.TaskActivityRepository.AddAsync(newTaskActivity);
 
+            string key = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), existedTaskLecturer.TaskLecturerId.ToString());
+            var task = _cacheService.RemoveAsync(key);
+
             try
             {
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<TaskActivity>
                     {
-                        Id = newTaskActivity.TaskActivityId.ToString(),
+                        Entity = newTaskActivity,
                         IsSuccess = true,
                         Message = "Create new task activity successfully"
                     };
                 }
                 else
                 {
-                    return new ServiceResponse
+                    return new ServiceResponse<TaskActivity>
                     {
                         IsSuccess = false,
                         Message = "Failed to create new task activity",
@@ -113,7 +115,7 @@ namespace FTask.Service.IService
             }
             catch (DbUpdateException ex)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskActivity>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",
@@ -122,7 +124,7 @@ namespace FTask.Service.IService
             }
             catch (OperationCanceledException)
             {
-                return new ServiceResponse
+                return new ServiceResponse<TaskActivity>
                 {
                     IsSuccess = false,
                     Message = "Failed to create new task",
