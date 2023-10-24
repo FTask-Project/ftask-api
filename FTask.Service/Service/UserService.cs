@@ -79,17 +79,23 @@ internal class UserService : IUserService
                 Message = ex.Message
             };
         }
-        
+
 
         // Get user data
         //var uid = decodedToken.Uid;
         //var name = decodedToken.Claims["name"].ToString();
         //pictureUrl = decodedToken.Claims["picture"].ToString();
 
-        
 
-        var existedUser = await _userManager.FindByEmailAsync(email);
-        if (existedUser is null || existedUser.Deleted)
+        var includes = new Expression<Func<User, object>>[]
+        {
+            u => u.Roles
+        };
+
+        var existedUser = await _unitOfWork.UserRepository
+            .Get(u => !u.Deleted && u.Email.Equals(email), includes)
+            .FirstOrDefaultAsync();
+        if (existedUser is null)
         {
             return new LoginUserManagement
             {
@@ -107,13 +113,12 @@ internal class UserService : IUserService
             };
         }
 
-        var roles = await _userManager.GetRolesAsync(existedUser);
         return new LoginUserManagement
         {
             Message = "Login Successfully",
             IsSuccess = true,
             LoginUser = existedUser,
-            RoleNames = roles
+            RoleNames = existedUser.Roles.Select(r => r.Name)
         };
     }
 
@@ -149,13 +154,14 @@ internal class UserService : IUserService
         }
         else
         {
-            var roles = await _userManager.GetRolesAsync(existedUser);
+            var roles = await _unitOfWork.RoleRepository.Get(r => !r.Deleted && r.Users.Contains(existedUser)).ToArrayAsync();
+            existedUser.Roles = roles;
             return new LoginUserManagement
             {
                 Message = "Login Successfully",
                 IsSuccess = true,
                 LoginUser = existedUser,
-                RoleNames = roles
+                RoleNames = roles.Select(r => r.Name)
             };
         }
     }
