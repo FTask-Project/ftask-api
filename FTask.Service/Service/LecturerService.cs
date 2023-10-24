@@ -87,8 +87,15 @@ namespace FTask.Service.IService
                 };
             }
 
+            var includes = new Expression<Func<Lecturer, object>>[]
+            {
+                l => l.Department!,
+                l => l.DepartmentHead!
+            };
 
-            var existedLecturer = await _userManager.FindByEmailAsync(email);
+            var existedLecturer = await _unitOfWork.LecturerRepository
+                .Get(l => !l.Deleted && l.Email.Equals(email), includes)
+                .FirstOrDefaultAsync();
             if(existedLecturer is null || existedLecturer.Deleted)
             {
                 return new LoginLecturerManagement
@@ -117,8 +124,15 @@ namespace FTask.Service.IService
 
         public async Task<LoginLecturerManagement> LoginLecturer(LoginUserVM resource)
         {
-            var existedUser = await _userManager.FindByNameAsync(resource.UserName);
-            if (existedUser == null || existedUser.Deleted)
+            var includes = new Expression<Func<Lecturer, object>>[]
+            {
+                l => l.Department!,
+                l => l.DepartmentHead!
+            };
+            var existedUser = await _unitOfWork.LecturerRepository
+                .Get(l => !l.Deleted && l.UserName.Equals(resource.UserName), includes)
+                .FirstOrDefaultAsync();
+            if (existedUser == null)
             {
                 return new LoginLecturerManagement
                 {
