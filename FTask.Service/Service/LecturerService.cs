@@ -1,5 +1,7 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
 using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
@@ -9,6 +11,7 @@ using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM;
 using FTask.Service.ViewModel.RequestVM.Lecturer;
 using FTask.Service.ViewModel.ResposneVM;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -39,6 +42,77 @@ namespace FTask.Service.IService
             _unitOfWork = unitOfWork;
             _cloudinary = cloudinary;
             _currentUserService = currentUserService;
+        }
+
+        public async Task<LoginLecturerManagement> LoginWithGoogle(string idToken, bool fromMobile)
+        {
+            string? email;
+
+            try
+            {
+                FirebaseToken decodedToken;
+                if (fromMobile)
+                {
+                    if (FirebaseApp.GetInstance("mobileInstance") is null)
+                    {
+                        FirebaseApp.Create(new AppOptions()
+                        {
+                            Credential = GoogleCredential.FromFile("mobileServiceAccountKey.json"),
+                        }, "mobileInstance");
+                    }
+                    var mobileInstance = FirebaseApp.GetInstance("mobileInstance");
+                    decodedToken = await FirebaseAuth.GetAuth(mobileInstance).VerifyIdTokenAsync(idToken);
+                }
+                else
+                {
+                    if (FirebaseApp.GetInstance("webInstance") is null)
+                    {
+                        FirebaseApp.Create(new AppOptions()
+                        {
+                            Credential = GoogleCredential.FromFile("webServiceAccountKey.json"),
+                        }, "webInstance");
+                    }
+                    var webInstance = FirebaseApp.GetInstance("webInstance");
+                    decodedToken = await FirebaseAuth.GetAuth(webInstance).VerifyIdTokenAsync(idToken);
+                }
+
+                email = decodedToken.Claims["email"].ToString();
+            }
+            catch (FirebaseAuthException ex)
+            {
+                return new LoginLecturerManagement
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                };
+            }
+
+
+            var existedLecturer = await _userManager.FindByEmailAsync(email);
+            if(existedLecturer is null || existedLecturer.Deleted)
+            {
+                return new LoginLecturerManagement
+                {
+                    Message = "Email not found",
+                    IsSuccess = false,
+                };
+            }
+
+            if (existedLecturer.LockoutEnabled)
+            {
+                return new LoginLecturerManagement
+                {
+                    Message = "Account is locked",
+                    IsSuccess = false,
+                };
+            }
+
+            return new LoginLecturerManagement
+            {
+                Message = "Login Successfully",
+                IsSuccess = true,
+                LoginUser = existedLecturer
+            };
         }
 
         public async Task<LoginLecturerManagement> LoginLecturer(LoginUserVM resource)

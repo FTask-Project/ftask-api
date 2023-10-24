@@ -7,7 +7,8 @@ namespace FTask.Service.IService;
 
 public interface IUserService
 {
-    Task<LoginUserManagement> LoginMember(LoginUserVM resource);
+    Task<LoginUserManagement> LoginWithGoogle(string idToken);
+    Task<LoginUserManagement> LoginUser(LoginUserVM resource);
     Task<IEnumerable<User>> GetUsers(int page, int quantity, string filter);
     Task<User?> GetUserById(Guid id);
     Task<ServiceResponse<User>> CreateNewUser(UserVM newEntity);

@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
 using FTask.API.Service;
 using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM;
@@ -26,7 +28,7 @@ namespace FTask.API.Controllers
             _lecturerService = lecturerService;
         }
 
-        [HttpPost("login/user")]
+        [HttpPost("login-user")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthenticateResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponseVM))]
@@ -35,7 +37,7 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _userService.LoginMember(resource);
+                var result = await _userService.LoginUser(resource);
                 if (result.IsSuccess)
                 {
                     var tokenString = _jwtTokenService.CreateToken(result.LoginUser!, result.RoleNames!);
@@ -69,12 +71,11 @@ namespace FTask.API.Controllers
             return BadRequest(new ServiceResponseVM
             {
                 IsSuccess = false,
-                Message = "Login failed",
-                Errors = new List<string>() { "Invalid input" }
+                Message = "Invalid input",
             });
         }
 
-        [HttpPost("login/lecturer")]
+        [HttpPost("login-lecturer")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthenticateResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponseVM))]
@@ -117,56 +118,108 @@ namespace FTask.API.Controllers
             return BadRequest(new ServiceResponseVM
             {
                 IsSuccess = false,
-                Message = "Login failed",
-                Errors = new List<string>() { "Invalid input" }
+                Message = "Invalid input",
             });
 
         }
 
-        [HttpPost("login/google/lecturer")]
-        public async Task<IActionResult> LoginGoogleLecturer([FromQuery] string idToken)
+        [HttpPost("login-google-lecturer")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthenticateResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> LoginLecturerWithGoogle([FromQuery] string idToken, [FromQuery] bool fromMobile)
         {
-            /*// Initialize the Firebase app
-            if (FirebaseApp.DefaultInstance is null)
+            if (ModelState.IsValid)
             {
-                FirebaseApp.Create(new AppOptions()
+                var result = await _lecturerService.LoginWithGoogle(idToken, fromMobile);
+                if (result.IsSuccess)
                 {
-                    //Credential = GoogleCredential.FromFile("serviceAccountKey.json"),
+                    var tokenString = _jwtTokenService.CreateToken(result.LoginUser!, new string[1] { "Lecturer" });
+                    if (tokenString is not null)
+                    {
+                        return Ok(new AuthenticateResponseVM
+                        {
+                            Token = tokenString,
+                            LecturerInformation = _mapper.Map<LecturerInformationResponseVM>(result.LoginUser!)
+                        });
+                    }
+                    else
+                    {
+                        return StatusCode(500, new ServiceResponseVM
+                        {
+                            IsSuccess = false,
+                            Message = "Login failed",
+                            Errors = new List<string>() { "Can not create token" }
+                        });
+                    }
+                }
+                else
+                {
+                    return Unauthorized(new ServiceResponseVM
+                    {
+                        IsSuccess = false,
+                        Message = result.Message
+                    });
+                }
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input",
                 });
             }
+        }
 
-            // Verify the ID token
-            var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(idToken);
-
-            // Get user data
-            var uid = decodedToken.Uid;
-            var name = decodedToken.Claims["name"].ToString();
-            var email = decodedToken.Claims["email"].ToString();
-            var pictureUrl = decodedToken.Claims["picture"].ToString();
-
-            // Use the user data
-            return Ok(decodedToken.ToString());*/
-
-            try
+        [HttpPost("login-google-user")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthenticateResponseVM))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponseVM))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ServiceResponseVM))]
+        public async Task<IActionResult> LoginUserWithGoogle([FromQuery] string idToken)
+        {
+            if (ModelState.IsValid)
             {
-                // Verify the ID token using Google's libraries
-                var payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
-
-                // Extract user data from the payload
-                var uid = payload.Subject;
-                var displayName = payload.Name;
-                var email = payload.Email;
-
-                // Handle user data (e.g., store in database)
-                // ...
-
-                // Return a response, such as an access token
-                return Ok(new { Message = "User data handled successfully" });
+                var result = await _userService.LoginWithGoogle(idToken);
+                if (result.IsSuccess)
+                {
+                    var tokenString = _jwtTokenService.CreateToken(result.LoginUser!, result.RoleNames!);
+                    if (tokenString is not null)
+                    {
+                        return Ok(new AuthenticateResponseVM
+                        {
+                            Token = tokenString,
+                            UserInformation = _mapper.Map<UserInformationResponseVM>(result.LoginUser!)
+                        });
+                    }
+                    else
+                    {
+                        return StatusCode(500, new ServiceResponseVM
+                        {
+                            IsSuccess = false,
+                            Message = "Login failed",
+                            Errors = new List<string>() { "Can not create token" }
+                        });
+                    }
+                }
+                else
+                {
+                    return Unauthorized(new ServiceResponseVM
+                    {
+                        IsSuccess = false,
+                        Message = result.Message
+                    });
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Console.Error.WriteLine($"Error handling user data: {ex}");
-                return StatusCode(500, new { Error = "Internal server error" });
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input",
+                });
             }
         }
     }

@@ -1,5 +1,7 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using FirebaseAdmin.Auth;
+using FirebaseAdmin;
 using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Identity;
@@ -12,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Role = FTask.Repository.Identity.Role;
+using Google.Apis.Auth.OAuth2;
 
 namespace FTask.Service.IService;
 
@@ -47,7 +50,74 @@ internal class UserService : IUserService
         _currentUserService = currentUserService;
     }
 
-    public async Task<LoginUserManagement> LoginMember(LoginUserVM resource)
+    public async Task<LoginUserManagement> LoginWithGoogle(string idToken)
+    {
+        // Initialize the Firebase app
+        if (FirebaseApp.GetInstance("webInstance") is null)
+        {
+            FirebaseApp.Create(new AppOptions()
+            {
+                Credential = GoogleCredential.FromFile("webServiceAccountKey.json"),
+            }, "webInstance");
+        }
+
+        // Verify the ID token
+        var webInstance = FirebaseApp.GetInstance("webInstance");
+
+        string? email; 
+
+        try
+        {
+            var decodedToken = await FirebaseAuth.GetAuth(webInstance).VerifyIdTokenAsync(idToken);
+            email = decodedToken.Claims["email"].ToString();
+        }
+        catch (FirebaseAuthException ex)
+        {
+            return new LoginUserManagement
+            {
+                IsSuccess = false,
+                Message = ex.Message
+            };
+        }
+        
+
+        // Get user data
+        //var uid = decodedToken.Uid;
+        //var name = decodedToken.Claims["name"].ToString();
+        //pictureUrl = decodedToken.Claims["picture"].ToString();
+
+        
+
+        var existedUser = await _userManager.FindByEmailAsync(email);
+        if (existedUser is null || existedUser.Deleted)
+        {
+            return new LoginUserManagement
+            {
+                IsSuccess = false,
+                Message = "Email not found"
+            };
+        }
+
+        if (existedUser.LockoutEnabled)
+        {
+            return new LoginUserManagement
+            {
+                Message = "Account is locked",
+                IsSuccess = false,
+            };
+        }
+
+        var roles = await _userManager.GetRolesAsync(existedUser);
+        return new LoginUserManagement
+        {
+            Message = "Login Successfully",
+            IsSuccess = true,
+            LoginUser = existedUser,
+            RoleNames = roles
+        };
+    }
+
+    public async Task<LoginUserManagement> LoginUser(LoginUserVM resource)
     {
         var existedUser = await _userManager.FindByNameAsync(resource.UserName);
         if (existedUser == null || existedUser.Deleted)

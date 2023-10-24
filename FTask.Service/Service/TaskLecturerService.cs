@@ -16,13 +16,20 @@ namespace FTask.Service.IService
         private readonly ICacheService<TaskLecturer> _cacheService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly ICreateTaskValidation _createTaskValidation;
 
-        public TaskLecturerService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, ICacheService<TaskLecturer> cacheService, IMapper mapper)
+        public TaskLecturerService(
+            IUnitOfWork unitOfWork, 
+            ICheckQuantityTaken checkQuantityTaken, 
+            ICacheService<TaskLecturer> cacheService, 
+            IMapper mapper,
+            ICreateTaskValidation createTaskValidation)
         {
             _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _mapper = mapper;
+            _createTaskValidation = createTaskValidation;
         }
 
         public async Task<TaskLecturer?> GetTaskLecturerById(int id)
@@ -79,7 +86,13 @@ namespace FTask.Service.IService
 
         public async Task<ServiceResponse<TaskLecturer>> CreateNewTaskLecturer(CreateTaskLecturerVM newEntity)
         {
-            var exsitedTask = await _unitOfWork.TaskRepository.FindAsync(newEntity.TaskId);
+            var includes = new Expression<Func<FTask.Repository.Entity.Task, object>>[]
+            {
+                t => t.TaskLecturers
+            };
+            var exsitedTask = await _unitOfWork.TaskRepository
+                .Get(t => !t.Deleted && t.TaskId == newEntity.TaskId, includes)
+                .FirstOrDefaultAsync();
             if (exsitedTask is null)
             {
                 return new ServiceResponse<TaskLecturer>
@@ -90,6 +103,29 @@ namespace FTask.Service.IService
                 };
             }
 
+            var task1 = _createTaskValidation.CanAssignTask(new Guid[] { newEntity.LecturerId }, _unitOfWork.DepartmentRepository);
+            var task2 = _createTaskValidation.IsMaximumAssign(exsitedTask.TaskLecturers.Count() + 1);
+            var canAssignTask = await task1;
+            var checkMaximum = await task2;
+            if(!canAssignTask.IsSuccess)
+            {
+                return new ServiceResponse<TaskLecturer>
+                {
+                    IsSuccess = false,
+                    Message = canAssignTask.Message,
+                    Errors = canAssignTask.Errors
+                };
+            }
+            if (!checkMaximum.IsSuccess)
+            {
+                return new ServiceResponse<TaskLecturer>
+                {
+                    IsSuccess = false,
+                    Message = checkMaximum.Message,
+                    Errors = checkMaximum.Errors
+                };
+            }
+
             var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync(newEntity.LecturerId);
             if (existedLecturer is null)
             {
@@ -97,7 +133,7 @@ namespace FTask.Service.IService
                 {
                     IsSuccess = false,
                     Message = "Failed to assign task",
-                    Errors = new string[1] { "Can not find lecturer" }
+                    Errors = new string[1] { "Lecturer not found" }
                 };
             }
 
@@ -110,7 +146,7 @@ namespace FTask.Service.IService
                 {
                     IsSuccess = false,
                     Message = "Failed to assign task",
-                    Errors = new string[] { "Lecturers has been already assigned the task before" }
+                    Errors = new string[] { "Lecturers has been already assigned to the task before" }
                 };
             }
 

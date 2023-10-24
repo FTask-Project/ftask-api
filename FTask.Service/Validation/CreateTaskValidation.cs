@@ -11,6 +11,7 @@ namespace FTask.Service.Validation
     public interface ICreateTaskValidation
     {
         Task<ServiceResponse<Task>> CanAssignTask(IEnumerable<Guid> taskRecipients, IDepartmentRepository departmentRepository);
+        Task<ServiceResponse<Task>> IsMaximumAssign(int recipientsCount);
     }
 
     internal class CreateTaskValidation : ICreateTaskValidation
@@ -75,16 +76,6 @@ namespace FTask.Service.Validation
                 };
             }
 
-            if (taskRecipients.Count() > MAXIMUM_ASSIGN)
-            {
-                return new ServiceResponse<Task>
-                {
-                    IsSuccess = false,
-                    Message = "Failed to create new task",
-                    Errors = new string[1] { $"You can only assign a maximum to {MAXIMUM_ASSIGN} lecturers" }
-                };
-            }
-
             var lecturerIds = department.Lecturers.Select(l => l.Id);
             foreach (var lecturer in taskRecipients)
             {
@@ -103,6 +94,28 @@ namespace FTask.Service.Validation
             {
                 IsSuccess = true
             };
+        }
+
+        public Task<ServiceResponse<Task>> IsMaximumAssign(int recipientsCount)
+        {
+            return System.Threading.Tasks.Task.Run(() =>
+            {
+                if (recipientsCount > MAXIMUM_ASSIGN)
+                {
+                    return new ServiceResponse<Task>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to create new task",
+                        Errors = new string[1] { $"You can only assign a maximum to {MAXIMUM_ASSIGN} lecturers" }
+                    };
+                }
+
+                return new ServiceResponse<Task>
+                {
+                    IsSuccess = true
+                };
+            });
+            
         }
     }
 }

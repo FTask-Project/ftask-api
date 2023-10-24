@@ -112,10 +112,15 @@ namespace FTask.Service.IService
 
         public async Task<ServiceResponse<Task>> CreateNewTask(TaskVM newEntity)
         {
-            var serviceResponse = await _createTaskValidation.CanAssignTask(newEntity.TaskLecturers.Select(t => t.LecturerId), _unitOfWork.DepartmentRepository);
-            if (!serviceResponse.IsSuccess)
+            var canAssignTask = _createTaskValidation.CanAssignTask(newEntity.TaskLecturers.Select(t => t.LecturerId), _unitOfWork.DepartmentRepository);
+            var checkMaximum = _createTaskValidation.IsMaximumAssign(newEntity.TaskLecturers.Count());
+            if (!(await canAssignTask).IsSuccess)
             {
-                return serviceResponse;
+                return await canAssignTask;
+            }
+            if(!(await checkMaximum).IsSuccess)
+            {
+                return await checkMaximum;
             }
 
             var currentDateTime = DateTime.Now;
@@ -140,12 +145,30 @@ namespace FTask.Service.IService
                 };
             }
 
+            if (newEntity.TaskLecturers.Count() > 0)
+            {
+                foreach (var assignedlecturer in newEntity.TaskLecturers)
+                {
+                    var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync(assignedlecturer.LecturerId);
+                    if (existedLecturer is null)
+                    {
+                        return new ServiceResponse<Task>
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to create new task",
+                            Errors = new string[1] { "Lecturer not found" }
+                        };
+                    }
+                }
+            }
+
+            var newTask = _mapper.Map<Task>(newEntity);
+
             int level = (int)TaskLevel.Semester;
             if (newEntity.DepartmentId is not null)
             {
                 var existedDepartment = await _unitOfWork.DepartmentRepository
                     .Get(d => !d.Deleted && d.DepartmentId == newEntity.DepartmentId)
-                    .AsNoTracking()
                     .FirstOrDefaultAsync();
                 if (existedDepartment is null)
                 {
@@ -156,12 +179,12 @@ namespace FTask.Service.IService
                         Errors = new string[1] { "Department not found " }
                     };
                 }
+                newTask.Department = existedDepartment;
                 level = (int)TaskLevel.Department;
                 if (newEntity.SubjectId is not null)
                 {
                     var existedSubject = await _unitOfWork.SubjectRepository
                         .Get(s => !s.Deleted && s.SubjectId == newEntity.SubjectId)
-                        .AsNoTracking()
                         .FirstOrDefaultAsync();
                     if (existedSubject is null)
                     {
@@ -181,28 +204,11 @@ namespace FTask.Service.IService
                             Errors = new string[1] { $"Subject '{existedSubject.SubjectName}' does not belong to '{existedDepartment.DepartmentName}'" }
                         };
                     }
+                    newTask.Subject = existedSubject;
                     level = (int)TaskLevel.Subject;
                 }
             }
 
-            if (newEntity.TaskLecturers.Count() > 0)
-            {
-                foreach (var assignedlecturer in newEntity.TaskLecturers)
-                {
-                    var existedLecturer = await _unitOfWork.LecturerRepository.FindAsync(assignedlecturer.LecturerId);
-                    if (existedLecturer is null)
-                    {
-                        return new ServiceResponse<Task>
-                        {
-                            IsSuccess = false,
-                            Message = "Failed to create new task",
-                            Errors = new string[1] { "Lecturer not found" }
-                        };
-                    }
-                }
-            }
-
-            var newTask = _mapper.Map<Task>(newEntity);
             newTask.TaskLevel = level;
             newTask.Semester = currentSemester;
 

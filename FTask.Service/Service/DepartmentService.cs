@@ -48,7 +48,7 @@ namespace FTask.Service.IService
                     .FirstOrDefaultAsync();
                 if (department is not null)
                 {
-                    await _cacheService.SetAsync(key, department);
+                    var task = _cacheService.SetAsync(key, department);
                 }
                 return department;
             }

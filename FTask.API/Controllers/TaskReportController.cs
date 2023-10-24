@@ -135,6 +135,15 @@ namespace FTask.API.Controllers
                         Errors = new string[1] { ex.Message }
                     });
                 }
+                catch (OperationCanceledException)
+                {
+                    return BadRequest(new ServiceResponseVM
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to delete task report",
+                        Errors = new string[1] { "The operation has been cancelled" }
+                    });
+                }
             }
             else
             {
