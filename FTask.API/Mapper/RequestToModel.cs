@@ -25,6 +25,8 @@ namespace FTask.API.Mapper
             CreateMap<DepartmentVM, Department>()
                 .ForMember(dest => dest.Subjects, opt => opt.MapFrom(src => src.Subjects));
 
+            CreateMap<SubjectVM, Subject>();
+
             CreateMap<SemesterVM, Semester>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.Now))
                 .ForMember(dest => dest.CreatedBy, opt => opt.MapFrom(src => _currentUserService.UserId));
