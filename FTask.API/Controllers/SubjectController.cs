@@ -189,5 +189,11 @@ namespace FTask.API.Controllers
                 });
             }
         }
+
+        [HttpPut]
+        public async Task<IActionResult> Update()
+        {
+            return Ok("Test đc");
+        }
     }
 }
