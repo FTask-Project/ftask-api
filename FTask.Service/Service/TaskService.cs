@@ -62,6 +62,7 @@ namespace FTask.Service.IService
                 var task = await _unitOfWork.TaskRepository
                     .Get(t => !t.Deleted && t.TaskId == id, include)
                     .Include(nameof(Task.TaskLecturers) + "." + nameof(TaskLecturer.Lecturer))
+                    .Include(nameof(Task.TaskLecturers) + "." + nameof(TaskLecturer.TaskActivities))
                     .FirstOrDefaultAsync();
                 if (task is not null)
                 {
