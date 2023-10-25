@@ -65,8 +65,13 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
+            var includes = new Expression<Func<TaskLecturer, object>>[]
+            {
+                tl => tl.TaskActivities!
+            };
+
             var taskLecturerList = _unitOfWork.TaskLecturerRepository
-                .Get(tl => !tl.Deleted)
+                .Get(tl => !tl.Deleted, includes)
                 .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
                 .Take(quantity)
                 .AsNoTracking();
