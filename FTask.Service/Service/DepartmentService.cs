@@ -265,7 +265,7 @@ namespace FTask.Service.IService
 
             if (updateDepartment.DepartmentName is not null)
             {
-                if (checkDepartment.Any(d => d.DepartmentName.Equals(updateDepartment.DepartmentName)))
+                if (checkDepartment.Where(d => d.DepartmentName.Equals(updateDepartment.DepartmentName)).Count() > 0)
                 {
                     return new ServiceResponse<Department>
                     {
@@ -279,7 +279,7 @@ namespace FTask.Service.IService
 
             if (updateDepartment.DepartmentCode is not null)
             {
-                if (checkDepartment.Any(d => d.DepartmentCode.Equals(updateDepartment.DepartmentCode)))
+                if (checkDepartment.Where(d => d.DepartmentCode.Equals(updateDepartment.DepartmentCode)).Count() > 0)
                 {
                     return new ServiceResponse<Department>
                     {

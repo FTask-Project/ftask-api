@@ -435,7 +435,7 @@ namespace FTask.Service.IService
                 .AsNoTracking();
             if (updateLecturer.Email is not null)
             {
-                if (checkLecturer.Any(l => l.Email.Equals(updateLecturer.Email)))
+                if (checkLecturer.Where(l => l.Email.Equals(updateLecturer.Email)).Count() > 0)
                 {
                     return new ServiceResponse<Lecturer>
                     {
@@ -449,7 +449,7 @@ namespace FTask.Service.IService
 
             if (updateLecturer.PhoneNumber is not null)
             {
-                if (checkLecturer.Any(l => l.PhoneNumber.Equals(updateLecturer.PhoneNumber)))
+                if (checkLecturer.Where(l => l.PhoneNumber.Equals(updateLecturer.PhoneNumber)).Count() > 0)
                 {
                     return new ServiceResponse<Lecturer>
                     {

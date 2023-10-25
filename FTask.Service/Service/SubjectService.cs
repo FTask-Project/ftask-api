@@ -199,7 +199,7 @@ namespace FTask.Service.IService
 
             if (updateSubject.SubjectName is not null)
             {
-                if (checkSubject.Any(s => s.SubjectName.Equals(updateSubject.SubjectName)))
+                if (checkSubject.Where(s => s.SubjectName.Equals(updateSubject.SubjectName)).Count() > 0)
                 {
                     return new ServiceResponse<Subject>
                     {
@@ -213,7 +213,7 @@ namespace FTask.Service.IService
 
             if (updateSubject.SubjectCode is not null)
             {
-                if (checkSubject.Any(s => s.SubjectCode.Equals(updateSubject.SubjectCode)))
+                if (checkSubject.Where(s => s.SubjectCode.Equals(updateSubject.SubjectCode)).Count() > 0)
                 {
                     return new ServiceResponse<Subject>
                     {
@@ -242,6 +242,8 @@ namespace FTask.Service.IService
                 }
                 existedSubject.DepartmentId = (int)updateSubject.DepartmentId;
             }
+
+            existedSubject.Status = updateSubject.Status ?? existedSubject.Status;
 
             try
             {
