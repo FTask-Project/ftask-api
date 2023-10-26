@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CloudinaryDotNet;
 using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
@@ -7,6 +8,7 @@ using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM.TaskActivity;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FTask.Service.IService
 {
@@ -49,7 +51,7 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<IEnumerable<TaskActivity>> GetTaskActivities(int page, int quantity, string filter, int? taskLecturerId)
+        public async Task<IEnumerable<TaskActivity>> GetTaskActivities(int page, int quantity, string filter, int? taskLecturerId, Guid? lecturerId, DateTime? from, DateTime? to)
         {
             if (page == 0)
             {
@@ -57,10 +59,13 @@ namespace FTask.Service.IService
             }
             quantity = _checkQuantityTaken.check(quantity);
 
+            var includes = new Expression<Func<TaskActivity, object>>[]
+            {
+                ta => ta.TaskLecturer!
+            };
+
             var taskActivityList = _unitOfWork.TaskActivityRepository
-                .Get(a => !a.Deleted && a.ActivityTitle.Contains(filter))
-                .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
-                .Take(quantity)
+                .Get(a => !a.Deleted && a.ActivityTitle.Contains(filter), includes)
                 .AsNoTracking();
 
             if (taskLecturerId is not null)
@@ -68,7 +73,25 @@ namespace FTask.Service.IService
                 taskActivityList = taskActivityList.Where(a => a.TaskLecturerId == taskLecturerId);
             }
 
-            return await taskActivityList.ToArrayAsync();
+            if(lecturerId is not null)
+            {
+                taskActivityList = taskActivityList.Where(ta => ta.TaskLecturer!.LecturerId == lecturerId);
+            }
+
+            if(from is not null)
+            {
+                taskActivityList = taskActivityList.Where(ta => ta.Deadline >= from);
+            }
+
+            if(to is not null)
+            {
+                taskActivityList = taskActivityList.Where(ta => ta.Deadline <= to);
+            }
+
+            return await taskActivityList
+                .Skip((page - 1) * _checkQuantityTaken.PageQuantity)
+                .Take(quantity)
+                .ToArrayAsync();
         }
 
         public async Task<ServiceResponse<TaskActivity>> CreateNewActivity(CreateTaskActivityVM newEntity)

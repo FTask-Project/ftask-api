@@ -48,11 +48,18 @@ namespace FTask.API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskActivityResponseVM>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
-        public async Task<IActionResult> GetTaskActivities([FromQuery] int page, [FromQuery] int quantity, [FromQuery] string? filter, [FromQuery] int? taskLecturerId)
+        public async Task<IActionResult> GetTaskActivities(
+            [FromQuery] int page, 
+            [FromQuery] int quantity, 
+            [FromQuery] string? filter, 
+            [FromQuery] int? taskLecturerId,
+            [FromQuery] Guid? lecturerId,
+            [FromQuery] DateTime? from,
+            [FromQuery] DateTime? to)
         {
             if (ModelState.IsValid)
             {
-                var taskActivityList = await _taskActivityService.GetTaskActivities(page, quantity, filter ?? "", taskLecturerId);
+                var taskActivityList = await _taskActivityService.GetTaskActivities(page, quantity, filter ?? "", taskLecturerId, lecturerId, from, to);
                 return Ok(_mapper.Map<IEnumerable<TaskActivityResponseVM>>(taskActivityList));
             }
             else
