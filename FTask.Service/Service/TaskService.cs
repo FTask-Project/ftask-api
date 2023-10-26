@@ -9,6 +9,7 @@ using FTask.Service.Enum;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM.Task;
 using FTask.Service.ViewModel.ResposneVM;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
@@ -276,11 +277,27 @@ namespace FTask.Service.IService
                             CreatedBy = _currentUserService.UserId,
                             CreatedAt = DateTime.Now
                         };
-                        await _unitOfWork.AttachmentRepository.AddAsync(attachment);
+                        //await _unitOfWork.AttachmentRepository.AddAsync(attachment);
                         attachments.Add(attachment);
                     }
                     newTask.Attachments = attachments;
                 }
+            }
+            else if(newEntity.FilePaths.Count() > 0)
+            {
+                var attachments = new List<Attachment>();
+                foreach(var item in newEntity.FilePaths)
+                {
+                    Attachment attachment = new Attachment
+                    {
+                        Url = item.Url,
+                        FileName = item.FileName,
+                        CreatedBy = _currentUserService.UserId,
+                        CreatedAt = DateTime.Now
+                    };
+                    attachments.Add(attachment);
+                }
+                newTask.Attachments = attachments;
             }
 
             await _unitOfWork.TaskRepository.AddAsync(newTask);
@@ -528,6 +545,19 @@ namespace FTask.Service.IService
                         };
                         attachments.Add(attachment);
                     }
+                }
+            }
+            else if(updateTask.AddedFilePaths.Count() > 0)
+            {
+                foreach(var item in updateTask.AddedFilePaths)
+                {
+                    attachments.Add(new Attachment
+                    {
+                        Url = item.Url,
+                        FileName = item.FileName,
+                        CreatedBy = _currentUserService.UserId,
+                        CreatedAt = DateTime.Now
+                    });
                 }
             }
 

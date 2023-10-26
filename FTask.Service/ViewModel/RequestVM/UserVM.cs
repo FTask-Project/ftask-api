@@ -19,6 +19,7 @@ public class UserVM
     public string? Email { get; set; }
     public IEnumerable<Guid> RoleIds { get; set; } = new List<Guid>();
     public IFormFile? Avatar { get; set; }
+    public string? FilePath { get; set; }
 }
 
 public class UpdateUserVM
@@ -31,4 +32,5 @@ public class UpdateUserVM
     public string? Email { get; set; }
     public IEnumerable<Guid>? RoleIds { get; set; }
     public IFormFile? Avatar { get; set; }
+    public string? FilePath { get; set; }
 }

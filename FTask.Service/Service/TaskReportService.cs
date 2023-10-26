@@ -164,6 +164,21 @@ namespace FTask.Service.IService
                     newTaskReport.Evidences = evidences;
                 }
             }
+            else if(newEntity.FilePaths.Count() > 0)
+            {
+                var evidences = new List<Evidence>();
+                foreach(var item in newEntity.FilePaths)
+                {
+                    evidences.Add(new Evidence
+                    {
+                        Url = item.Url,
+                        FileName = item.FileName,
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = _currentUserService.UserId
+                    });
+                }
+                newTaskReport.Evidences = evidences;
+            }
 
             if (existedTaskActivity.TaskActivityStatus != (int)TaskActivityStatus.Overdue && existedTaskActivity.TaskActivityStatus != (int)TaskActivityStatus.Done)
             {
@@ -322,6 +337,19 @@ namespace FTask.Service.IService
                         };
                         evidences.Add(evidence);
                     }
+                }
+            }
+            else if (updateTaskReport.AddFilePaths.Count() > 0)
+            {
+                foreach(var item in updateTaskReport.AddFilePaths)
+                {
+                    evidences.Add(new Evidence
+                    {
+                        Url = item.Url,
+                        FileName = item.FileName,
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = _currentUserService.UserId
+                    });
                 }
             }
 

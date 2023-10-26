@@ -81,9 +81,14 @@ namespace FTask.API.Controllers
             if (ModelState.IsValid)
             {
                 var data = new string("[" + HttpContext.Request.Form["TaskLecturers"].ToString() + "]");
+                var filePaths = new string("[" + HttpContext.Request.Form["FilePaths"].ToString() + "]");
                 if (!data.IsNullOrEmpty())
                 {
                     resource.TaskLecturers = JsonConvert.DeserializeObject<IEnumerable<TaskLecturerVM>>(data!) ?? new List<TaskLecturerVM>();
+                }
+                if (!filePaths.IsNullOrEmpty())
+                {
+                    resource.FilePaths = JsonConvert.DeserializeObject<IEnumerable<FilePathVM>>(filePaths) ?? new List<FilePathVM>();
                 }
 
                 var result = await _taskService.CreateNewTask(resource);
@@ -172,6 +177,12 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
+                var filePaths = new string("[" + HttpContext.Request.Form["AddedFilePaths"].ToString() + "]");
+                if (!filePaths.IsNullOrEmpty())
+                {
+                    resource.AddedFilePaths = JsonConvert.DeserializeObject<IEnumerable<FilePathVM>>(filePaths) ?? new List<FilePathVM>();
+                }
+
                 var result = await _taskService.UpdateTask(resource, id);
                 if (result.IsSuccess)
                 {

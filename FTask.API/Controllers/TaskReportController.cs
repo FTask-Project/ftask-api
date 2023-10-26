@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using Duende.IdentityServer.Extensions;
 using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM.TaskReport;
 using FTask.Service.ViewModel.ResposneVM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace FTask.API.Controllers
 {
@@ -72,10 +74,16 @@ namespace FTask.API.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TaskReportResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
-        public async Task<IActionResult> CreateTaskLecturer([FromForm] TaskReportVM resource)
+        public async Task<IActionResult> CreateTaskReport([FromForm] TaskReportVM resource)
         {
             if (ModelState.IsValid)
             {
+                var filePaths = new string("[" + HttpContext.Request.Form["FilePaths"].ToString() + "]");
+                if (!filePaths.IsNullOrEmpty())
+                {
+                    resource.FilePaths = JsonConvert.DeserializeObject<IEnumerable<EvidenceVM>>(filePaths) ?? new List<EvidenceVM>();
+                }
+
                 var result = await _taskReportService.CreateNewTaskReport(resource);
                 if (result.IsSuccess)
                 {
@@ -162,6 +170,12 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
+                var filePaths = new string("[" + HttpContext.Request.Form["AddFilePaths"].ToString() + "]");
+                if (!filePaths.IsNullOrEmpty())
+                {
+                    resource.AddFilePaths = JsonConvert.DeserializeObject<IEnumerable<EvidenceVM>>(filePaths) ?? new List<EvidenceVM>();
+                }
+
                 var result = await _taskReportService.UpdateTaskReport(resource, id);
                 if (result.IsSuccess)
                 {

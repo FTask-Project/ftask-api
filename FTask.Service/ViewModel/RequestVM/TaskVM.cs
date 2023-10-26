@@ -17,6 +17,13 @@ public class TaskVM
     public int? DepartmentId { get; set; }
     public IEnumerable<TaskLecturerVM> TaskLecturers { get; set; } = new List<TaskLecturerVM>();
     public IEnumerable<IFormFile> Attachments { get; set; } = new List<IFormFile>();
+    public IEnumerable<FilePathVM> FilePaths { get; set; } = new List<FilePathVM>();
+}
+
+public class FilePathVM
+{
+    public string FileName { get; set; } = "Undefined";
+    public string Url { get; set; } = "Undefined";
 }
 
 public class TaskLecturerVM
@@ -45,4 +52,5 @@ public class UpdateTaskVM
     public int? DepartmentId { get; set; }
     public IEnumerable<IFormFile> AddAttachments { get; set; } = new List<IFormFile>();
     public IEnumerable<int> DeleteAttachment { get; set; } = new List<int>();
+    public IEnumerable<FilePathVM> AddedFilePaths { get; set; } = new List<FilePathVM>();
 }

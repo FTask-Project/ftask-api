@@ -13,6 +13,7 @@ using FTask.Service.ViewModel.RequestVM.Lecturer;
 using FTask.Service.ViewModel.ResposneVM;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -344,7 +345,11 @@ namespace FTask.Service.IService
                     };
                 }
                 newLecturer.FilePath = uploadResult.SecureUrl.ToString();
-            };
+            }
+            else if (newEntity.FilePath is not null)
+            {
+                newLecturer.FilePath = newEntity.FilePath;
+            }
 
             try
             {
@@ -508,6 +513,10 @@ namespace FTask.Service.IService
                 }
 
                 existedLecturer.FilePath = uploadResult.SecureUrl.ToString();
+            }
+            else if(updateLecturer.FilePath is not null)
+            {
+                existedLecturer.FilePath = updateLecturer.FilePath;
             }
 
             existedLecturer.LockoutEnabled = updateLecturer.LockoutEnabled ?? existedLecturer.LockoutEnabled;

@@ -21,6 +21,7 @@ public class LecturerVM
     public int? DepartmentId { get; set; }
     public IEnumerable<int> SubjectIds { get; set; } = new List<int>();
     public IFormFile? Avatar { get; set; }
+    public string? FilePath { get; set; }
 }
 
 public class UpdateLecturerVM
@@ -34,4 +35,5 @@ public class UpdateLecturerVM
     public int? DepartmentId { get; set; }
     public IEnumerable<int>? SubjectIds { get; set; }
     public IFormFile? Avatar { get; set; }
+    public string? FilePath { get; set; }
 }

@@ -305,7 +305,11 @@ internal class UserService : IUserService
                 };
             }
             newUser.FilePath = uploadResult.SecureUrl.ToString();
-        };
+        }
+        else if(newEntity.FilePath is not null)
+        {
+            newUser.FilePath = newEntity.FilePath;
+        }
 
         try
         {
@@ -436,8 +440,11 @@ internal class UserService : IUserService
                     Errors = new string[1] { "Failed to upload image" }
                 };
             }
-
             existedUser.FilePath = uploadResult.SecureUrl.ToString();
+        }
+        else if(updateUser.FilePath is not null)
+        {
+            existedUser.FilePath = updateUser.FilePath;
         }
 
         if (updateUser.RoleIds is not null)
