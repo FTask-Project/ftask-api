@@ -45,7 +45,10 @@ namespace FTask.Service.Caching
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             });
 
-            await _distributedCache.SetStringAsync(key.ToString(), cacheData);
+            var timeToLive = new DistributedCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+            await _distributedCache.SetStringAsync(key.ToString(), cacheData, timeToLive);
         }
 
         public async Task SetAsyncArray(string key, T[] entity)

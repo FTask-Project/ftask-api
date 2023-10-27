@@ -120,8 +120,10 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
-                    string key = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), existedTaskLecturer.TaskLecturerId.ToString());
-                    var task = _cacheService.RemoveAsync(key);
+                    string key1 = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), existedTaskLecturer.TaskLecturerId.ToString());
+                    string key2 = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.Task), existedTaskLecturer.TaskId.ToString());
+                    var task1 = _cacheService.RemoveAsync(key1);
+                    var task2 = _cacheService.RemoveAsync(key2);
 
                     return new ServiceResponse<TaskActivity>
                     {
