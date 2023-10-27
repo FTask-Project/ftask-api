@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,5 +42,11 @@ namespace FTask.Service.ViewModel.ResposneVM
         public int TaskLevel { get; set; }
         public int TaskStatus { get; set; }
         public string? Location { get; set; }
+    }
+
+    public class NumberOfCreatedTaskStatisticsResponseVM
+    {
+        public DateTime DateTime { get; set; }
+        public int Quantity { get; set; } = 0;
     }
 }

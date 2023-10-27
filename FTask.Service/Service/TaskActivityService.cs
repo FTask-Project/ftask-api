@@ -80,11 +80,15 @@ namespace FTask.Service.IService
 
             if(from is not null)
             {
+                var fromValue = from.Value;
+                from = new DateTime(fromValue.Year, fromValue.Month, fromValue.Day, 0, 0, 0);
                 taskActivityList = taskActivityList.Where(ta => ta.Deadline >= from);
             }
 
             if(to is not null)
             {
+                var toValue = to.Value;
+                to = new DateTime(toValue.Year, toValue.Month, toValue.Day, 23, 59, 59);
                 taskActivityList = taskActivityList.Where(ta => ta.Deadline <= to);
             }
 

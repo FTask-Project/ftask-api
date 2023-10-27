@@ -623,11 +623,15 @@ namespace FTask.Service.IService
 
             if (from is not null)
             {
+                var fromValue = from.Value;
+                from = new DateTime(fromValue.Year, fromValue.Month, fromValue.Day, 0, 0, 0);
                 expressions.Add(Expression.GreaterThanOrEqual(Expression.Property(pe , "CreatedAt"), Expression.Constant(from)));
             }
 
             if(to is not null)
             {
+                var toValue = to.Value;
+                to = new DateTime(toValue.Year, toValue.Month, toValue.Day, 23, 59, 59);
                 expressions.Add(Expression.LessThanOrEqual(Expression.Property(pe, "CreatedAt"), Expression.Constant(to)));
             }
 
@@ -668,11 +672,15 @@ namespace FTask.Service.IService
 
             if (from is not null)
             {
+                var fromValue = from.Value;
+                from = new DateTime(fromValue.Year, fromValue.Month, fromValue.Day, 0 ,0 ,0);
                 expressions.Add(Expression.GreaterThanOrEqual(Expression.Property(pe, "CreatedAt"), Expression.Constant(from)));
             }
 
             if (to is not null)
             {
+                var toValue = to.Value;
+                to = new DateTime(toValue.Year, toValue.Month, toValue.Day, 23, 59, 59);
                 expressions.Add(Expression.LessThanOrEqual(Expression.Property(pe, "CreatedAt"), Expression.Constant(to)));
             }
 
@@ -714,6 +722,28 @@ namespace FTask.Service.IService
             }
 
             return result;
+        }
+
+        public async Task<IEnumerable<NumberOfCreatedTaskStatisticsResponseVM>> GetCreatedTaskCountStatistics(DateTime from, DateTime to)
+        {
+            var result = new List<NumberOfCreatedTaskStatisticsResponseVM>();
+
+            from = new DateTime(from.Year, from.Month, from.Day, 0 ,0 ,0);
+            to = new DateTime(to.Year, to.Month, to.Day, 23, 59, 59);
+
+            var createdTask = await _unitOfWork.TaskRepository.Get(t => !t.Deleted && t.CreatedAt >= from && t.CreatedAt <= to).ToArrayAsync();
+
+            while(from <= to)
+            {
+                result.Add(new NumberOfCreatedTaskStatisticsResponseVM
+                {
+                    DateTime = from,
+                    Quantity = createdTask.Where(t => t.CreatedAt.Date.Equals(from.Date) && t.CreatedAt.Month.Equals(from.Month)).Count()
+                });
+                from = from.AddDays(1);
+            }
+
+            return result.OrderBy(r => r.DateTime);
         }
     }
 }

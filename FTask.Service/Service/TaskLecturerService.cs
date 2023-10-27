@@ -157,11 +157,6 @@ namespace FTask.Service.IService
 
             var newTaskLecturer = _mapper.Map<TaskLecturer>(newEntity);
 
-            if (newTaskLecturer.TaskActivities.Count() > 0)
-            {
-                await _unitOfWork.TaskActivityRepository.AddRangeAsync(newTaskLecturer.TaskActivities);
-            }
-
             await _unitOfWork.TaskLecturerRepository.AddAsync(newTaskLecturer);
 
             try

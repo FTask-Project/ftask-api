@@ -53,5 +53,24 @@ namespace FTask.API.Controllers
                 });
             }
         }
+
+        [HttpGet("task-created")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<NumberOfCreatedTaskStatisticsResponseVM>))]
+        public async Task<IActionResult> GetCreatedTaskCountStatistics([FromQuery] DateTime from, [FromQuery] DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _taskService.GetCreatedTaskCountStatistics(from, to);
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
     }
 }
