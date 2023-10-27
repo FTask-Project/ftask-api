@@ -13,6 +13,7 @@ namespace FTask.Service.ViewModel.ResposneVM
         public TaskStatusStatistic ToDo { get; set; }
         public TaskStatusStatistic InProgress { get; set; }
         public TaskStatusStatistic End { get; set; }
+        public int TotalParticipant { get; set; }
     }
 
     public struct TaskStatusStatistic

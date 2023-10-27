@@ -638,8 +638,13 @@ namespace FTask.Service.IService
             Expression combined = expressions.Aggregate((accumulate, next) => Expression.AndAlso(accumulate, next));
             Expression<Func<Task, bool>> where = Expression.Lambda<Func<Task, bool>>(combined, pe);
 
+            var includes = new Expression<Func<Task, object>>[]
+            {
+                t => t.TaskLecturers
+            };
+
             var tasks = await _unitOfWork.TaskRepository
-                .Get(where)
+                .Get(where, includes)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -657,7 +662,8 @@ namespace FTask.Service.IService
             {
                 ToDo = new TaskStatusStatistic(toDoTask, toDoPercent),
                 InProgress = new TaskStatusStatistic(inProgressTask, inProgressPercent),
-                End = new TaskStatusStatistic(endTask, endPercent)
+                End = new TaskStatusStatistic(endTask, endPercent),
+                TotalParticipant = tasks.SelectMany(t => t.TaskLecturers).Count()
             };
         }
 
