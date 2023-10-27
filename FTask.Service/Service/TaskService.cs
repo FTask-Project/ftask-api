@@ -656,5 +656,64 @@ namespace FTask.Service.IService
                 End = new TaskStatusStatistic(endTask, endPercent)
             };
         }
+
+        public async Task<IEnumerable<TaskCompleteionRateStatisticResponseVM>> GetTaskCompletionRateStatistics(DateTime? from, DateTime? to, int? status, int? taskId)
+        {
+            var result = new List<TaskCompleteionRateStatisticResponseVM>();
+
+            var expressions = new List<Expression>();
+            ParameterExpression pe = Expression.Parameter(typeof(Task), "t");
+
+            expressions.Add(Expression.Equal(Expression.Property(pe, "Deleted"), Expression.Constant(false)));
+
+            if (from is not null)
+            {
+                expressions.Add(Expression.GreaterThanOrEqual(Expression.Property(pe, "CreatedAt"), Expression.Constant(from)));
+            }
+
+            if (to is not null)
+            {
+                expressions.Add(Expression.LessThanOrEqual(Expression.Property(pe, "CreatedAt"), Expression.Constant(to)));
+            }
+
+            if(status is not null)
+            {
+                expressions.Add(Expression.Equal(Expression.Property(pe, "TaskStatus"), Expression.Constant(status)));
+            }
+
+            if(taskId is not null)
+            {
+                expressions.Add(Expression.Equal(Expression.Property(pe, "TaskId"), Expression.Constant(taskId)));
+            }
+
+            Expression combined = expressions.Aggregate((accumulate, next) => Expression.AndAlso(accumulate, next));
+            Expression<Func<Task, bool>> where = Expression.Lambda<Func<Task, bool>>(combined, pe);
+
+            var tasks = await _unitOfWork.TaskRepository
+                .Get(where)
+                .Include(nameof(Task.TaskLecturers) + "." + nameof(TaskLecturer.TaskActivities))
+                .AsNoTracking()
+                .ToListAsync();
+
+            foreach(var task in tasks)
+            {
+                var taskActivities = task.TaskLecturers.SelectMany(tl => tl.TaskActivities);
+                var total = taskActivities.Count();
+                var completedActivities = (float) taskActivities.Where(a => a.TaskActivityStatus == (int)TaskActivityStatus.Done).Count();
+                float completionRate = 100;
+                if(total != 0)
+                {
+                    completionRate = completedActivities / total * 100;
+                }
+
+                result.Add(new TaskCompleteionRateStatisticResponseVM
+                {
+                    Task = _mapper.Map<TaskStatisticResponseVM>(task),
+                    CompletionRate = completionRate
+                });
+            }
+
+            return result;
+        }
     }
 }

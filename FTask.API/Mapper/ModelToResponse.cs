@@ -62,5 +62,11 @@ public class ModelToResponse : Profile
             .ForMember(dest => dest.Lecturers, opt => opt.MapFrom(src => src.Lecturers.Where(l => !l.Deleted)));
 
         CreateMap<Subject, SubjectResponseVM>();
+
+
+
+
+        // Statistics
+        CreateMap<Task, TaskStatisticResponseVM>();
     }
 }

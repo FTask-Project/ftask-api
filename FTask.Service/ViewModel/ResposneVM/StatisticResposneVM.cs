@@ -23,4 +23,22 @@ namespace FTask.Service.ViewModel.ResposneVM
             Percent = percent;
         }
     }
+
+    public class TaskCompleteionRateStatisticResponseVM
+    {
+        public TaskStatisticResponseVM? Task { get; set; }
+        public float CompletionRate { get; set; }
+    }
+
+    public class TaskStatisticResponseVM : Auditable
+    {
+        public int TaskId { get; set; }
+        public string? TaskTitle { get; set; }
+        public string? TaskContent { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public int TaskLevel { get; set; }
+        public int TaskStatus { get; set; }
+        public string? Location { get; set; }
+    }
 }
