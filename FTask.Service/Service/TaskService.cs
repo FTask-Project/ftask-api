@@ -15,6 +15,8 @@ using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using Task = FTask.Repository.Entity.Task;
 using TaskStatus = FTask.Service.Enum.TaskStatus;
+using Expression = System.Linq.Expressions.Expression;
+using System.Threading.Tasks;
 
 namespace FTask.Service.IService
 {
@@ -610,6 +612,49 @@ namespace FTask.Service.IService
                     Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
+        }
+
+        public async Task<TaskStatusStatisticResposneVM> GetTaskStatusStatistics(DateTime? from, DateTime? to)
+        {
+            var expressions = new List<Expression>();
+            ParameterExpression pe = Expression.Parameter(typeof(Task), "t");
+
+            expressions.Add(Expression.Equal(Expression.Property(pe, "Deleted"), Expression.Constant(false)));
+
+            if (from is not null)
+            {
+                expressions.Add(Expression.GreaterThanOrEqual(Expression.Property(pe , "CreatedAt"), Expression.Constant(from)));
+            }
+
+            if(to is not null)
+            {
+                expressions.Add(Expression.LessThanOrEqual(Expression.Property(pe, "CreatedAt"), Expression.Constant(to)));
+            }
+
+            Expression combined = expressions.Aggregate((accumulate, next) => Expression.AndAlso(accumulate, next));
+            Expression<Func<Task, bool>> where = Expression.Lambda<Func<Task, bool>>(combined, pe);
+
+            var tasks = await _unitOfWork.TaskRepository
+                .Get(where)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var total = tasks.Count;
+
+            var toDoTask = tasks.Where(t => t.TaskStatus == (int)TaskStatus.ToDo).Count();
+            var inProgressTask = tasks.Where(t => t.TaskStatus == (int)TaskStatus.InProgress).Count();
+            var endTask = tasks.Where(t => t.TaskStatus == (int)TaskStatus.End).Count();
+
+            float toDoPercent = (float)toDoTask / total * 100;
+            float inProgressPercent = (float)inProgressTask / total * 100;
+            float endPercent = (float)endTask / total * 100;
+
+            return new TaskStatusStatisticResposneVM
+            {
+                ToDo = new TaskStatusStatistic(toDoTask, toDoPercent),
+                InProgress = new TaskStatusStatistic(inProgressTask, inProgressPercent),
+                End = new TaskStatusStatistic(endTask, endPercent)
+            };
         }
     }
 }

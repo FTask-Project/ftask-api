@@ -11,5 +11,6 @@ namespace FTask.Service.IService
         Task<ServiceResponse<Task>> CreateNewTask(TaskVM newEntity);
         Task<bool> DeleteTask(int id);
         Task<ServiceResponse<Task>> UpdateTask(UpdateTaskVM updateTask, int id);
+        Task<TaskStatusStatisticResposneVM> GetTaskStatusStatistics(DateTime? from, DateTime? to);
     }
 }
