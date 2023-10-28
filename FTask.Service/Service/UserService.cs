@@ -247,6 +247,7 @@ internal class UserService : IUserService
 
         User newUser = new User
         {
+            DisplayName = newEntity.DisplayName,
             UserName = newEntity.UserName,
             PhoneNumber = newEntity.PhoneNumber,
             Email = newEntity.Email,

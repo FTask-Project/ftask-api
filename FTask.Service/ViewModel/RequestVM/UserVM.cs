@@ -11,6 +11,7 @@ public class UserVM
     [Required]
     [MinLength(5)]
     public string Password { get; set; } = "Undefined";
+    public string? DisplayName { get; set; }
     public string? PhoneNumber { get; set; }
     public bool? LockoutEnabled { get; set; }
     public DateTimeOffset? LockoutEnd { get; set; }
