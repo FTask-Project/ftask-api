@@ -2,6 +2,7 @@
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
+using FTask.Service.Service;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM.TaskLecturer;
 using FTask.Service.ViewModel.ResposneVM;
@@ -17,19 +18,22 @@ namespace FTask.Service.IService
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly ICreateTaskValidation _createTaskValidation;
+        private readonly IBackgroundTaskService _backgroundTaskService;
 
         public TaskLecturerService(
             IUnitOfWork unitOfWork, 
             ICheckQuantityTaken checkQuantityTaken, 
             ICacheService<TaskLecturer> cacheService, 
             IMapper mapper,
-            ICreateTaskValidation createTaskValidation)
+            ICreateTaskValidation createTaskValidation,
+            IBackgroundTaskService backgroundTaskService)
         {
             _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _mapper = mapper;
             _createTaskValidation = createTaskValidation;
+            _backgroundTaskService = backgroundTaskService;
         }
 
         public async Task<TaskLecturer?> GetTaskLecturerById(int id)
@@ -164,6 +168,11 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
+
+                    foreach(var item in newTaskLecturer.TaskActivities)
+                    {
+                        await _backgroundTaskService.SetOverdueTaskActivity(item.TaskActivityId);
+                    }
                     string key = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.Task), exsitedTask.TaskId.ToString());
                     var task = _cacheService.RemoveAsync(key);
 

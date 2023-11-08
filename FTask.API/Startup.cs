@@ -126,8 +126,6 @@ namespace FTask.API
 
             //services.AddAutoMapper(typeof(ModelToResponse), typeof(RequestToModel));
 
-
-            services.AddScoped<IBackgroundTaskService, BackgroundTaskService>();
             services.AddScoped<IJWTTokenService<IdentityUser<Guid>>, JWTTokenService<IdentityUser<Guid>>>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
@@ -295,6 +293,8 @@ namespace FTask.API
                 });
             });
 
+            services.AddHangfireServer();
+
 
             services.AddStackExchangeRedisCache(option =>
             {
@@ -342,10 +342,7 @@ namespace FTask.API
 
             app.UseHttpsRedirection();
 
-            /*app.UseHangfireDashboard("/hangfire", new DashboardOptions
-            {
-                Authorization = new[] {new AuthorizationFilter()}
-            });*/
+            app.UseHangfireDashboard("/hangfire");
 
             app.UseStaticFiles();
             // app.UseCookiePolicy();

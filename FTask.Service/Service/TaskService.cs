@@ -18,6 +18,7 @@ using TaskStatus = FTask.Service.Enum.TaskStatus;
 using Expression = System.Linq.Expressions.Expression;
 using System.Threading.Tasks;
 using FTask.Service.ViewModel.RequestVM.Semester;
+using FTask.Service.Service;
 
 namespace FTask.Service.IService
 {
@@ -30,6 +31,7 @@ namespace FTask.Service.IService
         private readonly Cloudinary _cloudinary;
         private readonly ICreateTaskValidation _createTaskValidation;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IBackgroundTaskService _backgroundTaskService;
 
         public TaskService(
             IUnitOfWork unitOfWork,
@@ -38,7 +40,8 @@ namespace FTask.Service.IService
             IMapper mapper,
             Cloudinary cloudinary,
             ICreateTaskValidation createTaskValidation,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IBackgroundTaskService backgroundTaskService)
         {
             _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
@@ -47,6 +50,7 @@ namespace FTask.Service.IService
             _cloudinary = cloudinary;
             _createTaskValidation = createTaskValidation;
             _currentUserService = currentUserService;
+            _backgroundTaskService = backgroundTaskService;
         }
 
         public async Task<Task?> GetTaskById(int id)
@@ -334,6 +338,16 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
+                    var setEnd = _backgroundTaskService.SetEndTask(newTask.TaskId);
+                    if (newTask.TaskStatus == (int)FTask.Service.Enum.TaskStatus.ToDo)
+                    {
+                        await _backgroundTaskService.SetInProgressTask(newTask.TaskId);
+                    }
+                    foreach(var item in newTask.TaskLecturers.SelectMany(tl => tl.TaskActivities))
+                    {
+                        await _backgroundTaskService.SetOverdueTaskActivity(item.TaskActivityId);
+                    }
+                    await setEnd;
                     return new ServiceResponse<Task>
                     {
                         Entity = newTask,

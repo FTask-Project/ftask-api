@@ -4,6 +4,7 @@ using FTask.Repository.Common;
 using FTask.Repository.Data;
 using FTask.Repository.Entity;
 using FTask.Service.Caching;
+using FTask.Service.Service;
 using FTask.Service.Validation;
 using FTask.Service.ViewModel.RequestVM.TaskActivity;
 using FTask.Service.ViewModel.ResposneVM;
@@ -19,14 +20,16 @@ namespace FTask.Service.IService
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IBackgroundTaskService _backgroundTaskService;
 
-        public TaskActivityService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, ICacheService<TaskActivity> cacheService, IMapper mapper, ICurrentUserService currentUserService)
+        public TaskActivityService(IUnitOfWork unitOfWork, ICheckQuantityTaken checkQuantityTaken, ICacheService<TaskActivity> cacheService, IMapper mapper, ICurrentUserService currentUserService, IBackgroundTaskService backgroundTaskService)
         {
             _unitOfWork = unitOfWork;
             _checkQuantityTaken = checkQuantityTaken;
             _cacheService = cacheService;
             _mapper = mapper;
             _currentUserService = currentUserService;
+            _backgroundTaskService = backgroundTaskService;
         }
 
         public async Task<TaskActivity?> GetTaskActivityById(int id)
@@ -120,11 +123,13 @@ namespace FTask.Service.IService
                 var result = await _unitOfWork.SaveChangesAsync();
                 if (result)
                 {
+                    var setOverdue = _backgroundTaskService.SetOverdueTaskActivity(newTaskActivity.TaskActivityId);
                     string key1 = CacheKeyGenerator.GetKeyById(nameof(TaskLecturer), existedTaskLecturer.TaskLecturerId.ToString());
                     string key2 = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.Task), existedTaskLecturer.TaskId.ToString());
                     var task1 = _cacheService.RemoveAsync(key1);
                     var task2 = _cacheService.RemoveAsync(key2);
 
+                    await setOverdue;
                     return new ServiceResponse<TaskActivity>
                     {
                         Entity = newTaskActivity,

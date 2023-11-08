@@ -2,6 +2,7 @@
 using FTask.Repository.Identity;
 using FTask.Service.Caching;
 using FTask.Service.IService;
+using FTask.Service.Service;
 using FTask.Service.Validation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<ITaskLecturerService, TaskLecturerService>();
         services.AddScoped<ITaskReportService, TaskReportService>();
         services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<IBackgroundTaskService, BackgroundTaskService>();
         #endregion
 
         #region Validation
