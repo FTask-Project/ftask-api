@@ -31,7 +31,7 @@ public class ModelToResponse : Profile
 
         CreateMap<Lecturer, LecturerResponseVM>();
 
-
+        CreateMap<Creator, CreatorResponse>();
 
 
         CreateMap<Task, TaskResponseVM>()

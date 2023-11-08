@@ -18,11 +18,11 @@ namespace FTask.API.Controllers
 
         [HttpGet("task-status")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TaskStatusStatisticResposneVM))]
-        public async Task<IActionResult> GetTaskStatusStatistics([FromQuery]DateTime? from, [FromQuery]DateTime? to)
+        public async Task<IActionResult> GetTaskStatusStatistics([FromQuery]DateTime? from, [FromQuery]DateTime? to, [FromQuery] int? semesterId)
         {
             if (ModelState.IsValid)
             {
-                var result = await _taskService.GetTaskStatusStatistics(from, to);
+                var result = await _taskService.GetTaskStatusStatistics(from, to, semesterId);
                 return Ok(result);
             }
             else
@@ -37,11 +37,11 @@ namespace FTask.API.Controllers
 
         [HttpGet("task-completion-rate")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskCompleteionRateStatisticResponseVM>))]
-        public async Task<IActionResult> GetTaskCompletionRateStatistics([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int? taskId)
+        public async Task<IActionResult> GetTaskCompletionRateStatistics([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int? taskId, [FromQuery] int? semesterId)
         {
             if (ModelState.IsValid)
             {
-                var result = await _taskService.GetTaskCompletionRateStatistics(from, to, (int)TaskStatus.InProgress, taskId);
+                var result = await _taskService.GetTaskCompletionRateStatistics(from, to, (int)TaskStatus.InProgress, taskId, semesterId);
                 return Ok(result);
             }
             else
@@ -56,11 +56,11 @@ namespace FTask.API.Controllers
 
         [HttpGet("task-created")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<NumberOfCreatedTaskStatisticsResponseVM>))]
-        public async Task<IActionResult> GetCreatedTaskCountStatistics([FromQuery] DateTime from, [FromQuery] DateTime to)
+        public async Task<IActionResult> GetCreatedTaskCountStatistics([FromQuery] DateTime from, [FromQuery] DateTime to, [FromQuery] int? semeterId)
         {
             if (ModelState.IsValid)
             {
-                var result = await _taskService.GetCreatedTaskCountStatistics(from, to);
+                var result = await _taskService.GetCreatedTaskCountStatistics(from, to, semeterId);
                 return Ok(result);
             }
             else

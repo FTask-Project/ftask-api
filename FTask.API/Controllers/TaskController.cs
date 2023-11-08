@@ -56,11 +56,12 @@ namespace FTask.API.Controllers
             [FromQuery] int? semsesterId,
             [FromQuery] int? departmentId,
             [FromQuery] int? subjectId,
-            [FromQuery] int? status)
+            [FromQuery] int? status,
+            [FromQuery] Guid? creatorId)
         {
             if (ModelState.IsValid)
             {
-                var result = await _taskService.GetTasks(page, quantity, filter ?? "", semsesterId, departmentId, subjectId, status);
+                var result = await _taskService.GetTasks(page, quantity, filter ?? "", semsesterId, departmentId, subjectId, status, creatorId);
                 return Ok(_mapper.Map<IEnumerable<TaskResponseVM>>(result));
             }
             else

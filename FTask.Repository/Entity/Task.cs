@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FTask.Repository.Entity;
 
@@ -28,4 +29,21 @@ public class Task : Auditable
     public int? DepartmentId { get; set; }
 
     //public bool Deleted { get; set; } = false;
+
+    [NotMapped]
+    public Creator? Creator { get; set; }
+}
+
+public class Creator
+{
+    public string? Name { get; set; }
+    public string? Email { get; set; }
+    public string? FilePath { get; set; }
+
+    public Creator(string? name, string? email, string? filePath)
+    {
+        Name = name;
+        Email = email;
+        FilePath = filePath;
+    }
 }

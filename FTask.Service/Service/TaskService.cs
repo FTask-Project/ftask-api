@@ -17,6 +17,7 @@ using Task = FTask.Repository.Entity.Task;
 using TaskStatus = FTask.Service.Enum.TaskStatus;
 using Expression = System.Linq.Expressions.Expression;
 using System.Threading.Tasks;
+using FTask.Service.ViewModel.RequestVM.Semester;
 
 namespace FTask.Service.IService
 {
@@ -77,7 +78,7 @@ namespace FTask.Service.IService
             return cachedData;
         }
 
-        public async Task<IEnumerable<Task>> GetTasks(int page, int quantity, string filter, int? semsesterId, int? departmentId, int? subjectId, int? status)
+        public async Task<IEnumerable<Task>> GetTasks(int page, int quantity, string filter, int? semsesterId, int? departmentId, int? subjectId, int? status, Guid? creatorId)
         {
             if (page == 0)
             {
@@ -111,7 +112,31 @@ namespace FTask.Service.IService
                 taskList = taskList.Where(t => t.TaskStatus == status);
             }
 
-            return await taskList.ToArrayAsync();
+            if(creatorId is not null)
+            {
+                taskList = taskList.Where(t => t.CreatedBy == creatorId.ToString());
+            }
+
+            var list = await taskList.ToArrayAsync();
+
+            foreach (var task in list)
+            {
+                var user = await _unitOfWork.UserRepository.FindAsync(Guid.Parse(task.CreatedBy));
+                if(user is not null)
+                {
+                    task.Creator = new Creator(user.DisplayName, user.Email, user.FilePath);
+                }
+                else
+                {
+                    var lecturer = await _unitOfWork.LecturerRepository.FindAsync(Guid.Parse(task.CreatedBy));
+                    if(lecturer is not null)
+                    {
+                        task.Creator = new Creator(lecturer.DisplayName, lecturer.Email, lecturer.FilePath);
+                    }
+                }
+            }
+
+            return list;
         }
 
         public async Task<ServiceResponse<Task>> CreateNewTask(TaskVM newEntity)
@@ -614,7 +639,7 @@ namespace FTask.Service.IService
             }
         }
 
-        public async Task<TaskStatusStatisticResposneVM> GetTaskStatusStatistics(DateTime? from, DateTime? to)
+        public async Task<TaskStatusStatisticResposneVM> GetTaskStatusStatistics(DateTime? from, DateTime? to, int? semesterId)
         {
             var expressions = new List<Expression>();
             ParameterExpression pe = Expression.Parameter(typeof(Task), "t");
@@ -635,6 +660,11 @@ namespace FTask.Service.IService
                 expressions.Add(Expression.LessThanOrEqual(Expression.Property(pe, "CreatedAt"), Expression.Constant(to)));
             }
 
+            if(semesterId is not null)
+            {
+                expressions.Add(Expression.Equal(Expression.Property(pe, "SemesterId"), Expression.Constant(semesterId)));
+            }
+
             Expression combined = expressions.Aggregate((accumulate, next) => Expression.AndAlso(accumulate, next));
             Expression<Func<Task, bool>> where = Expression.Lambda<Func<Task, bool>>(combined, pe);
 
@@ -650,13 +680,20 @@ namespace FTask.Service.IService
 
             var total = tasks.Count;
 
+            float toDoPercent = 0;
+            float inProgressPercent = 0;
+            float endPercent = 0;
+
             var toDoTask = tasks.Where(t => t.TaskStatus == (int)TaskStatus.ToDo).Count();
             var inProgressTask = tasks.Where(t => t.TaskStatus == (int)TaskStatus.InProgress).Count();
             var endTask = tasks.Where(t => t.TaskStatus == (int)TaskStatus.End).Count();
 
-            float toDoPercent = (float)toDoTask / total * 100;
-            float inProgressPercent = (float)inProgressTask / total * 100;
-            float endPercent = (float)endTask / total * 100;
+            if (total > 0)
+            {
+                toDoPercent = (float)toDoTask / total * 100;
+                inProgressPercent = (float)inProgressTask / total * 100;
+                endPercent = (float)endTask / total * 100;
+            }
 
             return new TaskStatusStatisticResposneVM
             {
@@ -667,7 +704,7 @@ namespace FTask.Service.IService
             };
         }
 
-        public async Task<IEnumerable<TaskCompleteionRateStatisticResponseVM>> GetTaskCompletionRateStatistics(DateTime? from, DateTime? to, int? status, int? taskId)
+        public async Task<IEnumerable<TaskCompleteionRateStatisticResponseVM>> GetTaskCompletionRateStatistics(DateTime? from, DateTime? to, int? status, int? taskId, int? semesterId)
         {
             var result = new List<TaskCompleteionRateStatisticResponseVM>();
 
@@ -700,6 +737,11 @@ namespace FTask.Service.IService
                 expressions.Add(Expression.Equal(Expression.Property(pe, "TaskId"), Expression.Constant(taskId)));
             }
 
+            if (semesterId is not null)
+            {
+                expressions.Add(Expression.Equal(Expression.Property(pe, "SemesterId"), Expression.Constant(semesterId)));
+            }
+
             Expression combined = expressions.Aggregate((accumulate, next) => Expression.AndAlso(accumulate, next));
             Expression<Func<Task, bool>> where = Expression.Lambda<Func<Task, bool>>(combined, pe);
 
@@ -730,7 +772,7 @@ namespace FTask.Service.IService
             return result;
         }
 
-        public async Task<IEnumerable<NumberOfCreatedTaskStatisticsResponseVM>> GetCreatedTaskCountStatistics(DateTime from, DateTime to)
+        public async Task<IEnumerable<NumberOfCreatedTaskStatisticsResponseVM>> GetCreatedTaskCountStatistics(DateTime from, DateTime to, int? semesterId)
         {
             var result = new List<NumberOfCreatedTaskStatisticsResponseVM>();
 
@@ -738,6 +780,11 @@ namespace FTask.Service.IService
             to = new DateTime(to.Year, to.Month, to.Day, 23, 59, 59);
 
             var createdTask = await _unitOfWork.TaskRepository.Get(t => !t.Deleted && t.CreatedAt >= from && t.CreatedAt <= to).ToArrayAsync();
+
+            if(semesterId is not null)
+            {
+                createdTask = createdTask.Where(ct => ct.SemesterId == semesterId).ToArray();
+            }
 
             while(from <= to)
             {

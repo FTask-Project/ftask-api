@@ -105,6 +105,14 @@ public class TaskResponseVM : Auditable
     public SubjectResponseVM? Subject { get; set; }
     public IEnumerable<TaskLecturerResponseVM> TaskLecturers { get; set; } = new List<TaskLecturerResponseVM>();
     public IEnumerable<AttachmentResponseVM> Attachments { get; set; } = new List<AttachmentResponseVM>();
+    public CreatorResponse? Creator { get; set; }
+}
+
+public class CreatorResponse
+{
+    public string? Name { get; set; }
+    public string? Email { get; set; }
+    public string? FilePath { get; set; }
 }
 
 public class AttachmentResponseVM
