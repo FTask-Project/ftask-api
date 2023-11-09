@@ -19,7 +19,7 @@ jobs:
       - name: Build and push Docker image to Azure Container Registry
         run: |
           docker build -t myappimage -f Dockerfile .
-          docker login azure-container-registry-url -u ${{ secrets.ACR_USERNAME }} -p ${{ secrets.ACR_PASSWORD }}
+          docker login ftaskdkregistry.azurecr.io -u ${{ secrets.ACR_USERNAME }} -p ${{ secrets.ACR_PASSWORD }}
           docker tag myappimage azure-container-registry-url/myappimage:latest
           docker push azure-container-registry-url/myappimage:latest
 
