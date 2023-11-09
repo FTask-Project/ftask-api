@@ -23,6 +23,8 @@ namespace FTask.Repository.Identity
         public string? FilePath { get; set; }
 
         public bool Deleted { get; set; } = false;
+
+        public string? DeviceToken { get; set; }
     }
 
     public class LoginLecturerManagement

@@ -81,8 +81,8 @@ namespace FTask.API.Controllers
         {
             if (ModelState.IsValid)
             {
-                var data = new string("[" + HttpContext.Request.Form["TaskLecturers"].ToString() + "]");
-                var filePaths = new string("[" + HttpContext.Request.Form["FilePaths"].ToString() + "]");
+                var data = new string(HttpContext.Request.Form["TaskLecturers"].ToString());
+                var filePaths = new string(HttpContext.Request.Form["FilePaths"].ToString());
                 if (!data.IsNullOrEmpty())
                 {
                     resource.TaskLecturers = JsonConvert.DeserializeObject<IEnumerable<TaskLecturerVM>>(data!) ?? new List<TaskLecturerVM>();

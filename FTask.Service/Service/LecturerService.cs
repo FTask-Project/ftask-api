@@ -519,6 +519,11 @@ namespace FTask.Service.IService
                 existedLecturer.FilePath = updateLecturer.FilePath;
             }
 
+            if(updateLecturer.DeviceToken is not null && updateLecturer.DeviceToken.Length > 0)
+            {
+                existedLecturer.DeviceToken = updateLecturer.DeviceToken;
+            }
+
             existedLecturer.LockoutEnabled = updateLecturer.LockoutEnabled ?? existedLecturer.LockoutEnabled;
             existedLecturer.LockoutEnd = updateLecturer.LockoutEnd ?? existedLecturer.LockoutEnd;
             existedLecturer.DisplayName = updateLecturer.DisplayName ?? existedLecturer.DisplayName;

@@ -36,4 +36,5 @@ public class UpdateLecturerVM
     public IEnumerable<int>? SubjectIds { get; set; }
     public IFormFile? Avatar { get; set; }
     public string? FilePath { get; set; }
+    public string? DeviceToken { get; set; }
 }
