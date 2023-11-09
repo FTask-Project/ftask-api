@@ -51,6 +51,7 @@ namespace FTask.Service.IService
                 };
                 var taskLecturer = await _unitOfWork.TaskLecturerRepository
                     .Get(t => !t.Deleted && t.TaskLecturerId == id, include)
+                    .Include(nameof(TaskLecturer.TaskActivities) + "." + nameof(TaskActivity.TaskReport) + "." + nameof(TaskReport.Evidences))
                     .FirstOrDefaultAsync();
                 if (taskLecturer is not null)
                 {
