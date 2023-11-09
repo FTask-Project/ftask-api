@@ -57,7 +57,7 @@ internal class UserService : IUserService
         {
             FirebaseApp.Create(new AppOptions()
             {
-                Credential = GoogleCredential.FromFile("webServiceAccountKey.json"),
+                Credential = GoogleCredential.FromFile("keys/webServiceAccountKey.json"),
             }, "webInstance");
         }
 

@@ -58,7 +58,7 @@ namespace FTask.Service.IService
                     {
                         FirebaseApp.Create(new AppOptions()
                         {
-                            Credential = GoogleCredential.FromFile("mobileServiceAccountKey.json"),
+                            Credential = GoogleCredential.FromFile("keys/mobileServiceAccountKey.json"),
                         }, "mobileInstance");
                     }
                     var mobileInstance = FirebaseApp.GetInstance("mobileInstance");
@@ -70,7 +70,7 @@ namespace FTask.Service.IService
                     {
                         FirebaseApp.Create(new AppOptions()
                         {
-                            Credential = GoogleCredential.FromFile("webServiceAccountKey.json"),
+                            Credential = GoogleCredential.FromFile("keys/webServiceAccountKey.json"),
                         }, "webInstance");
                     }
                     var webInstance = FirebaseApp.GetInstance("webInstance");

@@ -14,8 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="mobileServiceAccountKey.json" />
-    <None Include="webServiceAccountKey.json" />
+    <None Include="keys\mobileServiceAccountKey.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="keys\webServiceAccountKey.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
