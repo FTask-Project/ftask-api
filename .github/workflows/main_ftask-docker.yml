@@ -20,7 +20,7 @@ jobs:
         run: |
           docker build -t myappimage -f Dockerfile .
           docker login ftaskdkregistry.azurecr.io -u ${{ secrets.ACR_USERNAME }} -p ${{ secrets.ACR_PASSWORD }}
-          docker tag myappimage azure-container-registry-url/myappimage:latest
-          docker push azure-container-registry-url/myappimage:latest
+          docker tag myappimage ftaskdkregistry.azurecr.io/myappimage:latest
+          docker push ftaskdkregistry.azurecr.io/myappimage:latest
 
   
