@@ -9,6 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="mobileServiceAccountKey.json" />
+    <Content Remove="webServiceAccountKey.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="mobileServiceAccountKey.json" />
+    <None Include="webServiceAccountKey.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
     <PackageReference Include="Duende.IdentityServer" Version="6.3.5" />
