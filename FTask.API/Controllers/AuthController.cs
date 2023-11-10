@@ -128,11 +128,11 @@ namespace FTask.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ServiceResponseVM))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ServiceResponseVM))]
-        public async Task<IActionResult> LoginLecturerWithGoogle([FromQuery] string idToken, [FromQuery] bool fromMobile)
+        public async Task<IActionResult> LoginLecturerWithGoogle([FromQuery] string idToken, [FromQuery] bool fromMobile, [FromQuery] string? deviceToken)
         {
             if (ModelState.IsValid)
             {
-                var result = await _lecturerService.LoginWithGoogle(idToken, fromMobile);
+                var result = await _lecturerService.LoginWithGoogle(idToken, fromMobile, deviceToken);
                 if (result.IsSuccess)
                 {
                     var tokenString = _jwtTokenService.CreateToken(result.LoginUser!, new string[1] { "Lecturer" });

@@ -70,7 +70,7 @@ namespace FTask.Service.IService
                 var task = await _unitOfWork.TaskRepository
                     .Get(t => !t.Deleted && t.TaskId == id, include)
                     .Include(nameof(Task.TaskLecturers) + "." + nameof(TaskLecturer.Lecturer))
-                    .Include(nameof(Task.TaskLecturers) + "." + nameof(TaskLecturer.TaskActivities))
+                    .Include(nameof(Task.TaskLecturers) + "." + nameof(TaskLecturer.TaskActivities) + "." + nameof(TaskActivity.TaskReport))
                     .FirstOrDefaultAsync();
                 if (task is not null)
                 {
@@ -811,6 +811,35 @@ namespace FTask.Service.IService
             }
 
             return result.OrderBy(r => r.DateTime);
+        }
+
+        public TaskStatusStatisticResposneVM GetTaskStatistics(Guid lecturerId)
+        {
+            var tasks = _unitOfWork.TaskLecturerRepository.Get(tl => !tl.Deleted && !tl.Task!.Deleted && tl.LecturerId == lecturerId);
+            var total = tasks.Count();
+
+            float toDoPercent = 0;
+            float inProgressPercent = 0;
+            float endPercent = 0;
+
+            var toDoTask = tasks.Where(tl => tl.Task!.TaskStatus == (int)TaskStatus.ToDo).Count();
+            var inProgressTask = tasks.Where(tl => tl.Task!.TaskStatus == (int)TaskStatus.InProgress).Count();
+            var endTask = tasks.Where(tl => tl.Task!.TaskStatus == (int)TaskStatus.End).Count();
+
+            if (total > 0)
+            {
+                toDoPercent = (float)toDoTask / total * 100;
+                inProgressPercent = (float)inProgressTask / total * 100;
+                endPercent = (float)endTask / total * 100;
+            }
+
+            return new TaskStatusStatisticResposneVM
+            {
+                ToDo = new TaskStatusStatistic(toDoTask, toDoPercent),
+                InProgress = new TaskStatusStatistic(inProgressTask, inProgressPercent),
+                End = new TaskStatusStatistic(endTask, endPercent),
+                TotalParticipant = total
+            };
         }
     }
 }

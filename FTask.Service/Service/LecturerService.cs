@@ -45,7 +45,7 @@ namespace FTask.Service.IService
             _currentUserService = currentUserService;
         }
 
-        public async Task<LoginLecturerManagement> LoginWithGoogle(string idToken, bool fromMobile)
+        public async Task<LoginLecturerManagement> LoginWithGoogle(string idToken, bool fromMobile, string? deviceToken)
         {
             string? email;
 
@@ -115,6 +115,12 @@ namespace FTask.Service.IService
                 };
             }
 
+            if(deviceToken is not null)
+            {
+                existedLecturer.DeviceToken = deviceToken;
+                await _unitOfWork.SaveChangesAsync();
+            }
+
             return new LoginLecturerManagement
             {
                 Message = "Login Successfully",
@@ -162,6 +168,12 @@ namespace FTask.Service.IService
             }
             else
             {
+                if(resource.DeviceToken is not null)
+                {
+                    existedUser.DeviceToken = resource.DeviceToken;
+                    await _unitOfWork.SaveChangesAsync();
+                }
+
                 return new LoginLecturerManagement
                 {
                     Message = "Login Successfully",
@@ -571,6 +583,11 @@ namespace FTask.Service.IService
                     Errors = new string[1] { "The operation has been cancelled" }
                 };
             }
+        }
+
+        public async Task<IEnumerable<string?>> GetDeviceTokens(List<Guid> ids)
+        {
+            return await _unitOfWork.LecturerRepository.Get(l => ids.Contains(l.Id)).Select(l => l.DeviceToken).Where(t => t != null).ToArrayAsync();
         }
     }
 }

@@ -7,12 +7,13 @@ namespace FTask.Service.IService
 {
     public interface ILecturerService
     {
-        Task<LoginLecturerManagement> LoginWithGoogle(string idToken, bool fromMobile);
+        Task<LoginLecturerManagement> LoginWithGoogle(string idToken, bool fromMobile, string? deviceToken);
         Task<LoginLecturerManagement> LoginLecturer(LoginUserVM resource);
         Task<IEnumerable<Lecturer>> GetLecturers(int page, int quantity, string filter, int? departmentId, int? subjectId);
         Task<Lecturer?> GetLectureById(Guid id);
         Task<ServiceResponse<Lecturer>> CreateNewLecturer(LecturerVM newEntity);
         Task<bool> DeleteLecturer(Guid id);
         Task<ServiceResponse<Lecturer>> UpdateLecturer(UpdateLecturerVM updateLecturer, Guid id);
+        Task<IEnumerable<string?>> GetDeviceTokens(List<Guid> ids);
     }
 }

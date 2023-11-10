@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Duende.IdentityServer.Extensions;
+using FTask.API.Service;
 using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM.Task;
 using FTask.Service.ViewModel.ResposneVM;
@@ -13,13 +14,17 @@ namespace FTask.API.Controllers
     [ApiController]
     public class TaskController : ControllerBase
     {
+        private readonly ILecturerService _lecturerService;
         private readonly IMapper _mapper;
         private readonly ITaskService _taskService;
+        private readonly IPushNotificationService _pushNotificationService;
 
-        public TaskController(IMapper mapper, ITaskService taskService)
+        public TaskController(IMapper mapper, ITaskService taskService, IPushNotificationService pushNotificationService, ILecturerService lecturerService)
         {
             _mapper = mapper;
             _taskService = taskService;
+            _pushNotificationService = pushNotificationService;
+            _lecturerService = lecturerService;
         }
 
         [HttpGet("{id}", Name = nameof(GetTaskById))]
@@ -95,6 +100,15 @@ namespace FTask.API.Controllers
                 var result = await _taskService.CreateNewTask(resource);
                 if (result.IsSuccess)
                 {
+                    var task = result.Entity!;
+                    if (task.TaskLecturers.Count() > 0)
+                    {
+                        var tokens = await _lecturerService.GetDeviceTokens(task.TaskLecturers.Select(tl => tl.LecturerId).ToList());
+                        _ = System.Threading.Tasks.Task.Run(async () =>
+                        {
+                            await _pushNotificationService.SendNotifications("FTask", "You have new task '" + task.TaskTitle + "'", tokens.ToList()!);
+                        });
+                    }
                     return CreatedAtAction(nameof(GetTaskById), new
                     {
                         id = result.Entity!.TaskId,

@@ -177,6 +177,8 @@ namespace FTask.Service.IService
                     string key = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.Task), exsitedTask.TaskId.ToString());
                     var task = _cacheService.RemoveAsync(key);
 
+                    newTaskLecturer.Task = exsitedTask;
+
                     return new ServiceResponse<TaskLecturer>
                     {
                         Entity = newTaskLecturer,

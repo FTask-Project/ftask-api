@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FTask.API.Service;
 using FTask.Service.IService;
 using FTask.Service.ViewModel.RequestVM.TaskLecturer;
 using FTask.Service.ViewModel.ResposneVM;
@@ -13,11 +14,15 @@ namespace FTask.API.Controllers
     {
         private readonly ITaskLecturerService _taskLecturerService;
         private readonly IMapper _mapper;
+        private readonly IPushNotificationService _pushNotificationService;
+        private readonly ILecturerService _lecturerService;
 
-        public TaskLecturerController(ITaskLecturerService taskLecturerService, IMapper mapper)
+        public TaskLecturerController(ITaskLecturerService taskLecturerService, IMapper mapper, IPushNotificationService pushNotificationService, ILecturerService lecturerService)
         {
             _taskLecturerService = taskLecturerService;
             _mapper = mapper;
+            _pushNotificationService = pushNotificationService;
+            _lecturerService = lecturerService;
         }
 
         [HttpGet("{id}", Name = nameof(GetTaskLecturerById))]
@@ -69,7 +74,6 @@ namespace FTask.API.Controllers
             }
         }
 
-
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TaskLecturerResponseVM))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ServiceResponseVM))]
@@ -80,6 +84,12 @@ namespace FTask.API.Controllers
                 var result = await _taskLecturerService.CreateNewTaskLecturer(resource);
                 if (result.IsSuccess)
                 {
+                    var taskLecturer = result.Entity;
+                    var tokens = await _lecturerService.GetDeviceTokens(new List<Guid> { taskLecturer!.LecturerId });
+                    _ = System.Threading.Tasks.Task.Run(async () =>
+                    {
+                        await _pushNotificationService.SendNotifications("FTask", "You have new task '" + taskLecturer!.Task!.TaskTitle + "'", tokens?.ToList()!);
+                    });
                     return CreatedAtAction(nameof(GetTaskLecturerById), new
                     {
                         id = result.Entity!.TaskLecturerId,

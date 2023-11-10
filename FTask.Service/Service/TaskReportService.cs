@@ -86,7 +86,9 @@ namespace FTask.Service.IService
                 .Get(ta => ta.TaskActivityId == newEntity.TaskActivityId, new Expression<Func<TaskActivity, object>>[]
                 {
                     ta => ta.TaskReport!
-                }).FirstOrDefaultAsync();
+                })
+                .Include(nameof(TaskActivity.TaskLecturer) + "." + nameof(TaskLecturer.Task))
+                .FirstOrDefaultAsync();
 
             if (existedTaskActivity is null)
             {
@@ -198,6 +200,16 @@ namespace FTask.Service.IService
 
                 if (result)
                 {
+                    string key3 = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.Task), existedTaskActivity.TaskLecturer!.Task!.TaskId.ToString());
+                    var task3 = _cacheService.RemoveAsync(key3);
+                    string key1 = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.TaskActivity), existedTaskActivity.TaskActivityId.ToString());
+                    var task1 = _cacheService.RemoveAsync(key1);
+                    string key2 = CacheKeyGenerator.GetKeyById(nameof(FTask.Repository.Entity.TaskLecturer), existedTaskActivity.TaskLecturer!.TaskLecturerId.ToString());
+                    var task2 = _cacheService.RemoveAsync(key2);
+                    await task3;
+                    await task1;
+                    await task2;
+
                     return new ServiceResponse<TaskReport>
                     {
                         Entity = newTaskReport,

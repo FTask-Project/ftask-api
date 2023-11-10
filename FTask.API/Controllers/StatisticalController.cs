@@ -72,5 +72,23 @@ namespace FTask.API.Controllers
                 });
             }
         }
+
+        [HttpGet("lecturer/task-status")]
+
+        public IActionResult GetTaskStatusStatisticsOfLecturer([FromQuery]Guid lecturerId)
+        {
+            if (ModelState.IsValid)
+            {
+                return Ok(_taskService.GetTaskStatistics(lecturerId));
+            }
+            else
+            {
+                return BadRequest(new ServiceResponseVM
+                {
+                    IsSuccess = false,
+                    Message = "Invalid input"
+                });
+            }
+        }
     }
 }

@@ -21,6 +21,8 @@ public static class DependencyInjection
             });
         });
 
+        services.AddTransient<IApplicationDbContext, ApplicationDbContext>();
+
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         #region Repository

@@ -7,7 +7,7 @@ using Task = FTask.Repository.Entity.Task;
 
 namespace FTask.Repository.Data;
 
-public interface IApplicationDbContext
+public interface IApplicationDbContext : IDisposable
 {
     public DbSet<Lecturer> Lecturers { get; set; }
     public DbSet<User> Users { get; set; }

@@ -106,6 +106,10 @@ namespace FTask.API
             services.AddSingleton(cloudinary);
             #endregion
 
+            #region PushNotification
+            services.AddSingleton<IPushNotificationService, PushNotificationService>();
+            #endregion
+
             services.AddSingleton<IKeyManager, KeyManager>();
 
             #region Email

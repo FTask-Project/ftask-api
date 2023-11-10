@@ -14,5 +14,6 @@ namespace FTask.Service.IService
         Task<TaskStatusStatisticResposneVM> GetTaskStatusStatistics(DateTime? from, DateTime? to, int? semesterId);
         Task<IEnumerable<TaskCompleteionRateStatisticResponseVM>> GetTaskCompletionRateStatistics(DateTime? from, DateTime? to, int? status, int? taskId, int? semesterId);
         Task<IEnumerable<NumberOfCreatedTaskStatisticsResponseVM>> GetCreatedTaskCountStatistics(DateTime from, DateTime to, int? semesterId);
+        TaskStatusStatisticResposneVM GetTaskStatistics(Guid lecturerId);
     }
 }
