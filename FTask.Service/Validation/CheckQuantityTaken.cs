@@ -8,22 +8,23 @@ public interface ICheckQuantityTaken
 
 internal class CheckQuantityTaken : ICheckQuantityTaken
 {
-    private static readonly int MAX_QUANTITY = 50;
+    private static readonly int MAX_QUANTITY = 100;
     private static readonly int PAGE_QUANTITY = 10;
     public int check(int quantity)
     {
-        if (quantity > MAX_QUANTITY)
+        /*if (quantity > MAX_QUANTITY)
         {
             return MAX_QUANTITY;
         }
         else if (quantity == 0)
         {
-            return 10;
+            return 100;
         }
         else
         {
             return quantity;
-        }
+        }*/
+        return 100;
     }
 
     public int PageQuantity
