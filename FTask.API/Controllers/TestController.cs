@@ -10,7 +10,7 @@ namespace FTask.API.Controllers
         [HttpGet]
         public IActionResult Ok()
         {
-            return Ok("demo");
+            return Ok("demo1111");
         }
     }
 }
