@@ -7,5 +7,10 @@ namespace FTask.API.Controllers
     [ApiController]
     public class TestController : ControllerBase
     {
+        [HttpGet]
+        public IActionResult Ok()
+        {
+            return Ok("demo");
+        }
     }
 }
